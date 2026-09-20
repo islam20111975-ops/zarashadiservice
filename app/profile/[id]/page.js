@@ -55,6 +55,20 @@ export default function Profile(){
           <button className="backAction" onClick={()=>router.push("/")}>← Home पर जाएँ</button>
         </div>
       </section>
+      {lightbox&&photo&&<div className="photoLightbox" onClick={()=>setLightbox(false)}>
+        <button className="lightboxClose" aria-label="फोटो छोटा करें" onClick={(e)=>{e.stopPropagation();setLightbox(false)}}>×</button>
+        <div className="zoomControls" onClick={e=>e.stopPropagation()}>
+          <button onClick={()=>setZoom(z=>Math.max(.5,+(z-.25).toFixed(2)))}>−</button>
+          <span>{Math.round(zoom*100)}%</span>
+          <button onClick={()=>setZoom(z=>Math.min(3,+(z+.25).toFixed(2)))}>+</button>
+        </div>
+        <img className="lightboxImage" src={photo} alt="Marriage profile large" style={{transform:"scale("+zoom+")"}} onClick={e=>e.stopPropagation()}/>
+        <div className="lightboxPayment" onClick={e=>e.stopPropagation()}>
+          <b>इस रिश्ते की जानकारी के लिए पहले रजिस्ट्रेशन करें</b>
+          <span>Registration Fee: <strong>₹100</strong></span>
+          <button onClick={()=>router.push("/payment?profile="+encodeURIComponent(id))}>₹100 Registration करें →</button>
+        </div>
+      </div>}
     </main>
   );
 }
