@@ -24,28 +24,6 @@ export default function Profile(){
 
   const photos=Array.isArray(p?.photos)&&p.photos.length?p.photos:(p?.photo?[p.photo]:[]);
   const photo=photos[0];
-  useEffect(()=>{
-    if(!lightbox||photos.length<2)return;
-    const onWheel=(e)=>{
-      e.preventDefault();
-      setPhotoIndex(i=>e.deltaY>0?(i+1)%photos.length:(i-1+photos.length)%photos.length);
-    };
-    const onKey=(e)=>{if(e.key==="ArrowRight"||e.key==="ArrowDown")setPhotoIndex(i=>(i+1)%photos.length);if(e.key==="ArrowLeft"||e.key==="ArrowUp")setPhotoIndex(i=>(i-1+photos.length)%photos.length)};
-    window.addEventListener("wheel",onWheel,{passive:false});
-    window.addEventListener("keydown",onKey);
-    return ()=>{window.removeEventListener("wheel",onWheel);window.removeEventListener("keydown",onKey)};
-  },[lightbox,photos.length]);
-
-  const [touchStartY,setTouchStartY]=useState(null);
-  const handleTouchStart=(e)=>{if(e.touches?.[0])setTouchStartY(e.touches[0].clientY)};
-  const handleTouchEnd=(e)=>{
-    if(touchStartY===null||photos.length<2)return;
-    const endY=e.changedTouches?.[0]?.clientY;
-    if(endY===undefined){setTouchStartY(null);return;}
-    const diff=touchStartY-endY;
-    if(Math.abs(diff)>45)setPhotoIndex(i=>diff>0?(i+1)%photos.length:(i-1+photos.length)%photos.length);
-    setTouchStartY(null);
-  };
 
   const openLightbox=(index=0)=>{
     if(photos.length){
@@ -86,15 +64,20 @@ export default function Profile(){
         </div>
       </section>
       {lightbox&&photo&&<div className="photoLightbox" onClick={()=>setLightbox(false)}>
-        <div className="lightboxContent" onClick={e=>e.stopPropagation()}>
-          {photos.length>1&&<div className="galleryCounter">Photo {photoIndex+1} / {photos.length}</div>}
-          <div className="lightboxPhotoArea" onClick={()=>{if(photos.length>1)setPhotoIndex(i=>(i+1)%photos.length)}} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-            <img className="lightboxImage" src={photos[photoIndex]} alt={"Marriage profile "+(photoIndex+1)}/>
-          </div>
-          <div className="lightboxPayment">
-            <b>इस रिश्ते की जानकारी के लिए पहले रजिस्ट्रेशन करें</b>
-            <span>Registration Fee: <strong>₹100</strong></span>
-            <button onClick={()=>router.push("/payment?profile="+encodeURIComponent(id))}>₹100 Registration करें →</button>
+        <div className="galleryCard" onClick={e=>e.stopPropagation()}>
+          <button className="galleryClose" aria-label="Close" onClick={()=>setLightbox(false)}>×</button>
+          <div className="galleryScroll">
+            {photos.map((src,index)=>(
+              <div className="galleryPhoto" key={index}>
+                <img src={src} alt={"Marriage profile "+(index+1)}/>
+                {photos.length>1&&<span className="galleryPhotoNumber">{index+1} / {photos.length}</span>}
+              </div>
+            ))}
+            <div className="lightboxPayment">
+              <b>इस रिश्ते की जानकारी के लिए पहले रजिस्ट्रेशन करें</b>
+              <span>Registration Fee: <strong>₹100</strong></span>
+              <button onClick={()=>router.push("/payment?profile="+encodeURIComponent(id))}>₹100 Registration करें →</button>
+            </div>
           </div>
         </div>
       </div>}
