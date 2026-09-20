@@ -39,10 +39,8 @@ export default function Home(){
         <div className="heroGlow one"></div><div className="heroGlow two"></div>
         <div className="heroContent">
           <div className="heroBadge">✨ A TRUSTED NIKAH SERVICE</div>
-          <p>Aapka Rishta, Hamari Zimmedari</p>
           <div className="heroFeatures"><span>✓ Verified Profiles</span><span>✓ Privacy First</span><span>✓ Simple Registration</span></div>
         </div>
-        <div className="choiceTitle"><span>01</span><div><b>Rishta ki category chunein</b><small>Male ya Female profiles dekhein</small></div></div>
         <div className="gender genderPremium">
           <button className={r==="male"?"genderCard premiumCard maleCard active":"genderCard premiumCard maleCard"} onClick={()=>setR("male")}><div className="cardIcon">👨</div><div><b>Male Rishte</b><small>Male profiles dekhein</small></div><span className="arrow">→</span></button>
           <button className={r==="female"?"genderCard premiumCard femaleCard active":"genderCard premiumCard femaleCard"} onClick={()=>setR("female")}><div className="cardIcon">👩</div><div><b>Female Rishte</b><small>Female profiles dekhein</small></div><span className="arrow">→</span></button>
