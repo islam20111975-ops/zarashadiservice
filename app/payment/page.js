@@ -1,0 +1,5 @@
+"use client";
+import {useSearchParams,useRouter} from "next/navigation";
+import {Suspense} from "react";
+function Pay(){const q=useSearchParams();const router=useRouter();const profile=q.get("profile")||"";const upi="upi://pay?pa=YOUR_UPI_ID&pn=Zara%20Shadi%20Service&am=100&cu=INR";return <main><header><div className="brand">💳 Registration Payment</div></header><section className="payment"><h1>₹100 Registration</h1><p>Profile: <b>{profile}</b></p><div className="qr">UPI QR<br/><small>अपना असली UPI QR यहाँ लगाएँ</small></div><a className="pay" href={upi}>📱 UPI App से Pay करें</a><p className="small">Payment के बाद वापस वेबसाइट पर आएँ। Payment verification को बाद में secure gateway/verification से जोड़ा जाएगा।</p><button className="back" onClick={()=>router.push("/")}>Payment के बाद Home पर जाएँ</button></section></main>}
+export default function Payment(){return <Suspense><Pay/></Suspense>}
