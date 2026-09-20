@@ -29,7 +29,7 @@ export default function Home(){
 
   const shown=data.length?data:fallback.filter(p=>p.gender===r);
   return (
-    <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"linear-gradient(rgba(255,255,255,.70),rgba(255,255,255,.78)),url("+wallpaper+")"}:undefined}>
+    <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"url("+wallpaper+")"}:undefined}>
       <header className="siteHeader"><div className="headerInner">
         <button className="logo" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA SHADI</strong><small>Service</small></span></button>
         <div className="headerActions"><span className="secureChip">✓ Verified Service</span><button className="headerLogin" onClick={()=>router.push("/admin")}>🔐 Admin Login</button></div>
