@@ -81,7 +81,7 @@ export default function Home(){
                 <div className="photoWrap"><img src={p.photo} alt="Marriage profile"/><span className="verified">✓ Verified</span></div>
                 <div className="cardInfo">
                   <span className="profileId">{p.id}</span>
-                  <button onClick={()=>router.push("/profile/"+p.id)}>Rishte ki Jankari <span>→</span></button>
+                  <button onClick={()=>router.push("/profile/"+p.id)}>💍 रिश्ता देखें <span>→</span></button>
                 </div>
               </article>
             ))}
