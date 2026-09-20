@@ -5,29 +5,35 @@ import {useParams,useRouter} from "next/navigation";
 import {doc,getDoc} from "firebase/firestore";
 import {db} from "../../../lib/firebase";
 
-const fallback={
-  "ZS-101":{photo:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1000&q=85"},
-  "ZS-102":{photo:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=1000&q=85"},
-  "ZS-103":{photo:"https://images.unsplash.com/photo-1544005313-94ddf028df2?w=1000&q=85"},
-  "ZS-104":{photo:"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1000&q=85"}
-};
-
 export default function Profile(){
   const {id}=useParams();
   const router=useRouter();
   const [p,setP]=useState(null);
+  const [loading,setLoading]=useState(true);
   const [lightbox,setLightbox]=useState(false);
-  const [zoom,setZoom]=useState(1);\n  const [photoIndex,setPhotoIndex]=useState(0);
+  const [zoom,setZoom]=useState(1);
+  const [photoIndex,setPhotoIndex]=useState(0);
 
   useEffect(()=>{
     if(!id)return;
+    setLoading(true);
     getDoc(doc(db,"profiles",id))
-      .then(s=>setP(s.exists()?s.data():fallback[id]||null))
-      .catch(()=>setP(fallback[id]||null));
+      .then(s=>setP(s.exists()?s.data():null))
+      .catch(()=>setP(null))
+      .finally(()=>setLoading(false));
   },[id]);
 
-  const photos=p?.photos?.length?p.photos:(p?.photo?[p.photo]:(fallback[id]?.photo?[fallback[id].photo]:[]));\n  const photo=photos[0];
-  const openLightbox=(index=0)=>{if(photos.length){setPhotoIndex(index);setZoom(1);setLightbox(true)}};
+  const photos=Array.isArray(p?.photos)&&p.photos.length?p.photos:(p?.photo?[p.photo]:[]);
+  const photo=photos[0];
+  const openLightbox=(index=0)=>{
+    if(photos.length){
+      setPhotoIndex(index);
+      setZoom(1);
+      setLightbox(true);
+    }
+  };
+
+  if(loading)return <main><div className="detail cardPage"><div className="notFound">Loading...</div></div></main>;
 
   return (
     <main>
@@ -44,7 +50,10 @@ export default function Profile(){
           <button className="miniBack" onClick={()=>router.push("/")}>← Profiles</button>
           <span className="detailBadge">✓ Verified</span>
         </div>
-        <div className="detailPhoto" onClick={()=>openLightbox(0)}>{photo?<img src={photo} alt="Marriage profile"/>:<div className="notFound">Profile not found</div>} {photo&&<span className="photoHint">🔍 फोटो बड़ा करके देखें</span>}</div>
+        <div className="detailPhoto" onClick={()=>openLightbox(0)}>
+          {photo?<img src={photo} alt="Marriage profile"/>:<div className="notFound">Profile not found</div>}
+          {photo&&<span className="photoHint">🔍 फोटो बड़ा करके देखें</span>}
+        </div>
         <div className="detailBody">
           <span className="profileId">{id}</span>
           <h1>Rishta ki Jankari</h1>
@@ -57,10 +66,12 @@ export default function Profile(){
       </section>
       {lightbox&&photo&&<div className="photoLightbox" onClick={()=>setLightbox(false)}>
         <button className="lightboxClose" aria-label="फोटो छोटा करें" onClick={(e)=>{e.stopPropagation();setLightbox(false)}}>×</button>
-        <div className="galleryCounter">Photo {photoIndex+1} / {photos.length}</div>\n        {photos.length>1&&<><button className="galleryNav prev" onClick={e=>{e.stopPropagation();setPhotoIndex(i=>(i-1+photos.length)%photos.length);setZoom(1)}}>‹</button><button className="galleryNav next" onClick={e=>{e.stopPropagation();setPhotoIndex(i=>(i+1)%photos.length);setZoom(1)}}>›</button></>}\n        <div className="zoomControls" onClick={e=>e.stopPropagation()}>
-          <button onClick={()=>setZoom(z=>Math.max(.5,+(z-.25).toFixed(2)))}>−</button>
+        {photos.length>1&&<div className="galleryCounter">Photo {photoIndex+1} / {photos.length}</div>}
+        {photos.length>1&&<><button className="galleryNav prev" aria-label="पिछली फोटो" onClick={e=>{e.stopPropagation();setPhotoIndex(i=>(i-1+photos.length)%photos.length);setZoom(1)}}>‹</button><button className="galleryNav next" aria-label="अगली फोटो" onClick={e=>{e.stopPropagation();setPhotoIndex(i=>(i+1)%photos.length);setZoom(1)}}>›</button></>}
+        <div className="zoomControls" onClick={e=>e.stopPropagation()}>
+          <button aria-label="फोटो छोटी करें" onClick={()=>setZoom(z=>Math.max(.5,+(z-.25).toFixed(2)))}>−</button>
           <span>{Math.round(zoom*100)}%</span>
-          <button onClick={()=>setZoom(z=>Math.min(3,+(z+.25).toFixed(2)))}>+</button>
+          <button aria-label="फोटो बड़ी करें" onClick={()=>setZoom(z=>Math.min(3,+(z+.25).toFixed(2)))}>+</button>
         </div>
         <img className="lightboxImage" src={photos[photoIndex]} alt={"Marriage profile "+(photoIndex+1)} style={{transform:"scale("+zoom+")",maxWidth:"94vw",maxHeight:"calc(100vh - 150px)",width:"auto",height:"auto"}} onClick={e=>e.stopPropagation()}/>
         <div className="lightboxPayment" onClick={e=>e.stopPropagation()}>
