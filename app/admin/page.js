@@ -1,0 +1,6 @@
+"use client";
+import {useEffect,useState} from "react";
+import {getAuth,onAuthStateChanged,GoogleAuthProvider,signInWithPopup} from "firebase/auth";
+import {app} from "../../lib/firebase";
+const ADMIN="ngogrant454@gmail.com";
+export default function Admin(){const[u,setU]=useState(undefined);useEffect(()=>onAuthStateChanged(getAuth(app),setU),[]);const login=()=>signInWithPopup(getAuth(app),new GoogleAuthProvider());if(u===undefined)return <main><section className="admin"><h1>Admin</h1><p>Loading...</p></section></main>;if(!u)return <main><section className="admin"><h1>🔐 Zara Shadi Admin</h1><p>Admin login ke liye Google account use karein.</p><button className="pay" onClick={login}>Google se Login</button></section></main>;if(u.email?.toLowerCase()!==ADMIN)return <main><section className="admin"><h1>Access Denied</h1><p>यह Google account admin नहीं है.</p></section></main>;return <main><section className="admin"><h1>👑 Admin Panel</h1><p>Logged in: {u.email}</p><div className="adminBox">Profiles manage karne ka panel yahan rahega.<br/>Photo upload, profile add/edit/delete aur registration requests next step mein जोड़ेंगे.</div></section></main>}
