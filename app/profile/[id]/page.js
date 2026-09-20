@@ -36,6 +36,17 @@ export default function Profile(){
     return ()=>{window.removeEventListener("wheel",onWheel);window.removeEventListener("keydown",onKey)};
   },[lightbox,photos.length]);
 
+  const [touchStartY,setTouchStartY]=useState(null);
+  const handleTouchStart=(e)=>{if(e.touches?.[0])setTouchStartY(e.touches[0].clientY)};
+  const handleTouchEnd=(e)=>{
+    if(touchStartY===null||photos.length<2)return;
+    const endY=e.changedTouches?.[0]?.clientY;
+    if(endY===undefined){setTouchStartY(null);return;}
+    const diff=touchStartY-endY;
+    if(Math.abs(diff)>45)setPhotoIndex(i=>diff>0?(i+1)%photos.length:(i-1+photos.length)%photos.length);
+    setTouchStartY(null);
+  };
+
   const openLightbox=(index=0)=>{
     if(photos.length){
       setPhotoIndex(index);
@@ -77,7 +88,7 @@ export default function Profile(){
       {lightbox&&photo&&<div className="photoLightbox" onClick={()=>setLightbox(false)}>
         <div className="lightboxContent" onClick={e=>e.stopPropagation()}>
           {photos.length>1&&<div className="galleryCounter">Photo {photoIndex+1} / {photos.length}</div>}
-          <div className="lightboxPhotoArea" onClick={()=>{if(photos.length>1)setPhotoIndex(i=>(i+1)%photos.length)}}>
+          <div className="lightboxPhotoArea" onClick={()=>{if(photos.length>1)setPhotoIndex(i=>(i+1)%photos.length)}} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
             <img className="lightboxImage" src={photos[photoIndex]} alt={"Marriage profile "+(photoIndex+1)}/>
           </div>
           <div className="lightboxPayment">
