@@ -30,8 +30,10 @@ export default function Profile(){
       e.preventDefault();
       setPhotoIndex(i=>e.deltaY>0?(i+1)%photos.length:(i-1+photos.length)%photos.length);
     };
+    const onKey=(e)=>{if(e.key==="ArrowRight"||e.key==="ArrowDown")setPhotoIndex(i=>(i+1)%photos.length);if(e.key==="ArrowLeft"||e.key==="ArrowUp")setPhotoIndex(i=>(i-1+photos.length)%photos.length)};
     window.addEventListener("wheel",onWheel,{passive:false});
-    return ()=>window.removeEventListener("wheel",onWheel);
+    window.addEventListener("keydown",onKey);
+    return ()=>{window.removeEventListener("wheel",onWheel);window.removeEventListener("keydown",onKey)};
   },[lightbox,photos.length]);
 
   const openLightbox=(index=0)=>{
@@ -75,7 +77,9 @@ export default function Profile(){
       {lightbox&&photo&&<div className="photoLightbox" onClick={()=>setLightbox(false)}>
         <div className="lightboxContent" onClick={e=>e.stopPropagation()}>
           {photos.length>1&&<div className="galleryCounter">Photo {photoIndex+1} / {photos.length}</div>}
-          <img className="lightboxImage" src={photos[photoIndex]} alt={"Marriage profile "+(photoIndex+1)} onClick={()=>{if(photos.length>1)setPhotoIndex(i=>(i+1)%photos.length)}}/>
+          <div className="lightboxPhotoArea" onClick={()=>{if(photos.length>1)setPhotoIndex(i=>(i+1)%photos.length)}}>
+            <img className="lightboxImage" src={photos[photoIndex]} alt={"Marriage profile "+(photoIndex+1)}/>
+          </div>
           <div className="lightboxPayment">
             <b>इस रिश्ते की जानकारी के लिए पहले रजिस्ट्रेशन करें</b>
             <span>Registration Fee: <strong>₹100</strong></span>
