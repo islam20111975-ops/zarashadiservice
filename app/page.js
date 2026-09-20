@@ -17,9 +17,10 @@ export default function Home(){
   const [data,setData]=useState([]);
   const [loading,setLoading]=useState(false);
   const [wallpaper,setWallpaper]=useState("");
+  const [social,setSocial]=useState({whatsapp:"",facebook:"",instagram:""});
   const router=useRouter();
 
-  useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{})},[]);
+  useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
   useEffect(()=>{
     if(!r){setData([]);return}
     setLoading(true);
@@ -51,7 +52,7 @@ export default function Home(){
         <div className="grid">{shown.map(p=><article className="profileCard" key={p.id}><div className="photoWrap"><img src={p.photo} alt="Marriage profile"/><span className="verified">✓ Verified</span></div><div className="cardInfo"><span className="profileId">{p.id}</span><button onClick={()=>router.push("/profile/"+p.id)}>💍 रिश्ता देखें <span>→</span></button></div></article>)}</div>
       </section>}
       <section className="trustStrip"><div><b>🔒 Privacy</b><small>Aapki details ko respect ke saath handle kiya jata hai</small></div><div><b>✓ Verified</b><small>Registered profiles ko manage kiya jata hai</small></div><div><b>💗 Nikah Focus</b><small>Serious rishta search ke liye simple process</small></div></section>
-      <footer>© 2026 Zara Shadi Service <span>•</span> Aapka Rishta, Hamari Zimmedari</footer>
+      <div className="socialLinks">{social.whatsapp&&<a className="socialBtn whatsapp" href={social.whatsapp} target="_blank" rel="noreferrer">🟢 WhatsApp</a>}{social.facebook&&<a className="socialBtn facebook" href={social.facebook} target="_blank" rel="noreferrer">🔵 Facebook</a>}{social.instagram&&<a className="socialBtn instagram" href={social.instagram} target="_blank" rel="noreferrer">🟣 Instagram</a>}</div><footer>© 2026 Zara Shadi Service <span>•</span> Aapka Rishta, Hamari Zimmedari</footer>
     </main>
   );
 }
