@@ -11,7 +11,6 @@ export default function Profile(){
   const [p,setP]=useState(null);
   const [loading,setLoading]=useState(true);
   const [lightbox,setLightbox]=useState(false);
-  const [zoom,setZoom]=useState(1);
   const [photoIndex,setPhotoIndex]=useState(0);
 
   useEffect(()=>{
@@ -28,7 +27,6 @@ export default function Profile(){
   const openLightbox=(index=0)=>{
     if(photos.length){
       setPhotoIndex(index);
-      setZoom(1);
       setLightbox(true);
     }
   };
@@ -65,16 +63,10 @@ export default function Profile(){
         </div>
       </section>
       {lightbox&&photo&&<div className="photoLightbox" onClick={()=>setLightbox(false)}>
-        <button className="lightboxClose" aria-label="फोटो छोटा करें" onClick={(e)=>{e.stopPropagation();setLightbox(false)}}>×</button>
-        {photos.length>1&&<div className="galleryCounter">Photo {photoIndex+1} / {photos.length}</div>}
-        {photos.length>1&&<><button className="galleryNav prev" aria-label="पिछली फोटो" onClick={e=>{e.stopPropagation();setPhotoIndex(i=>(i-1+photos.length)%photos.length);setZoom(1)}}>‹</button><button className="galleryNav next" aria-label="अगली फोटो" onClick={e=>{e.stopPropagation();setPhotoIndex(i=>(i+1)%photos.length);setZoom(1)}}>›</button></>}
-        <div className="zoomControls" onClick={e=>e.stopPropagation()}>
-          <button aria-label="फोटो छोटी करें" onClick={()=>setZoom(z=>Math.max(.5,+(z-.25).toFixed(2)))}>−</button>
-          <span>{Math.round(zoom*100)}%</span>
-          <button aria-label="फोटो बड़ी करें" onClick={()=>setZoom(z=>Math.min(3,+(z+.25).toFixed(2)))}>+</button>
-        </div>
         <div className="lightboxContent" onClick={e=>e.stopPropagation()}>
-          <img className="lightboxImage" src={photos[photoIndex]} alt={"Marriage profile "+(photoIndex+1)} style={{transform:"scale("+zoom+")",maxWidth:"94vw",maxHeight:"calc(100vh - 190px)",width:"auto",height:"auto"}}/>
+          {photos.length>1&&<div className="galleryCounter">Photo {photoIndex+1} / {photos.length}</div>}
+          <img className="lightboxImage" src={photos[photoIndex]} alt={"Marriage profile "+(photoIndex+1)}/>
+          {photos.length>1&&<div className="galleryTapHint">Photo par click karke next photo dekhein</div>}
           <div className="lightboxPayment">
             <b>इस रिश्ते की जानकारी के लिए पहले रजिस्ट्रेशन करें</b>
             <span>Registration Fee: <strong>₹100</strong></span>
