@@ -73,11 +73,13 @@ export default function Profile(){
           <span>{Math.round(zoom*100)}%</span>
           <button aria-label="फोटो बड़ी करें" onClick={()=>setZoom(z=>Math.min(3,+(z+.25).toFixed(2)))}>+</button>
         </div>
-        <img className="lightboxImage" src={photos[photoIndex]} alt={"Marriage profile "+(photoIndex+1)} style={{transform:"scale("+zoom+")",maxWidth:"94vw",maxHeight:"calc(100vh - 150px)",width:"auto",height:"auto"}} onClick={e=>e.stopPropagation()}/>
-        <div className="lightboxPayment" onClick={e=>e.stopPropagation()}>
-          <b>इस रिश्ते की जानकारी के लिए पहले रजिस्ट्रेशन करें</b>
-          <span>Registration Fee: <strong>₹100</strong></span>
-          <button onClick={()=>router.push("/payment?profile="+encodeURIComponent(id))}>₹100 Registration करें →</button>
+        <div className="lightboxContent" onClick={e=>e.stopPropagation()}>
+          <img className="lightboxImage" src={photos[photoIndex]} alt={"Marriage profile "+(photoIndex+1)} style={{transform:"scale("+zoom+")",maxWidth:"94vw",maxHeight:"calc(100vh - 190px)",width:"auto",height:"auto"}}/>
+          <div className="lightboxPayment">
+            <b>इस रिश्ते की जानकारी के लिए पहले रजिस्ट्रेशन करें</b>
+            <span>Registration Fee: <strong>₹100</strong></span>
+            <button onClick={()=>router.push("/payment?profile="+encodeURIComponent(id))}>₹100 Registration करें →</button>
+          </div>
         </div>
       </div>}
     </main>
