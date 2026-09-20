@@ -24,6 +24,16 @@ export default function Profile(){
 
   const photos=Array.isArray(p?.photos)&&p.photos.length?p.photos:(p?.photo?[p.photo]:[]);
   const photo=photos[0];
+  useEffect(()=>{
+    if(!lightbox||photos.length<2)return;
+    const onWheel=(e)=>{
+      e.preventDefault();
+      setPhotoIndex(i=>e.deltaY>0?(i+1)%photos.length:(i-1+photos.length)%photos.length);
+    };
+    window.addEventListener("wheel",onWheel,{passive:false});
+    return ()=>window.removeEventListener("wheel",onWheel);
+  },[lightbox,photos.length]);
+
   const openLightbox=(index=0)=>{
     if(photos.length){
       setPhotoIndex(index);
