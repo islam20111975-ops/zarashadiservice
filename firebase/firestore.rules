@@ -16,7 +16,13 @@ service cloud.firestore {
     }
 
     match /registrations/{registrationId} {
-      allow create: if true;
+      allow create: if true
+        && request.resource.data.profileId is string
+        && request.resource.data.name is string
+        && request.resource.data.phone is string
+        && request.resource.data.fee == 100
+        && request.resource.data.status == "payment_pending"
+        && request.resource.data.utr == "";
       allow read, delete: if request.auth != null
         && request.auth.token.email == "ngogrant454@gmail.com";
       allow update: if request.auth != null
@@ -26,7 +32,18 @@ service cloud.firestore {
         && request.resource.data.utr is string
         && request.resource.data.utr != ""
         && request.resource.data.status == "utr_submitted"
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["utr","status","utrSubmittedAt"]);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["utr","status","utrSubmittedAt"])
+        && exists(/databases/$(database)/documents/utrClaims/$(request.resource.data.utr.lower()))
+        && get(/databases/$(database)/documents/utrClaims/$(request.resource.data.utr.lower())).data.registrationId == registrationId;
+    }
+
+    match /utrClaims/{utrId} {
+      allow create: if request.auth == null
+        && !exists(/databases/$(database)/documents/utrClaims/$(utrId))
+        && request.resource.data.registrationId is string
+        && request.resource.data.utr is string;
+      allow read, update, delete: if request.auth != null
+        && request.auth.token.email == "ngogrant454@gmail.com";
     }
 
     match /{document=**} {
