@@ -27,10 +27,8 @@ function Pay(){
 
   const upi=`upi://pay?pa=${encodeURIComponent(pay.upiId||"")}&pn=Zara%20Shadi%20Service&am=100&cu=INR`;
 
-  async function register(e){
+    e.preventDefault();
     const phone=form.phone.replace(/\D/g,"");
-    const phone=form.phone.replace(/\\D/g,"");
-    if(phone.length!==10||!(/^[6-9]\d{9}$/.test(phone))){setMsg("Sahi 10 digit WhatsApp number bhariye.");return;}
     if(phone.length!==10||!^[6-9]\\d{9}$/.test(phone)){setMsg("Sahi 10 digit WhatsApp number bhariye.");return;}
     if(profileExists===false){setMsg("Ye profile ab available nahi hai.");return;}
     setSaving(true);
