@@ -5,12 +5,7 @@ import {useRouter} from "next/navigation";
 import {collection,doc,getDoc,onSnapshot,query,where} from "firebase/firestore";
 import {db} from "../lib/firebase";
 
-const fallback=[
-  {id:"ZS-101",gender:"female",photo:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=85"},
-  {id:"ZS-102",gender:"male",photo:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&q=85"},
-  {id:"ZS-103",gender:"female",photo:"https://images.unsplash.com/photo-1544005313-94ddf028df2?w=800&q=85"},
-  {id:"ZS-104",gender:"male",photo:"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&q=85"}
-];
+const fallback=[];
 
 export default function Home(){
   const [r,setR]=useState(null);
@@ -28,7 +23,7 @@ export default function Home(){
     return onSnapshot(q,s=>{setData(s.docs.map(d=>({id:d.id,...d.data()})));setLoading(false)},()=>setLoading(false));
   },[r]);
 
-  const shown=data.length?data:fallback.filter(p=>p.gender===r);
+  const shown=data;
   return (
     <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"url("+wallpaper+")","--site-wallpaper":"url("+wallpaper+")"}:undefined}>
       <header className="siteHeader"><div className="headerInner">
