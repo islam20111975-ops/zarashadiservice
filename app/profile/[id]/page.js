@@ -17,7 +17,7 @@ export default function Profile(){
   const router=useRouter();
   const [p,setP]=useState(null);
   const [lightbox,setLightbox]=useState(false);
-  const [zoom,setZoom]=useState(1);
+  const [zoom,setZoom]=useState(1);\n  const [photoIndex,setPhotoIndex]=useState(0);
 
   useEffect(()=>{
     if(!id)return;
@@ -26,8 +26,8 @@ export default function Profile(){
       .catch(()=>setP(fallback[id]||null));
   },[id]);
 
-  const photo=p?.photo||fallback[id]?.photo;
-  const openLightbox=()=>{if(photo){setZoom(1);setLightbox(true)}};
+  const photos=p?.photos?.length?p.photos:(p?.photo?[p.photo]:(fallback[id]?.photo?[fallback[id].photo]:[]));\n  const photo=photos[0];
+  const openLightbox=(index=0)=>{if(photos.length){setPhotoIndex(index);setZoom(1);setLightbox(true)}};
 
   return (
     <main>
@@ -44,7 +44,7 @@ export default function Profile(){
           <button className="miniBack" onClick={()=>router.push("/")}>← Profiles</button>
           <span className="detailBadge">✓ Verified</span>
         </div>
-        <div className="detailPhoto" onClick={openLightbox}>{photo?<img src={photo} alt="Marriage profile"/>:<div className="notFound">Profile not found</div>} {photo&&<span className="photoHint">🔍 फोटो बड़ा करके देखें</span>}</div>
+        <div className="detailPhoto" onClick={()=>openLightbox(0)}>{photo?<img src={photo} alt="Marriage profile"/>:<div className="notFound">Profile not found</div>} {photo&&<span className="photoHint">🔍 फोटो बड़ा करके देखें</span>}</div>
         <div className="detailBody">
           <span className="profileId">{id}</span>
           <h1>Rishta ki Jankari</h1>
@@ -57,12 +57,12 @@ export default function Profile(){
       </section>
       {lightbox&&photo&&<div className="photoLightbox" onClick={()=>setLightbox(false)}>
         <button className="lightboxClose" aria-label="फोटो छोटा करें" onClick={(e)=>{e.stopPropagation();setLightbox(false)}}>×</button>
-        <div className="zoomControls" onClick={e=>e.stopPropagation()}>
+        <div className="galleryCounter">Photo {photoIndex+1} / {photos.length}</div>\n        {photos.length>1&&<><button className="galleryNav prev" onClick={e=>{e.stopPropagation();setPhotoIndex(i=>(i-1+photos.length)%photos.length);setZoom(1)}}>‹</button><button className="galleryNav next" onClick={e=>{e.stopPropagation();setPhotoIndex(i=>(i+1)%photos.length);setZoom(1)}}>›</button></>}\n        <div className="zoomControls" onClick={e=>e.stopPropagation()}>
           <button onClick={()=>setZoom(z=>Math.max(.5,+(z-.25).toFixed(2)))}>−</button>
           <span>{Math.round(zoom*100)}%</span>
           <button onClick={()=>setZoom(z=>Math.min(3,+(z+.25).toFixed(2)))}>+</button>
         </div>
-        <img className="lightboxImage" src={photo} alt="Marriage profile large" style={{transform:"scale("+zoom+")",maxWidth:"94vw",maxHeight:"calc(100vh - 150px)",width:"auto",height:"auto"}} onClick={e=>e.stopPropagation()}/>
+        <img className="lightboxImage" src={photos[photoIndex]} alt={"Marriage profile "+(photoIndex+1)} style={{transform:"scale("+zoom+")",maxWidth:"94vw",maxHeight:"calc(100vh - 150px)",width:"auto",height:"auto"}} onClick={e=>e.stopPropagation()}/>
         <div className="lightboxPayment" onClick={e=>e.stopPropagation()}>
           <b>इस रिश्ते की जानकारी के लिए पहले रजिस्ट्रेशन करें</b>
           <span>Registration Fee: <strong>₹100</strong></span>
