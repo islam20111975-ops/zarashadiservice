@@ -5,8 +5,6 @@ import {useRouter} from "next/navigation";
 import {collection,doc,getDoc,onSnapshot,query,where} from "firebase/firestore";
 import {db} from "../lib/firebase";
 
-const fallback=[];
-
 export default function Home(){
   const [r,setR]=useState(null);
   const [data,setData]=useState([]);
@@ -42,7 +40,7 @@ export default function Home(){
         </div>
       </section>
       {r&&<section className="profiles"><div className="sectionHead"><div><span className="eyebrow">AVAILABLE PROFILES</span><h2>{r==="male"?"Male":"Female"} Rishte</h2></div><span className="count">{loading?"Loading...":shown.length+" Profiles"}</span></div>
-        <div className="grid">{shown.map(p=><article className="profileCard" key={p.id}><div className="photoWrap" onClick={()=>router.push("/profile/"+p.id)} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")router.push("/profile/"+p.id)}}><img src={p.photo} alt="Marriage profile"/><span className="verified">✓ Verified</span></div><div className="cardInfo"><span className="profileId">{p.id}</span></div></article>)}</div>
+        <div className="grid">{shown.map(p=><article className="profileCard" key={p.id}><div className="photoWrap" onClick={()=>router.push("/profile/"+p.id)} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")router.push("/profile/"+p.id)}}><img src={(Array.isArray(p.photos)&&p.photos[0])||p.photo||""} alt={"Marriage profile "+p.id} onError={e=>{e.currentTarget.style.display="none"}}/><span className="verified">✓ Verified</span></div><div className="cardInfo"><span className="profileId">{p.id}</span></div></article>)}</div>
       </section>}
       <section className="trustStrip"><div><b>🔒 Privacy</b><small>Aapki details ko respect ke saath handle kiya jata hai</small></div><div><b>✓ Verified</b><small>Registered profiles ko manage kiya jata hai</small></div><div><b>💗 Nikah Focus</b><small>Serious rishta search ke liye simple process</small></div></section>
       <div className="socialLinks"><a className="socialBtn whatsapp" href={social.whatsapp||"#"} target={social.whatsapp?"_blank":undefined} rel={social.whatsapp?"noreferrer":undefined}>🟢 WhatsApp</a><a className="socialBtn facebook" href={social.facebook||"#"} target={social.facebook?"_blank":undefined} rel={social.facebook?"noreferrer":undefined}>🔵 Facebook</a><a className="socialBtn instagram" href={social.instagram||"#"} target={social.instagram?"_blank":undefined} rel={social.instagram?"noreferrer":undefined}>🟣 Instagram</a></div><footer>© 2026 Zara Shadi Service <span>•</span> Aapka Rishta, Hamari Zimmedari</footer>
