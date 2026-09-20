@@ -2,7 +2,7 @@
 
 import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
-import {collection,onSnapshot,query,where} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,query,where} from "firebase/firestore";
 import {db} from "../lib/firebase";
 
 const fallback=[
@@ -16,7 +16,14 @@ export default function Home(){
   const [r,setR]=useState(null);
   const [data,setData]=useState([]);
   const [loading,setLoading]=useState(false);
+  const [wallpaper,setWallpaper]=useState("");
   const router=useRouter();
+
+  useEffect(()=>{
+    getDoc(doc(db,"settings","appearance")).then(s=>{
+      if(s.exists())setWallpaper(s.data().wallpaper||"");
+    }).catch(()=>{});
+  },[]);
 
   useEffect(()=>{
     if(!r){setData([]);return;}
@@ -31,7 +38,7 @@ export default function Home(){
   const shown=data.length?data:fallback.filter(p=>p.gender===r);
 
   return (
-    <main>
+    <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"linear-gradient(rgba(255,255,255,.70),rgba(255,255,255,.78)),url("+wallpaper+")"}:undefined}>
       <header className="siteHeader">
         <div className="headerInner">
           <button className="logo" onClick={()=>router.push("/")}>
