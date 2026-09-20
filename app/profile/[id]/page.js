@@ -65,8 +65,7 @@ export default function Profile(){
       {lightbox&&photo&&<div className="photoLightbox" onClick={()=>setLightbox(false)}>
         <div className="lightboxContent" onClick={e=>e.stopPropagation()}>
           {photos.length>1&&<div className="galleryCounter">Photo {photoIndex+1} / {photos.length}</div>}
-          <img className="lightboxImage" src={photos[photoIndex]} alt={"Marriage profile "+(photoIndex+1)}/>
-          {photos.length>1&&<div className="galleryTapHint">Photo par click karke next photo dekhein</div>}
+          <img className="lightboxImage" src={photos[photoIndex]} alt={"Marriage profile "+(photoIndex+1)} onClick={()=>{if(photos.length>1)setPhotoIndex(i=>(i+1)%photos.length)}}/>
           <div className="lightboxPayment">
             <b>इस रिश्ते की जानकारी के लिए पहले रजिस्ट्रेशन करें</b>
             <span>Registration Fee: <strong>₹100</strong></span>
