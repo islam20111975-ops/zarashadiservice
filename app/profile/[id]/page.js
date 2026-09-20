@@ -16,6 +16,8 @@ export default function Profile(){
   const {id}=useParams();
   const router=useRouter();
   const [p,setP]=useState(null);
+  const [lightbox,setLightbox]=useState(false);
+  const [zoom,setZoom]=useState(1);
 
   useEffect(()=>{
     if(!id)return;
@@ -25,6 +27,7 @@ export default function Profile(){
   },[id]);
 
   const photo=p?.photo||fallback[id]?.photo;
+  const openLightbox=()=>{if(photo){setZoom(1);setLightbox(true)}};
 
   return (
     <main>
@@ -41,7 +44,7 @@ export default function Profile(){
           <button className="miniBack" onClick={()=>router.push("/")}>← Profiles</button>
           <span className="detailBadge">✓ Verified</span>
         </div>
-        <div className="detailPhoto">{photo?<img src={photo} alt="Marriage profile"/>:<div className="notFound">Profile not found</div>}</div>
+        <div className="detailPhoto" onClick={openLightbox}>{photo?<img src={photo} alt="Marriage profile"/>:<div className="notFound">Profile not found</div>} {photo&&<span className="photoHint">🔍 फोटो बड़ा करके देखें</span>}</div>
         <div className="detailBody">
           <span className="profileId">{id}</span>
           <h1>Rishta ki Jankari</h1>
