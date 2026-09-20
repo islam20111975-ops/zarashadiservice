@@ -62,7 +62,7 @@ export default function Profile(){
           <span>{Math.round(zoom*100)}%</span>
           <button onClick={()=>setZoom(z=>Math.min(3,+(z+.25).toFixed(2)))}>+</button>
         </div>
-        <img className="lightboxImage" src={photo} alt="Marriage profile large" style={{transform:"scale("+zoom+")"}} onClick={e=>e.stopPropagation()}/>
+        <img className="lightboxImage" src={photo} alt="Marriage profile large" style={{transform:"scale("+zoom+")",maxWidth:"94vw",maxHeight:"calc(100vh - 150px)",width:"auto",height:"auto"}} onClick={e=>e.stopPropagation()}/>
         <div className="lightboxPayment" onClick={e=>e.stopPropagation()}>
           <b>इस रिश्ते की जानकारी के लिए पहले रजिस्ट्रेशन करें</b>
           <span>Registration Fee: <strong>₹100</strong></span>
