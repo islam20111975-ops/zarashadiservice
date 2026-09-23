@@ -28,8 +28,8 @@ function Pay(){
     if(!/^[A-Z0-9]{6,40}$/.test(clean))return setMsg("Sahi UTR / Transaction ID bhariye.");
     setSaving(true);
     try{
-      const existing=await getDoc(doc(db,type==="mobile"?"mobileAccess":"biodataUnlocks",user.uid+"_"+profile));
-      if(existing.exists()&&existing.data().status==="approved"){setSent(true);return setMsg("Ye access pehle se approved hai.")};
+      // Do not read a missing access document here. The access rules intentionally
+      // protect documents whose owner field does not exist yet.
       await addDoc(collection(db,"paidAccessRequests"),{uid:user.uid,profileId:profile,type,amount,status:"pending",utr:clean,createdAt:serverTimestamp()});
       setSent(true);setMsg("Payment request Admin ko bhej di gayi hai. Verification ke baad access milega.");
     }catch(e){setMsg("Request save nahi hui: "+e.message)}finally{setSaving(false)}
