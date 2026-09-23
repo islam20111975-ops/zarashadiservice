@@ -55,7 +55,7 @@ export default function Admin(){
         const req=reqSnap.data();
         if(req.status!=="pending")throw new Error("Ye recharge already process ho chuka hai.");
         if(Number(req.amount)!==amount)throw new Error("Recharge request amount mismatch hai.");
-        if(!["upi","qr"].includes(req.paymentMethod))throw new Error("Recharge payment method invalid hai.");
+        if(req.paymentMethod!=="upi")throw new Error("Recharge payment method invalid hai.");
         if(!req.utr || !req.utrClaimId)throw new Error("Recharge UTR claim missing hai.");
         const claimRef=doc(db,"paymentUtrClaims",req.utrClaimId);
         const claimSnap=await t.get(claimRef);
