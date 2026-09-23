@@ -2,7 +2,7 @@
 
 import {useEffect,useState} from "react";
 import {GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged} from "firebase/auth";
-import {doc,getDoc,setDoc,collection,doc,getDoc,onSnapshot,query,where,serverTimestamp,writeBatch} from "firebase/firestore";
+import {doc,getDoc,setDoc,collection,onSnapshot,query,where,serverTimestamp,writeBatch} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 const empty={name:"",address:"",phone:"",age:"",income:"",photoURL:""};
