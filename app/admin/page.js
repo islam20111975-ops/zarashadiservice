@@ -61,6 +61,7 @@ export default function Admin(){
           approvedAt:serverTimestamp(),
           approvedAmount:amount
         });
+        if(reqSnap.data().lockId)t.delete(doc(db,"pendingPaymentLocks",reqSnap.data().lockId));
         t.set(txRef,{
           uid:x.uid,
           type:"recharge",
