@@ -8,6 +8,9 @@ service cloud.firestore {
       return signedIn() && request.auth.token.email == "ngogrant454@gmail.com";
     }
     function owner(uid) { return signedIn() && request.auth.uid == uid; }
+    function validUtr(v) {
+      return v is string && v.matches("^[A-Za-z0-9]{6,40}$");
+    }
 
     match /users/{userId} {
       allow read: if owner(userId) || isAdmin();
@@ -92,8 +95,7 @@ service cloud.firestore {
       allow create: if signedIn()
         && !exists(/databases/$(database)/documents/paymentUtrClaims/$(utrId))
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.utr is string
-        && request.resource.data.utr.size() >= 6
+        && validUtr(request.resource.data.utr)
         && request.resource.data.utr.lower() == utrId
         && request.resource.data.requestId is string
         && request.resource.data.kind is string
@@ -154,8 +156,7 @@ service cloud.firestore {
         && request.resource.data.email is string
         && request.resource.data.name is string
         && request.resource.data.phone is string
-        && request.resource.data.utr is string
-        && request.resource.data.utr != ""
+        && validUtr(request.resource.data.utr)
         && (request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
         && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId
         && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid
@@ -209,8 +210,7 @@ service cloud.firestore {
             && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.type == request.resource.data.type)
           ||
           ((request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
-            && request.resource.data.utr is string
-            && request.resource.data.utr.size() >= 6
+            && validUtr(request.resource.data.utr)
             && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId
             && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid
             && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.kind == "access"
