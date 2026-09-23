@@ -80,7 +80,7 @@ export default function Admin(){
       });
     }catch(e){setError("Recharge approve nahi hua: "+e.message)}
   }
-  async function rejectRecharge(x){if(confirm("Recharge reject karein?"))await updateDoc(doc(db,"walletRechargeRequests",x.id),{status:"rejected",rejectedAt:serverTimestamp()})}
+  async function rejectRecharge(x){if(confirm("Recharge reject karein?")){await runTransaction(db,async t=>{const ref=doc(db,"walletRechargeRequests",x.id);const s=await t.get(ref);if(!s.exists()||s.data().status!=="pending")throw new Error("Request already process ho chuki hai.");t.update(ref,{status:"rejected",rejectedAt:serverTimestamp()});if(s.data().lockId)t.delete(doc(db,"pendingPaymentLocks",s.data().lockId));if(s.data().utrClaimId)t.delete(doc(db,"paymentUtrClaims",s.data().utrClaimId));});}}
 
   async function approveAccess(x){
     try{
@@ -118,7 +118,7 @@ export default function Admin(){
           uid:x.uid,profileId:x.profileId,amount,status:"approved",
           type:x.type,approvedAt:serverTimestamp(),paymentMethod:req.paymentMethod||"upi"
         },{merge:true});
-        t.update(reqRef,{status:"approved",approvedAt:serverTimestamp(),approvedPaymentMethod:req.paymentMethod||"upi"});
+        t.update(reqRef,{status:"approved",approvedAt:serverTimestamp(),approvedPaymentMethod:req.paymentMethod||"upi"});\n        if(req.lockId)t.delete(doc(db,"pendingPaymentLocks",req.lockId));
         t.set(txRef,{
           uid:x.uid,
           type:x.type==="biodata"?"biodata_unlock":"mobile_access",
@@ -136,7 +136,7 @@ export default function Admin(){
       });
     }catch(e){setError("Access approve nahi hua: "+e.message)}
   }
-  async function rejectAccess(x){if(confirm("Request reject karein?"))await updateDoc(doc(db,"paidAccessRequests",x.id),{status:"rejected",rejectedAt:serverTimestamp()})}
+  async function rejectAccess(x){if(confirm("Request reject karein?")){await runTransaction(db,async t=>{const ref=doc(db,"paidAccessRequests",x.id);const s=await t.get(ref);if(!s.exists()||s.data().status!=="pending")throw new Error("Request already process ho chuki hai.");t.update(ref,{status:"rejected",rejectedAt:serverTimestamp()});if(s.data().lockId)t.delete(doc(db,"pendingPaymentLocks",s.data().lockId));if(s.data().utrClaimId)t.delete(doc(db,"paymentUtrClaims",s.data().utrClaimId));});}}
 
   async function savePayment(e){
     e.preventDefault();try{
