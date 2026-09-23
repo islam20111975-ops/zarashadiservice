@@ -1,6 +1,7 @@
 "use client";
 
 import {useEffect,useState} from "react";
+import {useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged,signOut} from "firebase/auth";
 import {collection,deleteDoc,doc,getDoc,onSnapshot,query,orderBy,setDoc,serverTimestamp,updateDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
@@ -29,6 +30,7 @@ function imageToDataUrl(file,maxSide=700,maxChars=140000){
 }
 
 export default function Admin(){
+  const router=useRouter();
   const [user,setUser]=useState(undefined),[tab,setTab]=useState("dashboard"),[error,setError]=useState("");
   const [profiles,setProfiles]=useState([]),[users,setUsers]=useState([]),[regs,setRegs]=useState([]);
   const [recharges,setRecharges]=useState([]),[requests,setRequests]=useState([]),[transactions,setTransactions]=useState([]);
@@ -145,7 +147,7 @@ export default function Admin(){
   return <main><section className="admin dashboardPage">
     <div className="dashTop"><div><span className="eyebrow">ZARA SHADI SERVICE</span><h1>Central Admin Board</h1><p>Users, biodata, payments, wallet aur access sab ek jagah.</p></div><button className="logout" onClick={logout}>🚪 Logout</button></div>
     <div className="adminUser">👤 <span>Admin</span> <b>{user.email}</b></div>
-    <div className="adminNav">{nav.map(n=><button key={n[0]} className={tab===n[0]?"active":""} onClick={()=>setTab(n[0])}>{n[1]}</button>)}</div>
+    <div className="adminNav">{nav.map(n=><button key={n[0]} className={tab===n[0]?"active":""} onClick={()=>n[0]==="biodata"?router.push("/admin/biodata"):setTab(n[0])}>{n[1]}</button>)}</div>
     {error&&<div className="errorBox">{error}</div>}
 
     {tab==="dashboard"&&<div className="dashboardGrid">
