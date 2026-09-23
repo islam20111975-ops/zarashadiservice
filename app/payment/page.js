@@ -19,7 +19,7 @@ function Pay(){
     return onSnapshot(doc(db,"users",user.uid),s=>setWallet(s.exists()?Number(s.data().walletBalance||0):0));
   },[user]);
   useEffect(()=>{
-    if(profile)getDoc(doc(db,"profiles",profile)).then(s=>setP(s.exists()?{id:s.id,...s.data()}:null));
+    if(profile)getDoc(doc(db,"profiles",profile)).then(s=>setP(s.exists()&&s.data().status!=="deleted"?{id:s.id,...s.data()}:null));
     getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setPay(s.data())).catch(()=>{});
   },[profile]);
 
