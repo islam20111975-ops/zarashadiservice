@@ -43,7 +43,7 @@ export default function Profile(){
         <div className="notice">{mobile?"📱 Mobile Number: "+(contact?.phone||"-"):"Mobile Number देखने के लिए ₹500 भुगतान करें"}</div>
         {!mobile&&<button className="primaryAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(id)+"&type=mobile")}>₹500 Mobile Number Access →</button>}
       </div>}
-      {!user&&<p className="small">Payment/access ke liye Google login zaroori hai.</p>}
+      {!user&&<><p className="small">Payment/access ke liye Google login zaroori hai.</p>{loginError&&<div className="errorBox">{loginError}</div>}</>}
       <button className="backAction" onClick={()=>router.push("/")}>← Home पर जाएँ</button></div>
     </section>
     {lightbox&&<div className="photoLightbox" onClick={()=>setLightbox(false)}><div className="galleryCard" onClick={e=>e.stopPropagation()}><button className="galleryClose" onClick={()=>setLightbox(false)}>×</button><div className="galleryScroll">{photos.map((s,i)=><div className="galleryPhoto" key={i}><img src={s} alt={"Photo "+(i+1)}/></div>)}<div className="lightboxPayment"><b>Profile: {id}</b></div></div></div></div>}
