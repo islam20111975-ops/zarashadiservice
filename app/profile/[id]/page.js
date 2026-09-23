@@ -29,7 +29,7 @@ export default function Profile(){
     })();
   },[id,user]);
 
-  async function login(){try{await signInWithPopup(auth,new GoogleAuthProvider())}catch{}}
+  async function login(){setLoginError("");try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}}
   const photos=Array.isArray(p?.photos)&&p.photos.length?p.photos:(p?.photo?[p.photo]:[]);
   if(loading)return <main><section className="cardPage"><div className="notFound">Loading...</div></section></main>;
   if(!p)return <main><section className="cardPage"><div className="notFound">Profile not found</div></section></main>;
