@@ -9,7 +9,7 @@ import {auth,db} from "../../../lib/firebase";
 export default function Profile(){
   const {id}=useParams(),router=useRouter();
   const [p,setP]=useState(null),[privateData,setPrivateData]=useState(null),[contact,setContact]=useState(null),[user,setUser]=useState(null);
-  const [loading,setLoading]=useState(true),[unlocked,setUnlocked]=useState(false),[mobile,setMobile]=useState(false),[lightbox,setLightbox]=useState(false);
+  const [loading,setLoading]=useState(true),[unlocked,setUnlocked]=useState(false),[mobile,setMobile]=useState(false),[lightbox,setLightbox]=useState(false),[zoom,setZoom]=useState(1),[loginError,setLoginError]=useState("");
 
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
   useEffect(()=>{
