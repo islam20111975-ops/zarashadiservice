@@ -3,7 +3,7 @@
 import {Suspense,useEffect,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {addDoc,collection,doc,getDoc,onSnapshot,query,where,serverTimestamp} from "firebase/firestore";
+import {addDoc,collection,doc,getDoc,getDocs,onSnapshot,query,where,serverTimestamp} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 function Pay(){
@@ -32,6 +32,8 @@ function Pay(){
     if(!/^[A-Z0-9]{6,40}$/.test(clean))return setMsg("Sahi UTR / Transaction ID bhariye.");
     setSaving(true);
     try{
+      const existing=await getDocs(query(collection(db,"paidAccessRequests"),where("uid","==",user.uid),where("profileId","==",profile),where("type","==",type),where("status","==","pending")));
+      if(!existing.empty){setMsg("Is profile ka payment request already Pending hai. Pehle Admin verification hone dein.");return;}
       await addDoc(collection(db,"paidAccessRequests"),{
         uid:user.uid,profileId:profile,type,amount,status:"pending",
         paymentMethod:"upi",utr:clean,createdAt:serverTimestamp()
@@ -46,6 +48,8 @@ function Pay(){
     if(wallet<amount)return setMsg("Wallet Balance ₹"+wallet+" hai. ₹"+amount+" available nahi hai. Pehle Wallet Recharge karein.");
     setSaving(true);
     try{
+      const existing=await getDocs(query(collection(db,"paidAccessRequests"),where("uid","==",user.uid),where("profileId","==",profile),where("type","==",type),where("status","==","pending")));
+      if(!existing.empty){setMsg("Is profile ka Wallet request already Pending hai. Pehle Admin approval hone dein.");return;}
       await addDoc(collection(db,"paidAccessRequests"),{
         uid:user.uid,profileId:profile,type,amount,status:"pending",
         paymentMethod:"wallet",utr:"",createdAt:serverTimestamp()
