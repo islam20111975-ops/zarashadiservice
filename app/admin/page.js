@@ -3,7 +3,7 @@
 import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged,signOut} from "firebase/auth";
-import {collection,deleteDoc,doc,getDoc,onSnapshot,query,orderBy,setDoc,serverTimestamp,updateDoc,runTransaction} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,query,orderBy,setDoc,serverTimestamp,updateDoc,runTransaction} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 const ADMIN="ngogrant454@gmail.com";
@@ -82,10 +82,45 @@ export default function Admin(){
   async function approveAccess(x){
     try{
       if(x.status!=="pending")return;
-      const key=x.uid+"_"+x.profileId;const col=x.type==="biodata"?"biodataUnlocks":"mobileAccess";
-      await setDoc(doc(db,col,key),{uid:x.uid,profileId:x.profileId,amount:x.amount,type:x.type,status:"approved",approvedAt:serverTimestamp()},{merge:true});
-      await updateDoc(doc(db,"paidAccessRequests",x.id),{status:"approved",approvedAt:serverTimestamp()});
-      await setDoc(doc(db,"walletTransactions",x.id+"_payment"),{uid:x.uid,type:x.type==="biodata"?"biodata_unlock":"mobile_access",amount:Number(x.amount),profileId:x.profileId,utr:x.utr||"",requestId:x.id,status:"approved",createdAt:serverTimestamp()},{merge:true});
+      const amount=Number(x.amount);
+      const expected=x.type==="biodata"?100:500;
+      if(amount!==expected)throw new Error("Access amount valid nahi hai.");
+      const reqRef=doc(db,"paidAccessRequests",x.id);
+      const unlockRef=doc(db,x.type==="biodata"?"biodataUnlocks":"mobileAccess",x.uid+"_"+x.profileId);
+      const txRef=doc(db,"walletTransactions",x.id+"_payment");
+      const userRef=doc(db,"users",x.uid);
+
+      await runTransaction(db,async t=>{
+        const reqSnap=await t.get(reqRef);
+        if(!reqSnap.exists())throw new Error("Access request nahi mili.");
+        const req=reqSnap.data();
+        if(req.status!=="pending")throw new Error("Ye request already process ho chuki hai.");
+
+        if(req.paymentMethod==="wallet"){
+          const userSnap=await t.get(userRef);
+          if(!userSnap.exists())throw new Error("User wallet nahi mila.");
+          const balance=Number(userSnap.data().walletBalance||0);
+          if(balance<amount)throw new Error("User Wallet Balance ₹"+balance+" hai. ₹"+amount+" available nahi hai.");
+          t.set(userRef,{walletBalance:balance-amount,lastPayment:amount},{merge:true});
+        }
+
+        t.set(unlockRef,{
+          uid:x.uid,profileId:x.profileId,amount,status:"approved",
+          type:x.type,approvedAt:serverTimestamp(),paymentMethod:req.paymentMethod||"upi"
+        },{merge:true});
+        t.update(reqRef,{status:"approved",approvedAt:serverTimestamp(),approvedPaymentMethod:req.paymentMethod||"upi"});
+        t.set(txRef,{
+          uid:x.uid,
+          type:x.type==="biodata"?"biodata_unlock":"mobile_access",
+          amount,
+          profileId:x.profileId,
+          utr:x.utr||"",
+          requestId:x.id,
+          paymentMethod:req.paymentMethod||"upi",
+          status:"approved",
+          createdAt:serverTimestamp()
+        },{merge:true});
+      });
     }catch(e){setError("Access approve nahi hua: "+e.message)}
   }
   async function rejectAccess(x){if(confirm("Request reject karein?"))await updateDoc(doc(db,"paidAccessRequests",x.id),{status:"rejected",rejectedAt:serverTimestamp()})}
