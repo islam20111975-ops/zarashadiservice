@@ -16,7 +16,7 @@ export default function Profile(){
     if(!id)return;
     (async()=>{
       try{
-        const s=await getDoc(doc(db,"profiles",id));if(!s.exists()){setLoading(false);return}
+        const s=await getDoc(doc(db,"profiles",id));if(!s.exists() || s.data().status === "deleted"){setLoading(false);setP(null);return}
         setP({id:s.id,...s.data()});
         if(auth.currentUser){
           const uid=auth.currentUser.uid;
@@ -34,7 +34,7 @@ export default function Profile(){
   if(loading)return <main><section className="cardPage"><div className="notFound">Loading...</div></section></main>;
   if(!p)return <main><section className="cardPage"><div className="notFound">Profile not found</div></section></main>;
 
-  return <main><header className="siteHeader"><div className="headerInner"><button className="logo" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA SHADI</strong><small>Service</small></span></button><button className="headerLogin" onClick={()=>router.push("/account")}>👤 My Profile</button></div></header>
+  return <main><header className="siteHeader"><div className="headerInner"><button className="logo" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA SHADI</strong><small>Service</small></span></button><button className="headerLogin" onClick={()=>router.push(user?.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account")}>{user?.email?.toLowerCase()==="ngogrant454@gmail.com"?"🔐 Admin Dashboard":"👤 My Profile"}</button></div></header>
     <section className="detail cardPage"><div className="detailTop"><button className="miniBack" onClick={()=>router.push("/")}>← Profiles</button><span className="detailBadge">✓ Verified</span></div>
       <div className="detailPhoto" onClick={()=>setLightbox(true)}>{photos[0]?<img src={photos[0]} alt="Marriage profile"/>:<div className="notFound">Photo not found</div>}</div>
       <div className="detailBody"><span className="profileId">{id}</span><h1>{unlocked&&privateData?privateData.name:"Rishta ki Jankari"}</h1>
