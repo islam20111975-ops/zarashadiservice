@@ -11,7 +11,7 @@ const ADMIN="ngogrant454@gmail.com";
 export default function Admin(){
   const router=useRouter();
   const [user,setUser]=useState(undefined),[tab,setTab]=useState("dashboard"),[error,setError]=useState("");
-  const [profiles,setProfiles]=useState([]),[users,setUsers]=useState([]),[regs,setRegs]=useState([]);
+  const [profiles,setProfiles]=useState([]),[users,setUsers]=useState([]);
   const [recharges,setRecharges]=useState([]),[requests,setRequests]=useState([]),[transactions,setTransactions]=useState([]);
   const [social,setSocial]=useState({whatsapp:"",facebook:"",instagram:""}),[upi,setUpi]=useState(""),[qrFile,setQrFile]=useState(null),[qrPreview,setQrPreview]=useState("");
   const [wallFile,setWallFile]=useState(null),[wallPreview,setWallPreview]=useState("");
@@ -25,7 +25,7 @@ export default function Admin(){
       const q=ordered?query(collection(db,path),orderBy("createdAt","desc")):collection(db,path);
       unsubs.push(onSnapshot(q,s=>setter(s.docs.map(d=>({id:d.id,...d.data()}))),e=>setError(path+" load error: "+e.message)));
     };
-    watch("profiles",setProfiles);watch("users",setUsers);watch("registrations",setRegs,true);
+    watch("profiles",setProfiles);watch("users",setUsers);
     watch("walletRechargeRequests",setRecharges,true);watch("paidAccessRequests",setRequests,true);watch("walletTransactions",setTransactions,true);
     getDoc(doc(db,"settings","social")).then(s=>s.exists()&&setSocial({...{whatsapp:"",facebook:"",instagram:""},...s.data()})).catch(()=>{});
     getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setUpi(s.data().upiId||"")).catch(()=>{});
@@ -176,8 +176,6 @@ export default function Admin(){
     {tab==="wallet"&&<div className="adminList"><div className="listHead"><h3>💰 Wallet Recharge Requests</h3><span>{recharges.length}</span></div>{recharges.map(x=><div className="userAdminCard" key={x.id}><div><b>{x.name||"Name not set"}</b><small>📧 {x.email||"-"}</small><small>📱 {x.phone||"-"}</small><small>👤 UID: {x.uid}</small><small>💰 Recharge: ₹{x.amount}</small><small>🧾 UTR: {x.utr||"-"}</small><small>📌 Status: {x.status}</small><small>🕒 {x.createdAt?.toDate?.()?.toLocaleString?.()||""}</small></div><div className="cardButtons">{x.status==="pending"&&<><button className="approve" onClick={()=>approveRecharge(x)}>✓ Approve & Credit ₹{x.amount}</button><button onClick={()=>rejectRecharge(x)}>✕ Reject</button></>}</div></div>)}</div>}
 
     {tab==="transactions"&&<div className="adminList"><div className="listHead"><h3>🧾 All Wallet / Payment Transactions</h3><span>{transactions.length}</span></div>{transactions.map(x=><div className="adminRow" key={x.id}><span><b>{x.type} • ₹{x.amount}</b><small>UID: {x.uid}</small><small>Profile: {x.profileId||"-"} • UTR: {x.utr||"-"}</small><small>{x.createdAt?.toDate?.()?.toLocaleString?.()||""}</small></span></div>)}</div>}
-
-    {tab==="registrations"&&<div className="adminList"><div className="listHead"><h3>📝 Old ₹100 Registrations</h3><span>{regs.length}</span></div>{regs.map(x=><div className="adminRow" key={x.id}><span><b>{x.name} • ₹{x.fee}</b><small>{x.phone} • Profile: {x.profileId}</small><small>UTR: {x.utr||"-"} • {x.status}</small></span></div>)}</div>}
 
     {tab==="settings"&&<><form className="adminBox" onSubmit={savePayment}><h3>💳 UPI Payment Settings</h3><input className="adminInput" placeholder="UPI ID" value={upi} onChange={e=>setUpi(e.target.value)}/><label className="uploadBox">QR Image<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setQrFile(f);setQrPreview(URL.createObjectURL(f))}}}/></label>{qrPreview&&<div className="uploadPreview"><img src={qrPreview} alt="QR"/></div>}<button className="primaryAction">💾 Payment Save →</button></form><form className="adminBox" onSubmit={saveSocial}><h3>📲 Social Links</h3><input className="adminInput" placeholder="WhatsApp" value={social.whatsapp} onChange={e=>setSocial({...social,whatsapp:e.target.value})}/><input className="adminInput" placeholder="Facebook" value={social.facebook} onChange={e=>setSocial({...social,facebook:e.target.value})}/><input className="adminInput" placeholder="Instagram" value={social.instagram} onChange={e=>setSocial({...social,instagram:e.target.value})}/><button className="primaryAction">💾 Social Save →</button></form></>}
   </section></main>;
