@@ -3,7 +3,7 @@
 import {Suspense,useEffect,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {addDoc,collection,doc,getDoc,getDocs,onSnapshot,query,where,serverTimestamp} from "firebase/firestore";
+import {collection,doc,getDoc,getDocs,onSnapshot,query,where,serverTimestamp,writeBatch} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 function Pay(){
