@@ -66,7 +66,7 @@ function Pay(){
       <div className="notice" style={{marginTop:12}}>💰 <b>Wallet Balance: ₹{wallet}</b><br/>Wallet se ₹{amount} pay karna ho to neeche button use karein.</div>
       <button type="button" className="primaryAction" onClick={payFromWallet} disabled={saving||walletSent}>{walletSent?"Wallet Request Sent ✓":"💰 Wallet se ₹"+amount+" Pay करें →"}</button>
       <div className="qr">{pay.qrUrl?<img src={pay.qrUrl} alt="UPI QR" style={{maxWidth:250,width:"100%"}}/>:<small>Admin ne QR set nahi kiya.</small>}</div>
-      {pay.upiId&&<a className="primaryAction payLink" href={`upi://pay?pa=${encodeURIComponent(pay.upiId)}&pn=Zara%20Shadi%20Service&am=${amount}&cu=INR`}>📱 ₹{amount} UPI से Pay करें →</a>}
+      {pay.upiId&&<button type="button" className="primaryAction" onClick={()=>router.push(`/recharge?profile=${encodeURIComponent(profile)}&type=${encodeURIComponent(type)}`)}>📱 UPI से Pay करें → Recharge Amount चुनें</button>}
       <form className="paymentForm" onSubmit={submit}><label>UTR / Transaction ID<input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder="Payment ke baad UTR dalein"/></label><button className="primaryAction" disabled={saving||sent}>{saving?"Sending...":sent?"Request Sent ✓":"UTR Send करें →"}</button></form></>}
       {msg&&<div className="messageBox">{msg}</div>}
       <button className="backAction" onClick={()=>router.push("/profile/"+encodeURIComponent(profile))}>← Biodata पर जाएँ</button>
