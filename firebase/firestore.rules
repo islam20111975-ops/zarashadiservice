@@ -108,6 +108,8 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.requestId is string
         && request.resource.data.status == "pending"
+        && exists(/databases/$(database)/documents/profiles/$(request.resource.data.profileId))
+        && get(/databases/$(database)/documents/profiles/$(request.resource.data.profileId)).data.status != "deleted"
         && (
           (request.resource.data.kind == "recharge"
             && request.resource.data.amount is number
@@ -136,6 +138,7 @@ service cloud.firestore {
         && request.resource.data.utr != ""
         && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId
         && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.kind == "recharge"
         && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.requestId == requestId
         && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.uid == request.auth.uid;
       allow update, delete: if isAdmin();
@@ -175,13 +178,19 @@ service cloud.firestore {
           (request.resource.data.paymentMethod == "wallet"
             && request.resource.data.utr == ""
             && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId
-            && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid)
+            && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid
+            && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.kind == "access"
+            && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.profileId == request.resource.data.profileId
+            && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.type == request.resource.data.type)
           ||
           (request.resource.data.paymentMethod == "upi"
             && request.resource.data.utr is string
             && request.resource.data.utr.size() >= 6
             && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId
             && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid
+            && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.kind == "access"
+            && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.profileId == request.resource.data.profileId
+            && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.type == request.resource.data.type
             && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.requestId == requestId
             && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.uid == request.auth.uid)
         );
