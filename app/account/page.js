@@ -34,7 +34,7 @@ export default function Account(){
   }),[]);
   useEffect(()=>{
     if(!user)return;
-    const a=onSnapshot(query(collection(db,"walletTransactions"),where("uid","==",user.uid)),s=>{const x=s.docs.map(d=>({id:d.id,...d.data()}));setTx(x);});
+    const a=onSnapshot(query(collection(db,"walletTransactions"),where("uid","==",user.uid)),s=>setTx(s.docs.map(d=>({id:d.id,...d.data()}))));
     const b=onSnapshot(query(collection(db,"walletRechargeRequests"),where("uid","==",user.uid)),s=>setRequests(s.docs.map(d=>({id:d.id,...d.data()}))));
     getDoc(doc(db,"users",user.uid)).then(s=>s.exists()&&setWallet(Number(s.data().walletBalance||0)));
     return()=>{a();b()};
@@ -56,7 +56,13 @@ export default function Account(){
     if(!RECHARGE_OPTIONS.includes(n))return setMsg("Recharge ke liye ₹100, ₹500 ya ₹1000 select karein.");
     if(!/^[A-Z0-9]{6,40}$/.test(clean))return setMsg("Sahi UTR / Transaction ID bhariye.");
     setSaving(true);setMsg("");
-    try{await addDoc(collection(db,"walletRechargeRequests"),{uid:user.uid,amount:n,utr:clean,status:"pending",createdAt:serverTimestamp()});setUtr("");setMsg("₹"+n+" recharge request Admin ko bheji gayi. Approval ke baad wallet credit hoga.")}catch(e){setMsg(e.message)}finally{setSaving(false)}
+    try{
+      await addDoc(collection(db,"walletRechargeRequests"),{
+        uid:user.uid,email:user.email||"",name:profile.name||"",phone:profile.phone||"",
+        amount:n,utr:clean,status:"pending",createdAt:serverTimestamp()
+      });
+      setUtr("");setMsg("₹"+n+" recharge request Admin Dashboard mein bhej di gayi. Approval ke baad wallet credit hoga.");
+    }catch(e){setMsg(e.message)}finally{setSaving(false)}
   }
   const upiLink=payment.upiId?"upi://pay?pa="+encodeURIComponent(payment.upiId)+"&pn="+encodeURIComponent("Zara Shadi Service")+"&am="+amount+"&cu=INR":"";
 
