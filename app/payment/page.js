@@ -59,9 +59,9 @@ function Pay(){
         <button type="button" className="primaryAction paymentOption" onClick={()=>router.push("/qr-recharge?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type))}>
           🔳 QR से ₹{amount} करें →
         </button></div>
-        <div className="walletPanel">💰 <b>Wallet Balance: ₹{wallet}</b><br/>Wallet se ₹{amount} pay karke access request bhejein.</div>
+        <div className="walletPanel"><div className="walletTop"><span>💰 Wallet Balance</span><b>₹{wallet}</b></div><small>Wallet se ₹{amount} pay karke access request bhejein.</small></div>
         <button type="button" className="primaryAction walletButton" onClick={payFromWallet} disabled={saving||walletSent}>
-          {walletSent?"Wallet Request Sent ✓":"💰 Wallet से करें →"}
+          {walletSent?"✓ Request Sent — Approval Pending":"💰 Wallet से ₹"+amount+" करें →"}
         </button>
       </>}
       {msg&&<div className="messageBox">{msg}</div>}
