@@ -64,32 +64,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Legacy registration collections are intentionally locked. The active payment system uses
+    // walletRechargeRequests / paidAccessRequests with paymentUtrClaims.
     match /registrations/{registrationId} {
-      allow create: if request.resource.data.profileId is string
-        && request.resource.data.name is string
-        && request.resource.data.phone is string
-        && request.resource.data.fee == 100
-        && request.resource.data.status == "payment_pending"
-        && request.resource.data.utr == "";
-      allow read, update, delete: if isAdmin();
-      allow update: if !signedIn()
-        && resource.data.utr == ""
-        && request.resource.data.utr is string
-        && request.resource.data.utr != ""
-        && request.resource.data.status == "utr_submitted"
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          "utr","status","utrSubmittedAt"
-        ])
-        && exists(/databases/$(database)/documents/utrClaims/$(request.resource.data.utr.lower()))
-        && get(/databases/$(database)/documents/utrClaims/$(request.resource.data.utr.lower())).data.registrationId == registrationId;
+      allow read, write: if false;
     }
 
     match /utrClaims/{utrId} {
-      allow create: if !signedIn()
-        && !exists(/databases/$(database)/documents/utrClaims/$(utrId))
-        && request.resource.data.registrationId is string
-        && request.resource.data.utr is string;
-      allow read, update, delete: if isAdmin();
+      allow read, write: if false;
     }
 
     match /paymentUtrClaims/{utrId} {
@@ -99,7 +81,20 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.utr is string
         && request.resource.data.utr.size() >= 6
-        && request.resource.data.requestId is string;
+        && request.resource.data.utr.lower() == utrId
+        && request.resource.data.requestId is string
+        && request.resource.data.kind is string
+        && (request.resource.data.kind == "recharge" || request.resource.data.kind == "access")
+        && ((request.resource.data.kind == "recharge"
+          && request.resource.data.amount is number
+          && (request.resource.data.amount == 100 || request.resource.data.amount == 500 || request.resource.data.amount == 1000))
+          ||
+          (request.resource.data.kind == "access"
+            && request.resource.data.profileId is string
+            && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")
+            && request.resource.data.amount is number
+            && ((request.resource.data.type == "biodata" && request.resource.data.amount == 100)
+              || (request.resource.data.type == "mobile" && request.resource.data.amount == 500))))
       allow delete: if isAdmin();
     }
 
