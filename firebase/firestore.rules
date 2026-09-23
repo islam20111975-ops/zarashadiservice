@@ -155,7 +155,7 @@ service cloud.firestore {
         && request.resource.data.phone is string
         && request.resource.data.utr is string
         && request.resource.data.utr != ""
-        && request.resource.data.paymentMethod == "upi"
+        && (request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
         && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId
         && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid
         && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.kind == "recharge"
