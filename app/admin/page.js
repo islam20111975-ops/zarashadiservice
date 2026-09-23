@@ -100,6 +100,11 @@ export default function Admin(){
         const req=reqSnap.data();
         if(req.status!=="pending")throw new Error("Ye request already process ho chuki hai.");
 
+        const profileSnap=await t.get(doc(db,"profiles",req.profileId));
+        if(!profileSnap.exists() || profileSnap.data().status==="deleted"){
+          throw new Error("Ye profile ab active nahi hai.");
+        }
+
         const unlockSnap=await t.get(unlockRef);
         if(unlockSnap.exists() && unlockSnap.data().status==="approved"){
           throw new Error("Is profile ka access pehle hi approved hai.");
