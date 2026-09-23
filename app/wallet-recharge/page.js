@@ -23,7 +23,7 @@ export default function WalletRecharge(){
   useEffect(()=>{
     if(!user)return;
     const unsubUser=onSnapshot(doc(db,"users",user.uid),s=>{if(s.exists())setWallet(Number(s.data().walletBalance||0))});
-    const unsubReq=onSnapshot(query(collection(db,"walletRechargeRequests"),where("uid","==",user.uid)),s=>setRequests(s.docs.map(d=>({id:d.id,...d.data()}))));
+    const unsubReq=onSnapshot(query(collection(db,"walletRechargeRequests"),where("uid","==",user.uid)),s=>setRequests(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))));
     return()=>{unsubUser();unsubReq()};
   },[user]);
 
