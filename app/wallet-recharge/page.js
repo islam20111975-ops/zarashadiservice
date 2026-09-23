@@ -31,6 +31,8 @@ export default function WalletRecharge(){
     e.preventDefault();
     const n=Number(amount),clean=utr.trim().replace(/\s+/g,"").toUpperCase();
     if(!RECHARGE_OPTIONS.includes(n))return setMsg("₹100, ₹500 या ₹1000 select करें.");
+    if(method==="upi"&&!payment.upiId)return setMsg("Admin ne UPI ID set nahi ki hai.");
+    if(method==="qr"&&!payment.qrUrl)return setMsg("Admin ne QR payment set nahi kiya hai.");
     if(!/^[A-Z0-9]{6,40}$/.test(clean))return setMsg("Sahi UTR / Transaction ID bhariye.");
     if(requests.some(x=>x.status==="pending"&&Number(x.amount)===n))return setMsg("Is amount ka recharge already Pending hai.");
     if(!user)return setMsg("Pehle Google se Login karein.");
