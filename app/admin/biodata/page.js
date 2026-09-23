@@ -5,12 +5,13 @@ import {Suspense} from "react";
 import {useRouter,useSearchParams} from "next/navigation";
 import {GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signInWithRedirect} from "firebase/auth";
 import {collection,deleteDoc,doc,getDoc,onSnapshot,setDoc,serverTimestamp} from "firebase/firestore";
-import {auth,db} from "../../../lib/firebase";
+import {auth,db,storage} from "../../../lib/firebase";
+import {ref as storageRef,uploadBytes,getDownloadURL} from "firebase/storage";
 
 const ADMIN="ngogrant454@gmail.com";
 const empty={id:"",gender:"female",name:"",address:"",phone:"",age:"",income:"",description:""};
 
-function imageToDataUrl(file,maxSide=700,maxChars=140000){
+function prepareImage(file,maxSide=1400){
   return new Promise((resolve,reject)=>{
     const url=URL.createObjectURL(file),img=new Image();
     img.onload=()=>{
@@ -19,14 +20,19 @@ function imageToDataUrl(file,maxSide=700,maxChars=140000){
       const w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale));
       const c=document.createElement("canvas");c.width=w;c.height=h;
       c.getContext("2d").drawImage(img,0,0,w,h);
-      let q=.68,data=c.toDataURL("image/jpeg",q);
-      while(data.length>maxChars&&q>.3){q-=.06;data=c.toDataURL("image/jpeg",q)}
-      if(data.length>maxChars)reject(new Error("Image bahut badi hai."));
-      else resolve(data);
+      c.toBlob(blob=>blob?resolve(blob):reject(new Error("Image prepare nahi hui.")),"image/jpeg",.82);
     };
     img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error("Image read nahi hui."))};
     img.src=url;
   });
+}
+
+async function uploadProfilePhoto(file,profileId,index){
+  const blob=await prepareImage(file);
+  const path="profiles/"+profileId+"/photo-"+index+".jpg";
+  const ref=storageRef(storage,path);
+  await uploadBytes(ref,blob,{contentType:"image/jpeg",cacheControl:"public,max-age=31536000"});
+  return getDownloadURL(ref);
 }
 
 function BiodataAdminPage(){
@@ -80,7 +86,7 @@ function BiodataAdminPage(){
       const ref=doc(db,"profiles",id),old=await getDoc(ref),editing=old.exists();
       if(!editing && old.exists())return;
       let photos=[];
-      if(files.length)photos=await Promise.all(files.map(f=>imageToDataUrl(f)));
+      if(files.length)photos=await Promise.all(files.map((f,i)=>uploadProfilePhoto(f,id,i+1)));
       else if(editing)photos=old.data().photos||[old.data().photo].filter(Boolean);
       if(!photos.length)return setError("Kam se kam 1 photo zaroori hai.");
       await setDoc(ref,{profileId:id,gender:form.gender,photos,photo:photos[0],status:"active",updatedAt:serverTimestamp()},{merge:true});
@@ -133,7 +139,7 @@ function BiodataAdminPage(){
       </div>
       <input className="adminInput" placeholder="Income" value={form.income} onChange={e=>setForm({...form,income:e.target.value})}/>
       <textarea className="adminInput descriptionBox" rows="7" placeholder="Biodata Description — education, family, job/business, expectations, etc." value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/>
-      <label className="uploadBox">📷 1–5 Photos<input type="file" accept="image/*" multiple onChange={chooseFiles}/><small>Photos compressed hokar Firestore mein save hongi.</small></label>
+      <label className="uploadBox">📷 1–5 Photos<input type="file" accept="image/*" multiple onChange={chooseFiles}/><small>Photos Firebase Storage mein securely save hongi.</small></label>
       {preview.length>0&&<div className="photoPreviewGrid">{preview.map((s,i)=><img key={i} src={s} alt={"Preview "+(i+1)}/>)}</div>}
       <button className="primaryAction" disabled={saving}>{saving?"Saving...":"💾 Biodata Save करें →"}</button>
     </form>
