@@ -44,23 +44,23 @@ function Pay(){
   }
 
   const photo=p?.photos?.[0]||p?.photo||"";
-  return <main><header className="siteHeader"><div className="headerInner"><button className="logo" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA SHADI</strong><small>Service</small></span></button></div></header>
-    <section className="payment cardPage">
+  return <main className="paymentPage"><header className="siteHeader"><div className="headerInner"><button className="logo" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA SHADI</strong><small>Service</small></span></button></div></header>
+    <section className="payment paymentPremium cardPage">
       <div className="paymentIcon">₹</div><span className="eyebrow">{type==="mobile"?"MOBILE ACCESS":"BIODATA UNLOCK"}</span>
       <h1>₹{amount} {type==="mobile"?"Mobile Number":"Biodata"} Access</h1>
-      {photo&&<img src={photo} alt="" style={{width:130,height:160,objectFit:"cover",borderRadius:20,display:"block",margin:"15px auto"}}/>}
+      {photo&&<img src={photo} alt="" className="paymentProfilePhoto"/>}
       <p className="paymentLead">Profile <b>{profile}</b> ke liye exact access request hai.</p>
       {!user&&<><div className="notice">Access lene ke liye pehle Google se Login karein.</div><button className="primaryAction" onClick={login}>Google se Login →</button></>}
       {user&&<>
         <div className="feeRow"><span><small>Access Fee</small><b>₹{amount}</b></span><strong>3 Payment Options</strong></div>
-        <button type="button" className="primaryAction" onClick={()=>router.push("/recharge?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type))}>
+        <div className="paymentOptions"><button type="button" className="primaryAction paymentOption" onClick={()=>router.push("/recharge?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type))}>
           📱 UPI से ₹{amount} करें →
         </button>
-        <button type="button" className="primaryAction" onClick={()=>router.push("/qr-recharge?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type))}>
+        <button type="button" className="primaryAction paymentOption" onClick={()=>router.push("/qr-recharge?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type))}>
           🔳 QR से ₹{amount} करें →
-        </button>
-        <div className="notice" style={{marginTop:12}}>💰 <b>Wallet Balance: ₹{wallet}</b><br/>Wallet se ₹{amount} pay karke access request bhejein.</div>
-        <button type="button" className="primaryAction" onClick={payFromWallet} disabled={saving||walletSent}>
+        </button></div>
+        <div className="walletPanel">💰 <b>Wallet Balance: ₹{wallet}</b><br/>Wallet se ₹{amount} pay karke access request bhejein.</div>
+        <button type="button" className="primaryAction walletButton" onClick={payFromWallet} disabled={saving||walletSent}>
           {walletSent?"Wallet Request Sent ✓":"💰 Wallet से करें →"}
         </button>
       </>}
