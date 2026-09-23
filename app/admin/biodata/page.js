@@ -1,6 +1,7 @@
 "use client";
 
 import {useEffect,useState} from "react";
+import {Suspense} from "react";
 import {useRouter,useSearchParams} from "next/navigation";
 import {GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signInWithRedirect} from "firebase/auth";
 import {collection,deleteDoc,doc,getDoc,onSnapshot,setDoc,serverTimestamp} from "firebase/firestore";
@@ -28,7 +29,7 @@ function imageToDataUrl(file,maxSide=700,maxChars=140000){
   });
 }
 
-export default function BiodataAdmin(){
+function BiodataAdminPage(){
   const router=useRouter(),params=useSearchParams();
   const [user,setUser]=useState(undefined),[profiles,setProfiles]=useState([]),[form,setForm]=useState(empty);
   const [files,setFiles]=useState([]),[preview,setPreview]=useState([]),[search,setSearch]=useState("");
@@ -149,4 +150,9 @@ export default function BiodataAdmin(){
       })}
     </div>
   </section></main>;
+}
+
+
+export default function BiodataAdmin(){
+  return <Suspense fallback={<main><section className="admin cardPage"><h1>Loading...</h1></section></main>}><BiodataAdminPage/></Suspense>;
 }
