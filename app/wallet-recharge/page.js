@@ -52,7 +52,7 @@ export default function WalletRecharge(){
   const upiLink=payment.upiId?"upi://pay?pa="+encodeURIComponent(payment.upiId)+"&pn="+encodeURIComponent("Zara Shadi Service")+"&am="+amount+"&cu=INR":"";
   const pending=requests.filter(x=>x.status==="pending");
 
-  if(!user)return <main><section className="cardPage" style={{maxWidth:520,margin:"25px auto",textAlign:"center"}}><div className="adminIcon">💰</div><h1>Wallet Recharge</h1><p>Recharge करने के लिए Google से Login करें.</p><button className="primaryAction" onClick={()=>signInWithPopup(auth,new GoogleAuthProvider())}>Google se Login →</button></section></main>;
+  if(!user)return <main><section className="cardPage" style={{maxWidth:520,margin:"25px auto",textAlign:"center"}}><div className="adminIcon">💰</div><h1>Wallet Recharge</h1><p>Recharge करने के लिए Google से Login करें.</p><button className="primaryAction" onClick={async()=>{setLoginError("");try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}}}>Google se Login →</button>{loginError&&<div className="errorBox">{loginError}</div>}</section></main>;
 
   return <main><section className="cardPage" style={{maxWidth:620,margin:"25px auto"}}>
     <div style={{textAlign:"center"}}><span className="eyebrow">WALLET RECHARGE</span><h1>💰 Wallet में पैसे जमा करें</h1><p className="small">Current Wallet Balance: <b>₹{wallet}</b></p></div>
