@@ -52,7 +52,16 @@ export default function Admin(){
       await runTransaction(db,async t=>{
         const reqSnap=await t.get(reqRef);
         if(!reqSnap.exists())throw new Error("Recharge request nahi mili.");
-        if(reqSnap.data().status!=="pending")throw new Error("Ye recharge already process ho chuka hai.");
+        const req=reqSnap.data();
+        if(req.status!=="pending")throw new Error("Ye recharge already process ho chuka hai.");
+        if(Number(req.amount)!==amount)throw new Error("Recharge request amount mismatch hai.");
+        if(!["upi","qr"].includes(req.paymentMethod))throw new Error("Recharge payment method invalid hai.");
+        if(!req.utr || !req.utrClaimId)throw new Error("Recharge UTR claim missing hai.");
+        const claimRef=doc(db,"paymentUtrClaims",req.utrClaimId);
+        const claimSnap=await t.get(claimRef);
+        if(!claimSnap.exists())throw new Error("UTR claim nahi mila.");
+        const claim=claimSnap.data();
+        if(claim.uid!==req.uid || claim.kind!=="recharge" || Number(claim.amount)!==amount || claim.requestId!==x.id || claim.utr!==req.utr)throw new Error("Recharge UTR claim mismatch hai.");
 
         const userSnap=await t.get(userRef);
         const oldBalance=Number(userSnap.exists()?userSnap.data().walletBalance||0:0);
@@ -83,7 +92,7 @@ export default function Admin(){
       });
     }catch(e){setError("Recharge approve nahi hua: "+e.message)}
   }
-  async function rejectRecharge(x){if(confirm("Recharge reject karein?")){await runTransaction(db,async t=>{const ref=doc(db,"walletRechargeRequests",x.id);const s=await t.get(ref);if(!s.exists()||s.data().status!=="pending")throw new Error("Request already process ho chuki hai.");t.update(ref,{status:"rejected",rejectedAt:serverTimestamp()});if(s.data().lockId)t.delete(doc(db,"pendingPaymentLocks",s.data().lockId));});}}
+  async function rejectRecharge(x){if(!confirm("Recharge reject karein?"))return;try{await runTransaction(db,async t=>{const ref=doc(db,"walletRechargeRequests",x.id);const s=await t.get(ref);if(!s.exists()||s.data().status!=="pending")throw new Error("Request already process ho chuki hai.");t.update(ref,{status:"rejected",rejectedAt:serverTimestamp()});if(s.data().lockId)t.delete(doc(db,"pendingPaymentLocks",s.data().lockId));});}catch(e){setError("Recharge reject nahi hua: "+e.message)}}
 
   async function approveAccess(x){
     try{
@@ -101,9 +110,20 @@ export default function Admin(){
         if(!reqSnap.exists())throw new Error("Access request nahi mili.");
         const req=reqSnap.data();
         if(req.status!=="pending")throw new Error("Ye request already process ho chuki hai.");
+        if(req.type!=="biodata" && req.type!=="mobile")throw new Error("Access type invalid hai.");
+        const expectedReqAmount=req.type==="biodata"?100:500;
+        if(Number(req.amount)!==expectedReqAmount)throw new Error("Access request amount mismatch hai.");
+        if(req.profileId!==x.profileId || req.type!==x.type)throw new Error("Access request data mismatch hai.");
         if(!["wallet","upi","qr"].includes(req.paymentMethod))throw new Error("Payment method valid nahi hai.");
         if(req.paymentMethod==="wallet" && req.utr!=="")throw new Error("Wallet request me UTR nahi hona chahiye.");
-        if(req.paymentMethod!=="wallet" && (!req.utr || !["upi","qr"].includes(req.paymentMethod)))throw new Error("UPI/QR request incomplete hai.");
+        if(req.paymentMethod==="wallet" && req.utrClaimId)throw new Error("Wallet request me UTR claim nahi hona chahiye.");
+        if(req.paymentMethod!=="wallet" && (!req.utr || !["upi","qr"].includes(req.paymentMethod) || !req.utrClaimId))throw new Error("UPI/QR request incomplete hai.");
+        if(req.paymentMethod!=="wallet"){
+          const claimSnap=await t.get(doc(db,"paymentUtrClaims",req.utrClaimId));
+          if(!claimSnap.exists())throw new Error("Access UTR claim nahi mila.");
+          const claim=claimSnap.data();
+          if(claim.uid!==req.uid || claim.kind!=="access" || claim.profileId!==req.profileId || claim.type!==req.type || Number(claim.amount)!==expectedReqAmount || claim.requestId!==x.id || claim.utr!==req.utr)throw new Error("Access UTR claim mismatch hai.");
+        }
 
         const profileSnap=await t.get(doc(db,"profiles",req.profileId));
         if(!profileSnap.exists() || profileSnap.data().status==="deleted"){
@@ -148,7 +168,7 @@ export default function Admin(){
       });
     }catch(e){setError("Access approve nahi hua: "+e.message)}
   }
-  async function rejectAccess(x){if(confirm("Request reject karein?")){await runTransaction(db,async t=>{const ref=doc(db,"paidAccessRequests",x.id);const s=await t.get(ref);if(!s.exists()||s.data().status!=="pending")throw new Error("Request already process ho chuki hai.");t.update(ref,{status:"rejected",rejectedAt:serverTimestamp()});if(s.data().lockId)t.delete(doc(db,"pendingPaymentLocks",s.data().lockId));});}}
+  async function rejectAccess(x){if(!confirm("Request reject karein?"))return;try{await runTransaction(db,async t=>{const ref=doc(db,"paidAccessRequests",x.id);const s=await t.get(ref);if(!s.exists()||s.data().status!=="pending")throw new Error("Request already process ho chuki hai.");t.update(ref,{status:"rejected",rejectedAt:serverTimestamp()});if(s.data().lockId)t.delete(doc(db,"pendingPaymentLocks",s.data().lockId));});}catch(e){setError("Access reject nahi hua: "+e.message)}}
 
   async function savePayment(e){
     e.preventDefault();try{
