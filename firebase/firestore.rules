@@ -20,6 +20,7 @@ service cloud.firestore {
         && request.resource.data.name is string
         && request.resource.data.address is string
         && request.resource.data.phone is string
+        && request.resource.data.phone.matches("^[6-9][0-9]{9}$")
         && request.resource.data.age is number
         && request.resource.data.age >= 18
         && request.resource.data.age <= 100
