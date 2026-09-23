@@ -24,13 +24,13 @@ function RechargePage(){
    const userSnap=await getDoc(doc(db,"users",user.uid)),ud=userSnap.exists()?userSnap.data():{};
    batch.set(claimRef,{uid:user.uid,utr:clean,kind:"recharge",amount:n,requestId:reqRef.id,createdAt:serverTimestamp()});
    batch.set(lockRef,{uid:user.uid,kind:"recharge",amount:n,requestId:reqRef.id,status:"pending",createdAt:serverTimestamp()});
-   batch.set(reqRef,{uid:user.uid,email:user.email||ud.email||"",name:user.displayName||ud.name||"",phone:ud.phone||"",amount:n,utr:clean,status:"pending",lockId:lockRef.id,utrClaimId:claimRef.id,createdAt:serverTimestamp()});
+   batch.set(reqRef,{uid:user.uid,email:user.email||ud.email||"",name:user.displayName||ud.name||"",phone:ud.phone||"",amount:n,utr:clean,status:"pending",paymentMethod:"upi",lockId:lockRef.id,utrClaimId:claimRef.id,createdAt:serverTimestamp()});
    await batch.commit();setSent(true);setUtr("");setMsg("⏳ Recharge Pending है। Admin UTR verify करेंगे। Approval के बाद ₹"+n+" आपके Wallet में जुड़ जाएगा।");
   }catch(e){setMsg("Recharge request save nahi hui: "+e.message)}finally{setSaving(false)}
  }
  const upiLink=payment.upiId?"upi://pay?pa="+encodeURIComponent(payment.upiId)+"&pn="+encodeURIComponent("Zara Shadi Service")+"&am="+amount+"&cu=INR":"";
  return <main><header className="siteHeader"><div className="headerInner"><button className="logo" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA SHADI</strong><small>Service</small></span></button></div></header>
- <section className="cardPage" style={{maxWidth:760,margin:"25px auto"}}><div style={{textAlign:"center"}}><div className="paymentIcon">₹</div><span className="eyebrow">WALLET RECHARGE</span><h1>Wallet में Recharge करें</h1><p>Profile <b>{profile||"—"}</b> के लिए पहले Wallet Recharge करें.</p></div>
+ <section className="cardPage" style={{maxWidth:760,margin:"25px auto"}}><div style={{textAlign:"center"}}><div className="paymentIcon">₹</div><span className="eyebrow">WALLET RECHARGE • UPI</span><h1>Wallet में Recharge करें</h1><p>Profile <b>{profile||"—"}</b> के लिए पहले Wallet Recharge करें.</p></div>
  {!user&&<><div className="notice">Recharge करने के लिए पहले Google से Login करें.</div><button className="primaryAction" onClick={login}>Google se Login →</button></>}
  {user&&<><div className="adminBox"><span className="eyebrow">MULTI RECHARGE OPTION</span><h3>कितना Recharge करना है?</h3>
  <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,margin:"15px 0"}}>{OPTIONS.map(n=><button type="button" key={n} onClick={()=>{setAmount(n);setSent(false);setMsg("")}} style={{padding:"16px 8px",borderRadius:14,border:amount===n?"2px solid #111":"1px solid #ddd",background:amount===n?"#f3f3f3":"#fff",fontWeight:800,cursor:"pointer",fontSize:18}}>₹{n}<small style={{display:"block",fontSize:12,fontWeight:500,marginTop:4}}>{amount===n?"Selected":"Select"}</small></button>)}</div>
