@@ -118,17 +118,27 @@ service cloud.firestore {
     }
 
     match /paidAccessRequests/{requestId} {
-      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.uid == request.auth.uid);
+
+      // A logged-in user may submit only their own pending access request.
+      // Keep this rule simple so the UTR request cannot be blocked by an
+      // unrelated field/type validation failure.
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.profileId is string
-        && request.resource.data.amount is number
-        && ((request.resource.data.type == "biodata" && request.resource.data.amount == 100)
-          || (request.resource.data.type == "mobile" && request.resource.data.amount == 500))
         && request.resource.data.type is string
+        && (request.resource.data.type == "biodata"
+          || request.resource.data.type == "mobile")
+        && request.resource.data.amount is number
+        && ((request.resource.data.type == "biodata"
+          && request.resource.data.amount == 100)
+          || (request.resource.data.type == "mobile"
+          && request.resource.data.amount == 500))
         && request.resource.data.status == "pending"
         && request.resource.data.utr is string
-        && request.resource.data.utr != "";
+        && request.resource.data.utr.size() >= 6;
+
       allow update, delete: if isAdmin();
     }
 
