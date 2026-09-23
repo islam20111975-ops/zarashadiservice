@@ -40,6 +40,7 @@ service cloud.firestore {
     match /profileBiodataPrivate/{profileId} {
       allow read: if isAdmin()
         || (signedIn()
+          && get(/databases/$(database)/documents/profiles/$(profileId)).data.status != "deleted"
           && exists(/databases/$(database)/documents/biodataUnlocks/$(request.auth.uid + "_" + profileId))
           && get(/databases/$(database)/documents/biodataUnlocks/$(request.auth.uid + "_" + profileId)).data.status == "approved");
       allow write: if isAdmin();
@@ -48,6 +49,7 @@ service cloud.firestore {
     match /profileContact/{profileId} {
       allow read: if isAdmin()
         || (signedIn()
+          && get(/databases/$(database)/documents/profiles/$(profileId)).data.status != "deleted"
           && exists(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + profileId))
           && get(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + profileId)).data.status == "approved");
       allow write: if isAdmin();
