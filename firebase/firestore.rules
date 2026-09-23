@@ -90,6 +90,36 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    match /paymentUtrClaims/{utrId} {
+      allow read: if isAdmin();
+      allow create: if signedIn()
+        && !exists(/databases/$(database)/documents/paymentUtrClaims/$(utrId))
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.utr is string
+        && request.resource.data.utr.size() >= 6
+        && request.resource.data.requestId is string;
+      allow delete: if isAdmin();
+    }
+
+    match /pendingPaymentLocks/{lockId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if signedIn()
+        && !exists(/databases/$(database)/documents/pendingPaymentLocks/$(lockId))
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.requestId is string
+        && request.resource.data.status == "pending"
+        && (
+          (request.resource.data.kind == "recharge"
+            && request.resource.data.amount is number
+            && (request.resource.data.amount == 100 || request.resource.data.amount == 500 || request.resource.data.amount == 1000))
+          ||
+          (request.resource.data.kind == "access"
+            && request.resource.data.profileId is string
+            && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile"))
+        );
+      allow delete, update: if isAdmin();
+    }
+
     match /walletRechargeRequests/{requestId} {
       allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       allow create: if signedIn()
@@ -103,7 +133,11 @@ service cloud.firestore {
         && request.resource.data.name is string
         && request.resource.data.phone is string
         && request.resource.data.utr is string
-        && request.resource.data.utr != "";
+        && request.resource.data.utr != ""
+        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId
+        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.requestId == requestId
+        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.uid == request.auth.uid;
       allow update, delete: if isAdmin();
     }
 
@@ -139,11 +173,17 @@ service cloud.firestore {
         && request.resource.data.status == "pending"
         && (
           (request.resource.data.paymentMethod == "wallet"
-            && request.resource.data.utr == "")
+            && request.resource.data.utr == ""
+            && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId
+            && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid)
           ||
           (request.resource.data.paymentMethod == "upi"
             && request.resource.data.utr is string
-            && request.resource.data.utr.size() >= 6)
+            && request.resource.data.utr.size() >= 6
+            && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId
+            && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid
+            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.requestId == requestId
+            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.uid == request.auth.uid)
         );
       allow update, delete: if isAdmin();
     }
