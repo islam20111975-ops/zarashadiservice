@@ -96,8 +96,9 @@ export default function BiodataAdmin(){
   }
 
   async function edit(p){
-    const s=await getDoc(doc(db,"profileBiodataPrivate",p.id)),d=s.exists()?s.data():{};
-    setForm({id:p.id,gender:p.gender||"female",name:d.name||"",address:d.address||"",phone:"",age:d.age||"",income:d.income||"",description:d.description||""});
+    const [s,cs]=await Promise.all([getDoc(doc(db,"profileBiodataPrivate",p.id)),getDoc(doc(db,"profileContact",p.id))]);
+    const d=s.exists()?s.data():{},contact=cs.exists()?cs.data():{};
+    setForm({id:p.id,gender:p.gender||"female",name:d.name||"",address:d.address||"",phone:contact.phone||"",age:d.age||"",income:d.income||"",description:d.description||""});
     setPreview(p.photos||[p.photo].filter(Boolean));setFiles([]);window.scrollTo({top:0,behavior:"smooth"});
   }
 
