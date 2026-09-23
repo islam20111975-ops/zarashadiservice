@@ -12,6 +12,9 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if owner(userId) || isAdmin();
       allow create: if owner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "uid","email","name","address","phone","age","income","photoURL","createdAt","updatedAt"
+        ])
         && request.resource.data.uid == userId
         && request.resource.data.email == request.auth.token.email
         && request.resource.data.name is string
@@ -137,7 +140,9 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid
         && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.kind == "recharge"
         && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.requestId == requestId
-        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.uid == request.auth.uid;
+        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.kind == "recharge"
+        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.amount == request.resource.data.amount;
       allow update, delete: if isAdmin();
     }
 
@@ -189,7 +194,11 @@ service cloud.firestore {
             && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.profileId == request.resource.data.profileId
             && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.type == request.resource.data.type
             && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.requestId == requestId
-            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.uid == request.auth.uid)
+            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.uid == request.auth.uid
+            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.kind == "access"
+            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.profileId == request.resource.data.profileId
+            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.type == request.resource.data.type
+            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.amount == request.resource.data.amount)
         );
       allow update, delete: if isAdmin();
     }
