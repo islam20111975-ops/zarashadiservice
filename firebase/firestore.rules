@@ -12,7 +12,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if owner(userId) || isAdmin();
       allow create: if owner(userId)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        && request.resource.data.keys().hasOnly([
           "uid","email","name","address","phone","age","income","photoURL","createdAt","updatedAt"
         ])
         && request.resource.data.uid == userId
