@@ -35,7 +35,7 @@ function Pay(){
       const batch=writeBatch(db);
       const reqRef=makeDoc(collection(db,"paidAccessRequests"));
       const lockRef=makeDoc(db,"pendingPaymentLocks",user.uid+"_"+profile+"_"+type);
-      batch.set(lockRef,{uid:user.uid,profileId:profile,type,kind:"access",requestId:reqRef.id,status:"pending",createdAt:serverTimestamp()});
+      batch.set(lockRef,{uid:user.uid,profileId:profile,type,kind:"access",amount,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()});
       batch.set(reqRef,{uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"wallet",utr:"",lockId:lockRef.id,createdAt:serverTimestamp()});
       await batch.commit();
       setWalletSent(true);
@@ -54,10 +54,10 @@ function Pay(){
       {user&&<>
         <div className="feeRow"><span><small>Access Fee</small><b>₹{amount}</b></span><strong>3 Payment Options</strong></div>
         <button type="button" className="primaryAction" onClick={()=>router.push("/recharge?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type))}>
-          📱 UPI से ₹"+amount+" करें →
+          📱 UPI से ₹{amount} करें →
         </button>
         <button type="button" className="primaryAction" onClick={()=>router.push("/qr-recharge?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type))}>
-          🔳 QR से ₹"+amount+" करें →
+          🔳 QR से ₹{amount} करें →
         </button>
         <div className="notice" style={{marginTop:12}}>💰 <b>Wallet Balance: ₹{wallet}</b><br/>Wallet se ₹{amount} pay karke access request bhejein.</div>
         <button type="button" className="primaryAction" onClick={payFromWallet} disabled={saving||walletSent}>
