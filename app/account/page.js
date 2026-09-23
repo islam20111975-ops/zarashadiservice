@@ -17,7 +17,7 @@ export default function Account(){
     if(!user)return;
     const unsubTx=onSnapshot(
       query(collection(db,"walletTransactions"),where("uid","==",user.uid)),
-      s=>setTx(s.docs.map(d=>({id:d.id,...d.data()})))
+      s=>setTx(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)))
     );
     const unsubReq=onSnapshot(
       query(collection(db,"walletRechargeRequests"),where("uid","==",user.uid)),
