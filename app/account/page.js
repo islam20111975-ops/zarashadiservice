@@ -12,7 +12,7 @@ export default function Account(){
   const [user,setUser]=useState(null),[profile,setProfile]=useState(empty),[wallet,setWallet]=useState(0),[tx,setTx]=useState([]),[requests,setRequests]=useState([]);
   const [file,setFile]=useState(null),[preview,setPreview]=useState(""),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false),[loginError,setLoginError]=useState("");
 
-  useEffect(()=>onAuthStateChanged(auth,async u=>{setUser(u);if(!u)return;const s=await getDoc(doc(db,"users",u.uid));if(s.exists())setProfile({...empty,...s.data()});}),[]);
+  useEffect(()=>onAuthStateChanged(auth,async u=>{setUser(u);if(!u)return;try{const s=await getDoc(doc(db,"users",u.uid));if(s.exists())setProfile({...empty,...s.data()})}catch(e){setMsg("Profile load nahi ho saka: "+(e?.message||"error"))}}),[]);
   useEffect(()=>{
     if(!user)return;
     const unsubTx=onSnapshot(
