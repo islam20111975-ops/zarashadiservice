@@ -54,10 +54,10 @@ function Pay(){
       {user&&<>
         <div className="feeRow"><span><small>Access Fee</small><b>₹{amount}</b></span><strong>3 Payment Options</strong></div>
         <button type="button" className="primaryAction" onClick={()=>router.push("/recharge?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type))}>
-          📱 UPI से करें →
+          📱 UPI से ₹"+amount+" करें →
         </button>
         <button type="button" className="primaryAction" onClick={()=>router.push("/qr-recharge?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type))}>
-          🔳 QR से करें →
+          🔳 QR से ₹"+amount+" करें →
         </button>
         <div className="notice" style={{marginTop:12}}>💰 <b>Wallet Balance: ₹{wallet}</b><br/>Wallet se ₹{amount} pay karke access request bhejein.</div>
         <button type="button" className="primaryAction" onClick={payFromWallet} disabled={saving||walletSent}>
