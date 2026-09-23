@@ -62,7 +62,7 @@ export default function WalletRecharge(){
         {RECHARGE_OPTIONS.map(n=><button type="button" key={n} onClick={()=>{setAmount(n);setMsg("")}} style={{padding:"14px 8px",borderRadius:14,border:amount===n?"2px solid #111":"1px solid #ddd",background:amount===n?"#f3f3f3":"#fff",fontWeight:800,cursor:"pointer"}}>₹{n}<small style={{display:"block",fontWeight:500,marginTop:3}}>{amount===n?"Selected":"Select"}</small></button>)}
       </div>
       <div className="feeRow"><span><small>Selected Amount</small><b>₹{amount}</b></span><strong>UPI</strong></div>
-      {payment.upiId?<a className="primaryAction payLink" href={upiLink}>📱 UPI से Pay करें →</a>:<div className="notice">Admin ने अभी UPI ID set नहीं की है.</div>}
+      {payment.upiId?<a className="primaryAction payLink" href={upiLink}>📱 UPI से Pay करें →</a>:<div className="notice">अभी UPI payment उपलब्ध नहीं है.</div>}
       {payment.qrUrl&&<div className="qr" style={{marginTop:12,textAlign:"center"}}><img src={payment.qrUrl} alt="UPI QR" style={{maxWidth:250,width:"100%"}}/><small style={{display:"block",marginTop:8}}>QR scan करके selected amount pay करें.</small></div>}
       <form onSubmit={recharge} style={{marginTop:14}}><input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder="Payment ka UTR / Transaction ID"/><button className="primaryAction" disabled={saving}>{saving?"Sending...":"💳 Recharge Request भेजें →"}</button></form>
     </div>
