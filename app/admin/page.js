@@ -28,7 +28,7 @@ export default function Admin(){
     watch("profiles",setProfiles);watch("users",setUsers);
     watch("walletRechargeRequests",setRecharges,true);watch("paidAccessRequests",setRequests,true);watch("walletTransactions",setTransactions,true);
     getDoc(doc(db,"settings","social")).then(s=>s.exists()&&setSocial({...{whatsapp:"",facebook:"",instagram:""},...s.data()})).catch(()=>{});
-    getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setUpi(s.data().upiId||"")).catch(()=>{});
+    getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists()){setUpi(s.data().upiId||"");setQrPreview(s.data().qrUrl||"")}}).catch(e=>setError("Payment settings load error: "+e.message));
     return()=>unsubs.forEach(x=>x());
   },[user]);
 
