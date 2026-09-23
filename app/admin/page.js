@@ -96,6 +96,11 @@ export default function Admin(){
         const req=reqSnap.data();
         if(req.status!=="pending")throw new Error("Ye request already process ho chuki hai.");
 
+        const unlockSnap=await t.get(unlockRef);
+        if(unlockSnap.exists() && unlockSnap.data().status==="approved"){
+          throw new Error("Is profile ka access pehle hi approved hai.");
+        }
+
         if(req.paymentMethod==="wallet"){
           const userSnap=await t.get(userRef);
           if(!userSnap.exists())throw new Error("User wallet nahi mila.");
