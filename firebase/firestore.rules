@@ -3,26 +3,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function signedIn() {
-      return request.auth != null;
-    }
-
+    function signedIn() { return request.auth != null; }
     function isAdmin() {
-      return signedIn()
-        && request.auth.token.email == "ngogrant454@gmail.com";
+      return signedIn() && request.auth.token.email == "ngogrant454@gmail.com";
     }
+    function owner(uid) { return signedIn() && request.auth.uid == uid; }
 
-    function isOwner(userId) {
-      return signedIn() && request.auth.uid == userId;
-    }
-
-    // USER PROFILE
-    // User can manage only their own profile.
-    // Financial fields must NOT be trusted from this document.
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-
-      allow create: if isOwner(userId)
+      allow read: if owner(userId) || isAdmin();
+      allow create: if owner(userId)
         && request.resource.data.uid == userId
         && request.resource.data.email == request.auth.token.email
         && request.resource.data.name is string
@@ -32,61 +21,40 @@ service cloud.firestore {
         && request.resource.data.age >= 18
         && request.resource.data.age <= 100
         && request.resource.data.income is string
-        && request.resource.data.photoURL is string
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          "uid","name","address","phone","age","income","photoURL","email","createdAt","updatedAt"
-        ]);
-
-      allow update: if isOwner(userId)
-        && request.resource.data.uid == resource.data.uid
-        && request.resource.data.email == resource.data.email
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          "name","address","phone","age","income","photoURL","updatedAt"
-        ])
-        && request.resource.data.name is string
-        && request.resource.data.address is string
-        && request.resource.data.phone is string
-        && request.resource.data.age is number
-        && request.resource.data.age >= 18
-        && request.resource.data.age <= 100
-        && request.resource.data.income is string
         && request.resource.data.photoURL is string;
-
+      allow update: if isAdmin()
+        || (owner(userId)
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            "name","address","phone","age","income","photoURL","updatedAt"
+          ]));
       allow delete: if isAdmin();
     }
 
-    // BIODATA
-    // Public biodata can be viewed.
-    // Only Admin can create/edit/delete.
     match /profiles/{profileId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
 
-    // PUBLIC / ADMIN SETTINGS
+    match /profilePrivate/{profileId} {
+      allow read, write: if isAdmin();
+    }
+
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // OLD ₹100 REGISTRATION SYSTEM
     match /registrations/{registrationId} {
-      // Public user creates a payment-pending registration only.
-      allow create: if
-        request.resource.data.profileId is string
+      allow create: if request.resource.data.profileId is string
         && request.resource.data.name is string
         && request.resource.data.phone is string
         && request.resource.data.fee == 100
         && request.resource.data.status == "payment_pending"
         && request.resource.data.utr == "";
-
-      // Only Admin can read/delete/approve/reject.
-      allow read, delete: if isAdmin();
-      allow update: if isAdmin();
-
-      // Anonymous UTR submission for the existing payment page.
-      // Only UTR, status and timestamp may change.
-      allow update: if request.auth == null
+      allow read, update, delete: if isAdmin();
+      allow update: if !signedIn()
         && resource.data.utr == ""
         && request.resource.data.utr is string
         && request.resource.data.utr != ""
@@ -98,23 +66,16 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/utrClaims/$(request.resource.data.utr.lower())).data.registrationId == registrationId;
     }
 
-    // UTR DUPLICATE PROTECTION
     match /utrClaims/{utrId} {
-      allow create: if request.auth == null
+      allow create: if !signedIn()
         && !exists(/databases/$(database)/documents/utrClaims/$(utrId))
         && request.resource.data.registrationId is string
         && request.resource.data.utr is string;
-
       allow read, update, delete: if isAdmin();
     }
 
-    // WALLET RECHARGE REQUESTS
-    // User submits their own pending recharge request.
-    // Admin alone can modify/approve/reject/delete.
     match /walletRechargeRequests/{requestId} {
-      allow read: if isAdmin()
-        || (signedIn() && resource.data.uid == request.auth.uid);
-
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.amount is number
@@ -122,44 +83,26 @@ service cloud.firestore {
         && request.resource.data.status == "pending"
         && request.resource.data.utr is string
         && request.resource.data.utr != "";
-
       allow update, delete: if isAdmin();
     }
 
-    // WALLET TRANSACTIONS
-    // Ledger is Admin-controlled.
     match /walletTransactions/{transactionId} {
-      allow read: if isAdmin()
-        || (signedIn() && resource.data.uid == request.auth.uid);
-
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       allow create, update, delete: if isAdmin();
     }
 
-    // ₹100 BIODATA UNLOCKS
-    // Access is created only by Admin after payment verification.
     match /biodataUnlocks/{unlockId} {
-      allow read: if isAdmin()
-        || (signedIn() && resource.data.uid == request.auth.uid);
-
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       allow create, update, delete: if isAdmin();
     }
 
-    // ₹500 MOBILE / CONTACT ACCESS
-    // Access is created only by Admin after payment verification.
     match /mobileAccess/{accessId} {
-      allow read: if isAdmin()
-        || (signedIn() && resource.data.uid == request.auth.uid);
-
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       allow create, update, delete: if isAdmin();
     }
 
-    // Optional unified payment/access requests.
-    // Users may create only their own pending request.
-    // Admin handles verification and final access.
     match /paidAccessRequests/{requestId} {
-      allow read: if isAdmin()
-        || (signedIn() && resource.data.uid == request.auth.uid);
-
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.profileId is string
@@ -170,11 +113,9 @@ service cloud.firestore {
         && request.resource.data.status == "pending"
         && request.resource.data.utr is string
         && request.resource.data.utr != "";
-
       allow update, delete: if isAdmin();
     }
 
-    // Everything else closed.
     match /{document=**} {
       allow read, write: if false;
     }
