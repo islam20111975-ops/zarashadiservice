@@ -15,7 +15,22 @@ export default function Account(){
   const [payment,setPayment]=useState({upiId:"",qrUrl:""}),[file,setFile]=useState(null),[preview,setPreview]=useState(""),[amount,setAmount]=useState(500),[utr,setUtr]=useState(""),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
   useEffect(()=>onAuthStateChanged(auth,async u=>{setUser(u);if(!u)return;const s=await getDoc(doc(db,"users",u.uid));if(s.exists())setProfile({...empty,...s.data()});getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setPayment({upiId:s.data().upiId||"",qrUrl:s.data().qrUrl||""})).catch(()=>{})}),[]);
-  useEffect(()=>{if(!user)return;const a=onSnapshot(query(collection(db,"walletTransactions"),where("uid","==",user.uid)),s=>setTx(s.docs.map(d=>({id:d.id,...d.data()}))));const b=onSnapshot(query(collection(db,"walletRechargeRequests"),where("uid","==",user.uid)),s=>setRequests(s.docs.map(d=>({id:d.id,...d.data()})));const u=onSnapshot(doc(db,"users",user.uid),s=>s.exists()&&setWallet(Number(s.data().walletBalance||0)));return()=>{a();b();u()}},[user]);
+  useEffect(()=>{
+    if(!user)return;
+    const unsubTx=onSnapshot(
+      query(collection(db,"walletTransactions"),where("uid","==",user.uid)),
+      s=>setTx(s.docs.map(d=>({id:d.id,...d.data()})))
+    );
+    const unsubReq=onSnapshot(
+      query(collection(db,"walletRechargeRequests"),where("uid","==",user.uid)),
+      s=>setRequests(s.docs.map(d=>({id:d.id,...d.data()})))
+    );
+    const unsubUser=onSnapshot(
+      doc(db,"users",user.uid),
+      s=>{if(s.exists())setWallet(Number(s.data().walletBalance||0))}
+    );
+    return()=>{unsubTx();unsubReq();unsubUser()};
+  },[user]);
 
   function choosePhoto(e){const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith("image/")||f.size>10*1024*1024)return setMsg("Image 10 MB se chhoti honi chahiye.");setFile(f);setPreview(URL.createObjectURL(f))}
   async function save(e){e.preventDefault();if(!user)return;const phone=profile.phone.replace(/\D/g,"");if(!profile.name.trim()||!profile.address.trim()||!/^[6-9]\d{9}$/.test(phone)||!profile.age||!profile.income.trim())return setMsg("Name, Address, Mobile, Age aur Income sab bharna zaroori hai.");setSaving(true);setMsg("");try{let photoURL=profile.photoURL||"";if(file)photoURL=await compressPhoto(file);await setDoc(doc(db,"users",user.uid),{uid:user.uid,name:profile.name.trim(),address:profile.address.trim(),phone,age:Number(profile.age),income:profile.income.trim(),photoURL,email:user.email||"",createdAt:profile.createdAt||serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});setProfile({...profile,phone,photoURL});setFile(null);setPreview(photoURL);setMsg("Profile save ho gaya.")}catch(e){setMsg(e.message)}finally{setSaving(false)}}
