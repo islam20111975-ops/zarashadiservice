@@ -6,6 +6,7 @@ import {doc,getDoc,setDoc,addDoc,collection,onSnapshot,query,where,serverTimesta
 import {auth,db} from "../../lib/firebase";
 
 const empty={name:"",address:"",phone:"",age:"",income:"",photoURL:""};
+const RECHARGE_OPTIONS=[100,500,1000];
 
 function compressPhoto(file){
   return new Promise((resolve,reject)=>{
@@ -16,13 +17,14 @@ function compressPhoto(file){
       c.getContext("2d").drawImage(img,0,0,c.width,c.height);let q=.7,data=c.toDataURL("image/jpeg",q);
       while(data.length>600000&&q>.3){q-=.06;data=c.toDataURL("image/jpeg",q)}
       data.length>650000?reject(new Error("Photo chhoti karein.")):resolve(data);
-    };img.onerror=()=>reject(new Error("Photo read nahi hui."));img.src=url;
+    };
+    img.onerror=()=>reject(new Error("Photo read nahi hui."));img.src=url;
   });
 }
 
 export default function Account(){
   const [user,setUser]=useState(null),[profile,setProfile]=useState(empty),[wallet,setWallet]=useState(0),[tx,setTx]=useState([]),[requests,setRequests]=useState([]);
-  const [file,setFile]=useState(null),[preview,setPreview]=useState(""),[amount,setAmount]=useState("500"),[utr,setUtr]=useState(""),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
+  const [file,setFile]=useState(null),[preview,setPreview]=useState(""),[amount,setAmount]=useState(500),[utr,setUtr]=useState(""),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
   useEffect(()=>onAuthStateChanged(auth,async u=>{
     setUser(u);if(!u)return;
@@ -49,10 +51,10 @@ export default function Account(){
   }
   async function recharge(e){
     e.preventDefault();const n=Number(amount),clean=utr.trim().replace(/\s+/g,"").toUpperCase();
-    if(!Number.isFinite(n)||n<100)return setMsg("Recharge amount kam se kam ₹100 rakhein.");
+    if(!RECHARGE_OPTIONS.includes(n))return setMsg("Recharge ke liye ₹100, ₹500 ya ₹1000 select karein.");
     if(!/^[A-Z0-9]{6,40}$/.test(clean))return setMsg("Sahi UTR / Transaction ID bhariye.");
     setSaving(true);setMsg("");
-    try{await addDoc(collection(db,"walletRechargeRequests"),{uid:user.uid,amount:n,utr:clean,status:"pending",createdAt:serverTimestamp()});setUtr("");setMsg("Recharge request Admin ko bhej di gayi. Approval ke baad wallet credit hoga.")}catch(e){setMsg(e.message)}finally{setSaving(false)}
+    try{await addDoc(collection(db,"walletRechargeRequests"),{uid:user.uid,amount:n,utr:clean,status:"pending",createdAt:serverTimestamp()});setUtr("");setMsg("₹"+n+" recharge request Admin ko bheji gayi. Approval ke baad wallet credit hoga.")}catch(e){setMsg(e.message)}finally{setSaving(false)}
   }
 
   if(!user)return <main><section className="cardPage"><div className="adminIcon">👤</div><h1>My Profile</h1><p>Google se login karein.</p><button className="primaryAction" onClick={()=>signInWithPopup(auth,new GoogleAuthProvider())}>Google se Login →</button></section></main>;
@@ -71,10 +73,15 @@ export default function Account(){
       <button className="primaryAction" disabled={saving}>{saving?"Saving...":"💾 Profile Save करें →"}</button>
     </form>
     <div className="adminBox"><div className="boxTitle"><div><span className="eyebrow">WALLET</span><h3>💰 Wallet Balance: ₹{wallet}</h3></div></div>
-      <p className="small">UPI se recharge karein, UTR bhejein. Admin verify karne ke baad balance add hoga.</p>
-      <form onSubmit={recharge}><input className="adminInput" type="number" min="100" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="Recharge amount"/>
-      <input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder="Recharge UTR / Transaction ID"/>
-      <button className="primaryAction" disabled={saving}>💳 Recharge Request भेजें →</button></form>
+      <p className="small">Pehle ₹100 / ₹500 / ₹1000 recharge select karein, phir UPI se payment karke UTR bhejein. Admin verify karne ke baad balance add hoga.</p>
+      <div className="rechargeOptions" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,margin:"12px 0"}}>
+        {RECHARGE_OPTIONS.map(n=><button type="button" key={n} onClick={()=>{setAmount(n);setMsg("")}} style={{padding:"14px 8px",borderRadius:14,border:amount===n?"2px solid #111":"1px solid #ddd",background:amount===n?"#f3f3f3":"#fff",fontWeight:800,cursor:"pointer"}}>₹{n}<small style={{display:"block",fontWeight:500,marginTop:3}}>{amount===n?"Selected":"Recharge"}</small></button>)}
+      </div>
+      <div className="feeRow"><span><small>Selected Recharge</small><b>Wallet में ₹{amount}</b></span><strong>₹{amount}</strong></div>
+      <form onSubmit={recharge}>
+        <input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder={"₹"+amount+" payment ka UTR / Transaction ID"}/>
+        <button className="primaryAction" disabled={saving}>{saving?"Sending...":"💳 ₹"+amount+" Recharge Request भेजें →"}</button>
+      </form>
     </div>
     <div className="adminList"><div className="listHead"><h3>🧾 Recharge History</h3><span>{requests.length}</span></div>{requests.map(x=><div className="adminRow" key={x.id}><span><b>₹{x.amount} • {x.status}</b><small>UTR: {x.utr}</small></span></div>)}</div>
     <div className="adminList"><div className="listHead"><h3>📊 Transactions</h3><span>{tx.length}</span></div>{tx.map(x=><div className="adminRow" key={x.id}><span><b>{x.type} • ₹{x.amount}</b><small>{x.profileId||""} • {x.utr||""}</small></span></div>)}</div>
