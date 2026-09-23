@@ -1,0 +1,43 @@
+"use client";
+import {Suspense,useEffect,useState} from "react";
+import {useSearchParams,useRouter} from "next/navigation";
+import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
+import {collection,doc,getDoc,onSnapshot,query,where,serverTimestamp,writeBatch} from "firebase/firestore";
+import {auth,db} from "../../lib/firebase";
+const OPTIONS=[100,500,1000];
+function RechargePage(){
+ const q=useSearchParams(),router=useRouter(),profile=q.get("profile")||"",type=q.get("type")==="mobile"?"mobile":"biodata";
+ const [user,setUser]=useState(null),[payment,setPayment]=useState({upiId:"",qrUrl:""}),[amount,setAmount]=useState(100),[utr,setUtr]=useState(""),[requests,setRequests]=useState([]),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false),[sent,setSent]=useState(false);
+ useEffect(()=>onAuthStateChanged(auth,setUser),[]);
+ useEffect(()=>{getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setPayment({upiId:s.data().upiId||"",qrUrl:s.data().qrUrl||""})).catch(()=>{})},[]);
+ useEffect(()=>{if(!user)return;return onSnapshot(query(collection(db,"walletRechargeRequests"),where("uid","==",user.uid)),s=>setRequests(s.docs.map(d=>({id:d.id,...d.data()}))))},[user]);
+ async function login(){try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setMsg(e.message)}}
+ async function submit(e){
+  e.preventDefault();setMsg("");if(!user)return setMsg("Pehle Google se login karein.");
+  const n=Number(amount),clean=utr.trim().replace(/\s+/g,"").toUpperCase();
+  if(!OPTIONS.includes(n))return setMsg("₹100, ₹500 ya ₹1000 select karein.");
+  if(!/^[A-Z0-9]{6,40}$/.test(clean))return setMsg("Sahi UTR / Transaction ID bhariye.");
+  if(requests.some(x=>x.status==="pending"&&Number(x.amount)===n))return setMsg("Is amount ka ek recharge already Pending hai.");
+  setSaving(true);
+  try{
+   const batch=writeBatch(db),reqRef=doc(collection(db,"walletRechargeRequests")),claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase()),lockRef=doc(db,"pendingPaymentLocks",user.uid+"_recharge_"+n);
+   batch.set(claimRef,{uid:user.uid,utr:clean,kind:"recharge",amount:n,requestId:reqRef.id,createdAt:serverTimestamp()});
+   batch.set(lockRef,{uid:user.uid,kind:"recharge",amount:n,requestId:reqRef.id,status:"pending",createdAt:serverTimestamp()});
+   batch.set(reqRef,{uid:user.uid,email:user.email||"",name:user.displayName||"",amount:n,utr:clean,status:"pending",lockId:lockRef.id,utrClaimId:claimRef.id,createdAt:serverTimestamp()});
+   await batch.commit();setSent(true);setUtr("");setMsg("⏳ Recharge Pending है। Admin UTR verify करेंगे। Approval के बाद ₹"+n+" आपके Wallet में जुड़ जाएगा।");
+  }catch(e){setMsg("Recharge request save nahi hui: "+e.message)}finally{setSaving(false)}
+ }
+ const upiLink=payment.upiId?"upi://pay?pa="+encodeURIComponent(payment.upiId)+"&pn="+encodeURIComponent("Zara Shadi Service")+"&am="+amount+"&cu=INR":"";
+ return <main><header className="siteHeader"><div className="headerInner"><button className="logo" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA SHADI</strong><small>Service</small></span></button></div></header>
+ <section className="cardPage" style={{maxWidth:760,margin:"25px auto"}}><div style={{textAlign:"center"}}><div className="paymentIcon">₹</div><span className="eyebrow">WALLET RECHARGE</span><h1>Wallet में Recharge करें</h1><p>Profile <b>{profile||"—"}</b> के लिए पहले Wallet Recharge करें.</p></div>
+ {!user&&<><div className="notice">Recharge करने के लिए पहले Google से Login करें.</div><button className="primaryAction" onClick={login}>Google se Login →</button></>}
+ {user&&<><div className="adminBox"><span className="eyebrow">MULTI RECHARGE OPTION</span><h3>कितना Recharge करना है?</h3>
+ <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,margin:"15px 0"}}>{OPTIONS.map(n=><button type="button" key={n} onClick={()=>{setAmount(n);setSent(false);setMsg("")}} style={{padding:"16px 8px",borderRadius:14,border:amount===n?"2px solid #111":"1px solid #ddd",background:amount===n?"#f3f3f3":"#fff",fontWeight:800,cursor:"pointer",fontSize:18}}>₹{n}<small style={{display:"block",fontSize:12,fontWeight:500,marginTop:4}}>{amount===n?"Selected":"Select"}</small></button>)}</div>
+ <div className="feeRow"><span><small>Selected Recharge</small><b>Wallet में ₹{amount}</b></span><strong>₹{amount}</strong></div>
+ {payment.upiId?<a className="primaryAction payLink" href={upiLink}>📱 ₹{amount} UPI से Pay करें →</a>:<div className="notice">Admin ने अभी UPI ID set नहीं की है.</div>}
+ {payment.qrUrl&&<div className="qr" style={{marginTop:12}}><img src={payment.qrUrl} alt="UPI QR" style={{maxWidth:250,width:"100%"}}/><small style={{display:"block",marginTop:8}}>QR से चुने हुए ₹{amount} का payment करें और UTR नीचे डालें.</small></div>}
+ <form className="paymentForm" onSubmit={submit}><label>UTR / Transaction ID<input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder={"₹"+amount+" payment ka UTR dalein"}/></label><button className="primaryAction" disabled={saving||sent}>{saving?"Sending...":sent?"Recharge Request Sent ✓":"💳 ₹"+amount+" Recharge Request भेजें →"}</button></form></div>
+ {msg&&<div className="messageBox">{msg}</div>}<div className="adminList"><div className="listHead"><h3>🧾 Recent Recharge</h3><span>{requests.length}</span></div>{requests.slice().reverse().slice(0,5).map(x=><div className="adminRow" key={x.id}><span><b>₹{x.amount} • {x.status}</b><small>UTR: {x.utr||"—"}</small></span></div>)}</div></>}
+ <button className="backAction" onClick={()=>router.push(profile?"/payment?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type):"/account")}>← वापस जाएँ</button></section></main>;
+}
+export default function Recharge(){return <Suspense fallback={<main><section className="cardPage">Loading...</section></main>}><RechargePage/></Suspense>}
