@@ -2,17 +2,15 @@
 
 import {useEffect,useState} from "react";
 import {GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged} from "firebase/auth";
-import {doc,getDoc,setDoc,collection,onSnapshot,query,where,serverTimestamp,writeBatch} from "firebase/firestore";
+import {doc,getDoc,setDoc,collection,onSnapshot,query,where,serverTimestamp} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 const empty={name:"",address:"",phone:"",age:"",income:"",photoURL:""};
-const RECHARGE_OPTIONS=[100,500,1000];
-
 function compressPhoto(file){return new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{URL.revokeObjectURL(url);const scale=Math.min(1,700/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement("canvas");c.width=Math.round(img.naturalWidth*scale);c.height=Math.round(img.naturalHeight*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);let q=.7,data=c.toDataURL("image/jpeg",q);while(data.length>600000&&q>.3){q-=.06;data=c.toDataURL("image/jpeg",q)}data.length>650000?reject(new Error("Photo chhoti karein.")):resolve(data)};img.onerror=()=>reject(new Error("Photo read nahi hui."));img.src=url})}
 
 export default function Account(){
   const [user,setUser]=useState(null),[profile,setProfile]=useState(empty),[wallet,setWallet]=useState(0),[tx,setTx]=useState([]),[requests,setRequests]=useState([]);
-  const [payment,setPayment]=useState({upiId:"",qrUrl:""}),[file,setFile]=useState(null),[preview,setPreview]=useState(""),[amount,setAmount]=useState(500),[utr,setUtr]=useState(""),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
+  const [file,setFile]=useState(null),[preview,setPreview]=useState(""),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
   useEffect(()=>onAuthStateChanged(auth,async u=>{setUser(u);if(!u)return;const s=await getDoc(doc(db,"users",u.uid));if(s.exists())setProfile({...empty,...s.data()});getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setPayment({upiId:s.data().upiId||"",qrUrl:s.data().qrUrl||""})).catch(()=>{})}),[]);
   useEffect(()=>{
@@ -34,9 +32,6 @@ export default function Account(){
 
   function choosePhoto(e){const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith("image/")||f.size>10*1024*1024)return setMsg("Image 10 MB se chhoti honi chahiye.");setFile(f);setPreview(URL.createObjectURL(f))}
   async function save(e){e.preventDefault();if(!user)return;const phone=profile.phone.replace(/\D/g,"");if(!profile.name.trim()||!profile.address.trim()||!/^[6-9]\d{9}$/.test(phone)||!profile.age||!profile.income.trim())return setMsg("Name, Address, Mobile, Age aur Income sab bharna zaroori hai.");setSaving(true);setMsg("");try{let photoURL=profile.photoURL||"";if(file)photoURL=await compressPhoto(file);await setDoc(doc(db,"users",user.uid),{uid:user.uid,name:profile.name.trim(),address:profile.address.trim(),phone,age:Number(profile.age),income:profile.income.trim(),photoURL,email:user.email||"",createdAt:profile.createdAt||serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});setProfile({...profile,phone,photoURL});setFile(null);setPreview(photoURL);setMsg("Profile save ho gaya.")}catch(e){setMsg(e.message)}finally{setSaving(false)}}
-  async function recharge(e){e.preventDefault();const n=Number(amount),clean=utr.trim().replace(/\s+/g,"").toUpperCase();if(!RECHARGE_OPTIONS.includes(n))return setMsg("Recharge ke liye ₹100, ₹500 ya ₹1000 select karein.");if(!/^[A-Z0-9]{6,40}$/.test(clean))return setMsg("Sahi UTR / Transaction ID bhariye.");if(requests.some(x=>x.status==="pending"&&Number(x.amount)===n))return setMsg("Is amount ka ek recharge already Pending hai. Pehle uska verification hone dein.");setSaving(true);setMsg("");try{const batch=writeBatch(db);const reqRef=doc(collection(db,"walletRechargeRequests"));const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());const lockRef=doc(db,"pendingPaymentLocks",user.uid+"_recharge_"+n);batch.set(claimRef,{uid:user.uid,utr:clean,kind:"recharge",amount:n,requestId:reqRef.id,createdAt:serverTimestamp()});batch.set(lockRef,{uid:user.uid,kind:"recharge",amount:n,requestId:reqRef.id,status:"pending",createdAt:serverTimestamp()});batch.set(reqRef,{uid:user.uid,email:user.email||"",name:profile.name||"",phone:profile.phone||"",amount:n,utr:clean,status:"pending",paymentMethod:"upi",lockId:lockRef.id,utrClaimId:claimRef.id,createdAt:serverTimestamp()});await batch.commit();setUtr("");setMsg("⏳ आपका Recharge Pending है। आपका UTR मिल गया है। Admin payment verify कर रहे हैं। Verification के बाद amount आपके Wallet में जल्द ही आ जाएगा। कृपया अभी थोड़ा इंतज़ार करें।")}catch(e){setMsg(e.message)}finally{setSaving(false)}}
-  const upiLink=payment.upiId?"upi://pay?pa="+encodeURIComponent(payment.upiId)+"&pn="+encodeURIComponent("Zara Shadi Service")+"&am="+amount+"&cu=INR":"";
-
   if(!user)return <main><section className="cardPage"><div className="adminIcon">👤</div><h1>My Profile</h1><p>Google se login karein.</p><button className="primaryAction" onClick={()=>signInWithPopup(auth,new GoogleAuthProvider())}>Google se Login →</button></section></main>;
   const pending=requests.filter(x=>x.status==="pending");
   return <main><section className="cardPage" style={{maxWidth:760,margin:"25px auto"}}>
