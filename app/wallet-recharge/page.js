@@ -10,7 +10,7 @@ const RECHARGE_OPTIONS=[100,500,1000];
 export default function WalletRecharge(){
   const [user,setUser]=useState(null),[profile,setProfile]=useState({name:"",phone:""}),[wallet,setWallet]=useState(0);
   const [payment,setPayment]=useState({upiId:"",qrUrl:""}),[amount,setAmount]=useState(100),[method,setMethod]=useState("upi"),[utr,setUtr]=useState("");
-  const [requests,setRequests]=useState([]),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
+  const [requests,setRequests]=useState([]),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false),[loginError,setLoginError]=useState("");
 
   useEffect(()=>onAuthStateChanged(auth,async u=>{
     setUser(u);
