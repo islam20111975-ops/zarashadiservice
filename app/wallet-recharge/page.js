@@ -9,7 +9,7 @@ const RECHARGE_OPTIONS=[100,500,1000];
 
 export default function WalletRecharge(){
   const [user,setUser]=useState(null),[profile,setProfile]=useState({name:"",phone:""}),[wallet,setWallet]=useState(0);
-  const [payment,setPayment]=useState({upiId:"",qrUrl:""}),[amount,setAmount]=useState(100),[utr,setUtr]=useState("");
+  const [payment,setPayment]=useState({upiId:""}),[amount,setAmount]=useState(100),[utr,setUtr]=useState("");
   const [requests,setRequests]=useState([]),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
   useEffect(()=>onAuthStateChanged(auth,async u=>{
@@ -17,7 +17,7 @@ export default function WalletRecharge(){
     if(!u)return;
     const s=await getDoc(doc(db,"users",u.uid));
     if(s.exists())setProfile({name:s.data().name||"",phone:s.data().phone||""});
-    getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setPayment({upiId:s.data().upiId||"",qrUrl:s.data().qrUrl||""})).catch(()=>{});
+    getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setPayment({upiId:s.data().upiId||""})).catch(()=>{});
   }),[]);
 
   useEffect(()=>{
@@ -63,7 +63,6 @@ export default function WalletRecharge(){
       </div>
       <div className="feeRow"><span><small>Selected Amount</small><b>₹{amount}</b></span><strong>UPI</strong></div>
       {payment.upiId?<a className="primaryAction payLink" href={upiLink}>📱 UPI से Pay करें →</a>:<div className="notice">अभी UPI payment उपलब्ध नहीं है.</div>}
-      {payment.qrUrl&&<div className="qr" style={{marginTop:12,textAlign:"center"}}><img src={payment.qrUrl} alt="UPI QR" style={{maxWidth:250,width:"100%"}}/><small style={{display:"block",marginTop:8}}>QR scan करके selected amount pay करें.</small></div>}
       <form onSubmit={recharge} style={{marginTop:14}}><input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder="Payment ka UTR / Transaction ID"/><button className="primaryAction" disabled={saving}>{saving?"Sending...":"💳 Recharge Request भेजें →"}</button></form>
     </div>
     {pending.length>0&&<div className="notice" style={{marginTop:14}}>⏳ <b>आपका Recharge Pending है</b><br/>Admin payment verify कर रहे हैं. Approval के बाद selected amount Wallet में add होगा.</div>}
