@@ -43,7 +43,7 @@ export default function Admin(){
       if(x.status!=="pending")return;
       const amount=Number(x.amount);
       if(![100,500,1000].includes(amount))throw new Error("Recharge amount valid nahi hai.");
-      if(x.paymentMethod!=="upi")throw new Error("Recharge payment method valid nahi hai.");
+      if(!["upi","qr"].includes(x.paymentMethod))throw new Error("Recharge payment method valid nahi hai.");
       if(!x.utr)throw new Error("Recharge UTR missing hai.");
       const reqRef=doc(db,"walletRechargeRequests",x.id);
       const userRef=doc(db,"users",x.uid);
@@ -55,7 +55,7 @@ export default function Admin(){
         const req=reqSnap.data();
         if(req.status!=="pending")throw new Error("Ye recharge already process ho chuka hai.");
         if(Number(req.amount)!==amount)throw new Error("Recharge request amount mismatch hai.");
-        if(req.paymentMethod!=="upi")throw new Error("Recharge payment method invalid hai.");
+        if(!["upi","qr"].includes(req.paymentMethod))throw new Error("Recharge payment method invalid hai.");
         if(!req.utr || !req.utrClaimId)throw new Error("Recharge UTR claim missing hai.");
         const claimRef=doc(db,"paymentUtrClaims",req.utrClaimId);
         const claimSnap=await t.get(claimRef);
@@ -198,7 +198,7 @@ export default function Admin(){
 
     {(tab==="access100"||tab==="access500")&&<div className="adminList"><div className="listHead"><h3>{tab==="access100"?"₹100 Paid Biodata":"₹500 Paid Mobile / Contact"} Requests</h3><span>{requests.filter(x=>x.amount===(tab==="access100"?100:500)).length}</span></div>{requests.filter(x=>x.amount===(tab==="access100"?100:500)).map(x=>{const p=profiles.find(p=>p.id===x.profileId);return <div className="userAdminCard" key={x.id}><div className="rowProfile">{p?.photos?.[0]?<img src={p.photos[0]} alt=""/>:<div className="rowPlaceholder">📷</div>}<div><b>{x.profileId}</b><small>User: {x.uid}</small><small>Amount: ₹{x.amount} • {x.status}</small><small>UTR: {x.utr||"-"}</small><small>{x.createdAt?.toDate?.()?.toLocaleString?.()||""}</small></div></div><div className="cardButtons">{x.status==="pending"&&<><button className="approve" onClick={()=>approveAccess(x)}>✓ Approve</button><button onClick={()=>rejectAccess(x)}>✕ Reject</button></>}</div></div>})}</div>}
 
-    {tab==="wallet"&&<div className="adminList"><div className="listHead"><h3>💰 Wallet Recharge Requests</h3><span>{recharges.length}</span></div>{recharges.map(x=><div className="userAdminCard" key={x.id}><div><b>{x.name||"Name not set"}</b><small>📧 {x.email||"-"}</small><small>📱 {x.phone||"-"}</small><small>👤 UID: {x.uid}</small><small>💰 Recharge: ₹{x.amount}</small><small>🧾 UTR: {x.utr||"-"}</small><small>📌 Status: {x.status}</small><small>🕒 {x.createdAt?.toDate?.()?.toLocaleString?.()||""}</small></div><div className="cardButtons">{x.status==="pending"&&<><button className="approve" onClick={()=>approveRecharge(x)}>✓ Approve & Credit ₹{x.amount}</button><button onClick={()=>rejectRecharge(x)}>✕ Reject</button></>}</div></div>)}</div>}
+    {tab==="wallet"&&<div className="adminList"><div className="listHead"><h3>💰 Wallet Recharge Requests</h3><span>{recharges.length}</span></div>{recharges.map(x=><div className="userAdminCard" key={x.id}><div><b>{x.name||"Name not set"}</b><small>📧 {x.email||"-"}</small><small>📱 {x.phone||"-"}</small><small>👤 UID: {x.uid}</small><small>💰 Recharge: ₹{x.amount}</small><small>🧾 UTR: {x.utr||"-"}</small><small>💳 Method: {(x.paymentMethod||"upi").toUpperCase()}</small><small>📌 Status: {x.status}</small><small>🕒 {x.createdAt?.toDate?.()?.toLocaleString?.()||""}</small></div><div className="cardButtons">{x.status==="pending"&&<><button className="approve" onClick={()=>approveRecharge(x)}>✓ Approve & Credit ₹{x.amount}</button><button onClick={()=>rejectRecharge(x)}>✕ Reject</button></>}</div></div>)}</div>}
 
     {tab==="transactions"&&<div className="adminList"><div className="listHead"><h3>🧾 All Wallet / Payment Transactions</h3><span>{transactions.length}</span></div>{transactions.map(x=><div className="adminRow" key={x.id}><span><b>{x.type} • ₹{x.amount}</b><small>UID: {x.uid}</small><small>Profile: {x.profileId||"-"} • UTR: {x.utr||"-"}</small><small>{x.createdAt?.toDate?.()?.toLocaleString?.()||""}</small></span></div>)}</div>}
 
