@@ -2,25 +2,8 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    match /users/{userId}/profile.jpg {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-        && (request.auth.uid == userId
-        || request.auth.token.email == "ngogrant454@gmail.com");
-    }
-
-    match /profiles/{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null
-        && request.auth.token.email == "ngogrant454@gmail.com";
-    }
-
-    match /payment/{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null
-        && request.auth.token.email == "ngogrant454@gmail.com";
-    }
-
+    // Storage is not used by the current app. All Storage access stays disabled
+    // so an accidental client-side upload cannot create unexpected usage.
     match /{allPaths=**} {
       allow read, write: if false;
     }
