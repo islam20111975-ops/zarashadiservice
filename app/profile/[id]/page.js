@@ -16,6 +16,7 @@ export default function Profile(){
     if(!id)return;
     (async()=>{
       try{
+        setLoadError("");
         const s=await getDoc(doc(db,"profiles",id));if(!s.exists() || s.data().status === "deleted"){setLoading(false);setP(null);return}
         setP({id:s.id,...s.data()});
         if(auth.currentUser){
@@ -25,14 +26,14 @@ export default function Profile(){
           if(m.exists()&&m.data().status==="approved"){const cr=await getDoc(doc(db,"profileContact",id));if(cr.exists())setContact(cr.data())}
           if(b.exists()&&b.data().status==="approved"){const pr=await getDoc(doc(db,"profileBiodataPrivate",id));if(pr.exists())setPrivateData(pr.data())}
         }
-      }finally{setLoading(false)}
+      }catch(e){setLoadError(e?.message||"Profile load nahi ho saka.")}finally{setLoading(false)}
     })();
   },[id,user]);
 
   async function login(){setLoginError("");try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}}
   const photos=Array.isArray(p?.photos)&&p.photos.length?p.photos:(p?.photo?[p.photo]:[]);
   if(loading)return <main><section className="cardPage"><div className="notFound">Loading...</div></section></main>;
-  if(!p)return <main><section className="cardPage"><div className="notFound">Profile not found</div></section></main>;
+  if(!p)return <main><section className="cardPage"><div className="notFound">{loadError||"Profile not found"}</div></section></main>;
 
   return <main><header className="siteHeader"><div className="headerInner"><button className="logo" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA SHADI</strong><small>Service</small></span></button><button className="headerLogin" onClick={()=>user?router.push(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account"):login()}>{!user?"🔐 Login":user.email?.toLowerCase()==="ngogrant454@gmail.com"?"🔐 Admin Dashboard":"👤 My Profile"}</button></div></header>
     <section className="detail cardPage"><div className="detailTop"><button className="miniBack" onClick={()=>router.push("/")}>← Profiles</button><span className="detailBadge">✓ Verified</span></div>
