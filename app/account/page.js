@@ -9,7 +9,7 @@ const empty={name:"",address:"",phone:"",age:"",income:"",photoURL:""};
 function compressPhoto(file){return new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{URL.revokeObjectURL(url);const scale=Math.min(1,700/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement("canvas");c.width=Math.round(img.naturalWidth*scale);c.height=Math.round(img.naturalHeight*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);let q=.7,data=c.toDataURL("image/jpeg",q);while(data.length>600000&&q>.3){q-=.06;data=c.toDataURL("image/jpeg",q)}data.length>650000?reject(new Error("Photo chhoti karein.")):resolve(data)};img.onerror=()=>reject(new Error("Photo read nahi hui."));img.src=url})}
 
 export default function Account(){
-  const [user,setUser]=useState(null),[profile,setProfile]=useState(empty),[wallet,setWallet]=useState(0),[tx,setTx]=useState([]),[requests,setRequests]=useState([]),[payment,setPayment]=useState({upiId:"",qrUrl:""});
+  const [user,setUser]=useState(null),[profile,setProfile]=useState(empty),[wallet,setWallet]=useState(0),[tx,setTx]=useState([]),[requests,setRequests]=useState([]);
   const [file,setFile]=useState(null),[preview,setPreview]=useState(""),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
   useEffect(()=>onAuthStateChanged(auth,async u=>{setUser(u);if(!u)return;const s=await getDoc(doc(db,"users",u.uid));if(s.exists())setProfile({...empty,...s.data()});getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setPayment({upiId:s.data().upiId||"",qrUrl:s.data().qrUrl||""})).catch(()=>{})}),[]);
