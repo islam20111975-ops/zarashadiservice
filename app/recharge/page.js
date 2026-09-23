@@ -21,9 +21,10 @@ function RechargePage(){
   setSaving(true);
   try{
    const batch=writeBatch(db),reqRef=doc(collection(db,"walletRechargeRequests")),claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase()),lockRef=doc(db,"pendingPaymentLocks",user.uid+"_recharge_"+n);
+   const userSnap=await getDoc(doc(db,"users",user.uid)),ud=userSnap.exists()?userSnap.data():{};
    batch.set(claimRef,{uid:user.uid,utr:clean,kind:"recharge",amount:n,requestId:reqRef.id,createdAt:serverTimestamp()});
    batch.set(lockRef,{uid:user.uid,kind:"recharge",amount:n,requestId:reqRef.id,status:"pending",createdAt:serverTimestamp()});
-   batch.set(reqRef,{uid:user.uid,email:user.email||"",name:user.displayName||"",amount:n,utr:clean,status:"pending",lockId:lockRef.id,utrClaimId:claimRef.id,createdAt:serverTimestamp()});
+   batch.set(reqRef,{uid:user.uid,email:user.email||ud.email||"",name:user.displayName||ud.name||"",phone:ud.phone||"",amount:n,utr:clean,status:"pending",lockId:lockRef.id,utrClaimId:claimRef.id,createdAt:serverTimestamp()});
    await batch.commit();setSent(true);setUtr("");setMsg("⏳ Recharge Pending है। Admin UTR verify करेंगे। Approval के बाद ₹"+n+" आपके Wallet में जुड़ जाएगा।");
   }catch(e){setMsg("Recharge request save nahi hui: "+e.message)}finally{setSaving(false)}
  }
@@ -35,7 +36,6 @@ function RechargePage(){
  <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,margin:"15px 0"}}>{OPTIONS.map(n=><button type="button" key={n} onClick={()=>{setAmount(n);setSent(false);setMsg("")}} style={{padding:"16px 8px",borderRadius:14,border:amount===n?"2px solid #111":"1px solid #ddd",background:amount===n?"#f3f3f3":"#fff",fontWeight:800,cursor:"pointer",fontSize:18}}>₹{n}<small style={{display:"block",fontSize:12,fontWeight:500,marginTop:4}}>{amount===n?"Selected":"Select"}</small></button>)}</div>
  <div className="feeRow"><span><small>Selected Recharge</small><b>Wallet में ₹{amount}</b></span><strong>₹{amount}</strong></div>
  {payment.upiId?<a className="primaryAction payLink" href={upiLink}>📱 ₹{amount} UPI से Pay करें →</a>:<div className="notice">Admin ने अभी UPI ID set नहीं की है.</div>}
- {payment.qrUrl&&<div className="qr" style={{marginTop:12}}><img src={payment.qrUrl} alt="UPI QR" style={{maxWidth:250,width:"100%"}}/><small style={{display:"block",marginTop:8}}>QR से चुने हुए ₹{amount} का payment करें और UTR नीचे डालें.</small></div>}
  <form className="paymentForm" onSubmit={submit}><label>UTR / Transaction ID<input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder={"₹"+amount+" payment ka UTR dalein"}/></label><button className="primaryAction" disabled={saving||sent}>{saving?"Sending...":sent?"Recharge Request Sent ✓":"💳 ₹"+amount+" Recharge Request भेजें →"}</button></form></div>
  {msg&&<div className="messageBox">{msg}</div>}<div className="adminList"><div className="listHead"><h3>🧾 Recent Recharge</h3><span>{requests.length}</span></div>{requests.slice().reverse().slice(0,5).map(x=><div className="adminRow" key={x.id}><span><b>₹{x.amount} • {x.status}</b><small>UTR: {x.utr||"—"}</small></span></div>)}</div></>}
  <button className="backAction" onClick={()=>router.push(profile?"/payment?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type):"/account")}>← वापस जाएँ</button></section></main>;
