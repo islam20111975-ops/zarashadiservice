@@ -148,7 +148,7 @@ export default function Admin(){
   async function savePayment(e){
     e.preventDefault();try{
       let qr="";const old=await getDoc(doc(db,"settings","payment"));if(old.exists())qr=old.data().qrUrl||"";
-      if(qrFile){const url=URL.createObjectURL(qrFile);const img=new Image();img.src=url;await new Promise((res,rej)=>{img.onload=res;img.onerror=rej});const c=document.createElement("canvas");const s=Math.min(1,700/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.round(img.naturalWidth*s);c.height=Math.round(img.naturalHeight*s);c.getContext("2d").drawImage(img,0,0,c.width,c.height);qr=c.toDataURL("image/jpeg",.8);URL.revokeObjectURL(url)}
+      if(qrFile){if(!qrFile.type.startsWith("image/")||qrFile.size>5*1024*1024)throw new Error("QR image 5 MB se chhoti honi chahiye.");const url=URL.createObjectURL(qrFile);try{const img=new Image();img.src=url;await new Promise((res,rej)=>{img.onload=res;img.onerror=rej});const c=document.createElement("canvas");const s=Math.min(1,700/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.round(img.naturalWidth*s);c.height=Math.round(img.naturalHeight*s);c.getContext("2d").drawImage(img,0,0,c.width,c.height);let q=.8;qr=c.toDataURL("image/jpeg",q);while(qr.length>300000&&q>.3){q-=.08;qr=c.toDataURL("image/jpeg",q)}if(qr.length>300000)throw new Error("QR image bahut badi hai. Chhoti image upload karein.");}finally{URL.revokeObjectURL(url)}}
       await setDoc(doc(db,"settings","payment"),{upiId:upi.trim(),qrUrl:qr,updatedAt:serverTimestamp()},{merge:true});setQrFile(null);setQrPreview("");alert("Payment settings save ho gayi.")
     }catch(e){setError(e.message)}
   }
