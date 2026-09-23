@@ -101,9 +101,9 @@ export default function Admin(){
   async function approveRecharge(x){
     try{
       if(x.status!=="pending")return;
-      await updateDoc(doc(db,"walletRechargeRequests",x.id),{status:"approved",approvedAt:serverTimestamp()});
-      await setDoc(doc(db,"walletTransactions",x.id+"_recharge"),{uid:x.uid,type:"recharge",amount:Number(x.amount),utr:x.utr||"",requestId:x.id,status:"approved",createdAt:serverTimestamp()},{merge:true});
-      await setDoc(doc(db,"users",x.uid),{walletBalance:Number(x.approvedAmount||x.amount),lastRecharge:Number(x.approvedAmount||x.amount)},{merge:true});
+      const amount=Number(x.approvedAmount||x.amount); const uref=doc(db,"users",x.uid); const us=await getDoc(uref); const oldBalance=Number(us.exists()?us.data().walletBalance||0:0); await updateDoc(doc(db,"walletRechargeRequests",x.id),{status:"approved",approvedAt:serverTimestamp(),approvedAmount:amount});
+      await setDoc(doc(db,"walletTransactions",x.id+"_recharge"),{uid:x.uid,type:"recharge",amount,utr:x.utr||"",requestId:x.id,status:"approved",createdAt:serverTimestamp()},{merge:true});
+      await setDoc(uref,{walletBalance:oldBalance+amount,lastRecharge:amount},{merge:true});
     }catch(e){setError("Recharge approve nahi hua: "+e.message)}
   }
   async function rejectRecharge(x){if(confirm("Recharge reject karein?"))await updateDoc(doc(db,"walletRechargeRequests",x.id),{status:"rejected",rejectedAt:serverTimestamp()})}
