@@ -3,7 +3,7 @@
 import {Suspense,useEffect,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {doc,getDoc,onSnapshot} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,serverTimestamp,writeBatch} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 function Pay(){
@@ -28,17 +28,15 @@ function Pay(){
     setMsg("");
     if(!user)return setMsg("Pehle Google se login karein.");
     if(!p)return setMsg("Profile available nahi hai.");
-    const {getDoc}=await import("firebase/firestore");
     const accessRef=doc(db,type==="biodata"?"biodataUnlocks":"mobileAccess",user.uid+"_"+profile);
     const accessSnap=await getDoc(accessRef);
     if(accessSnap.exists()&&accessSnap.data().status==="approved")return setMsg("Is profile ka access pehle hi approved hai.");
     if(wallet<amount)return setMsg("Wallet Balance ₹"+wallet+" hai. ₹"+amount+" available nahi hai. Pehle Wallet Recharge karein.");
     setSaving(true);
     try{
-      const {collection,doc:makeDoc,serverTimestamp,writeBatch}=await import("firebase/firestore");
       const batch=writeBatch(db);
-      const reqRef=makeDoc(collection(db,"paidAccessRequests"));
-      const lockRef=makeDoc(db,"pendingPaymentLocks",user.uid+"_"+profile+"_"+type);
+      const reqRef=doc(collection(db,"paidAccessRequests"));
+      const lockRef=doc(db,"pendingPaymentLocks",user.uid+"_"+profile+"_"+type);
       batch.set(lockRef,{uid:user.uid,profileId:profile,type,kind:"access",amount,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()});
       batch.set(reqRef,{uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"wallet",utr:"",lockId:lockRef.id,createdAt:serverTimestamp()});
       await batch.commit();
