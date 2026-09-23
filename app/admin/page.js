@@ -43,7 +43,7 @@ export default function Admin(){
       if(x.status!=="pending")return;
       const amount=Number(x.amount);
       if(![100,500,1000].includes(amount))throw new Error("Recharge amount valid nahi hai.");
-      if(!["upi","qr"].includes(x.paymentMethod))throw new Error("Recharge payment method valid nahi hai.");
+      if(x.paymentMethod!=="upi")throw new Error("Recharge payment method valid nahi hai.");
       if(!x.utr)throw new Error("Recharge UTR missing hai.");
       const reqRef=doc(db,"walletRechargeRequests",x.id);
       const userRef=doc(db,"users",x.uid);
