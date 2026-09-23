@@ -41,8 +41,8 @@ export default function Admin(){
   async function approveRecharge(x){
     try{
       if(x.status!=="pending")return;
-      const amount=Number(x.approvedAmount||x.amount);
-      if(!Number.isFinite(amount)||amount<=0)throw new Error("Recharge amount valid nahi hai.");
+      const amount=Number(x.amount);
+      if(![100,500,1000].includes(amount))throw new Error("Recharge amount valid nahi hai.");
       const reqRef=doc(db,"walletRechargeRequests",x.id);
       const userRef=doc(db,"users",x.uid);
       const txRef=doc(db,"walletTransactions",x.id+"_recharge");
@@ -64,7 +64,10 @@ export default function Admin(){
         t.set(txRef,{
           uid:x.uid,
           type:"recharge",
+          direction:"credit",
           amount,
+          signedAmount:amount,
+          balanceAfter:newBalance,
           utr:x.utr||"",
           requestId:x.id,
           status:"approved",
@@ -101,12 +104,14 @@ export default function Admin(){
           throw new Error("Is profile ka access pehle hi approved hai.");
         }
 
+        let balanceAfter=null;
         if(req.paymentMethod==="wallet"){
           const userSnap=await t.get(userRef);
           if(!userSnap.exists())throw new Error("User wallet nahi mila.");
           const balance=Number(userSnap.data().walletBalance||0);
           if(balance<amount)throw new Error("User Wallet Balance ₹"+balance+" hai. ₹"+amount+" available nahi hai.");
-          t.set(userRef,{walletBalance:balance-amount,lastPayment:amount},{merge:true});
+          balanceAfter=balance-amount;
+          t.set(userRef,{walletBalance:balanceAfter,lastPayment:amount},{merge:true});
         }
 
         t.set(unlockRef,{
@@ -122,6 +127,9 @@ export default function Admin(){
           utr:x.utr||"",
           requestId:x.id,
           paymentMethod:req.paymentMethod||"upi",
+          direction:req.paymentMethod==="wallet"?"debit":"credit",
+          signedAmount:req.paymentMethod==="wallet"?-amount:amount,
+          balanceAfter,
           status:"approved",
           createdAt:serverTimestamp()
         },{merge:true});
