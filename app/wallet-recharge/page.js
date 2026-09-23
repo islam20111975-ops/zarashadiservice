@@ -9,7 +9,7 @@ const RECHARGE_OPTIONS=[100,500,1000];
 
 export default function WalletRecharge(){
   const [user,setUser]=useState(null),[profile,setProfile]=useState({name:"",phone:""}),[wallet,setWallet]=useState(0);
-  const [payment,setPayment]=useState({upiId:""}),[amount,setAmount]=useState(100),[utr,setUtr]=useState("");
+  const [payment,setPayment]=useState({upiId:"",qrUrl:""}),[amount,setAmount]=useState(100),[method,setMethod]=useState("upi"),[utr,setUtr]=useState("");
   const [requests,setRequests]=useState([]),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
   useEffect(()=>onAuthStateChanged(auth,async u=>{
@@ -17,7 +17,7 @@ export default function WalletRecharge(){
     if(!u)return;
     const s=await getDoc(doc(db,"users",u.uid));
     if(s.exists())setProfile({name:s.data().name||"",phone:s.data().phone||""});
-    getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setPayment({upiId:s.data().upiId||""})).catch(()=>{});
+    getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setPayment({upiId:s.data().upiId||"",qrUrl:s.data().qrUrl||""})).catch(()=>{});
   }),[]);
 
   useEffect(()=>{
@@ -42,7 +42,7 @@ export default function WalletRecharge(){
       const lockRef=doc(db,"pendingPaymentLocks",user.uid+"_recharge_"+n);
       batch.set(claimRef,{uid:user.uid,utr:clean,kind:"recharge",amount:n,requestId:reqRef.id,createdAt:serverTimestamp()});
       batch.set(lockRef,{uid:user.uid,kind:"recharge",amount:n,requestId:reqRef.id,status:"pending",createdAt:serverTimestamp()});
-      batch.set(reqRef,{uid:user.uid,email:user.email||"",name:profile.name||"",phone:profile.phone||"",amount:n,utr:clean,status:"pending",paymentMethod:"upi",lockId:lockRef.id,utrClaimId:claimRef.id,createdAt:serverTimestamp()});
+      batch.set(reqRef,{uid:user.uid,email:user.email||"",name:profile.name||"",phone:profile.phone||"",amount:n,utr:clean,status:"pending",paymentMethod:method,lockId:lockRef.id,utrClaimId:claimRef.id,createdAt:serverTimestamp()});
       await batch.commit();
       setUtr("");
       setMsg("⏳ Recharge Pending है। Admin payment verify करेंगे। Verification के बाद amount आपके Wallet में आ जाएगा.");
@@ -61,8 +61,9 @@ export default function WalletRecharge(){
       <div className="rechargeOptions" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,margin:"14px 0"}}>
         {RECHARGE_OPTIONS.map(n=><button type="button" key={n} onClick={()=>{setAmount(n);setMsg("")}} style={{padding:"14px 8px",borderRadius:14,border:amount===n?"2px solid #111":"1px solid #ddd",background:amount===n?"#f3f3f3":"#fff",fontWeight:800,cursor:"pointer"}}>₹{n}<small style={{display:"block",fontWeight:500,marginTop:3}}>{amount===n?"Selected":"Select"}</small></button>)}
       </div>
-      <div className="feeRow"><span><small>Selected Amount</small><b>₹{amount}</b></span><strong>UPI</strong></div>
-      {payment.upiId?<a className="primaryAction payLink" href={upiLink}>📱 UPI से Pay करें →</a>:<div className="notice">अभी UPI payment उपलब्ध नहीं है.</div>}
+      <div className="feeRow"><span><small>Selected Amount</small><b>₹{amount}</b></span><strong>{method==="upi"?"UPI":"QR"}</strong></div>
+      <div className="rechargeOptions" style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10,margin:"14px 0"}}><button type="button" onClick={()=>setMethod("upi")} style={{padding:"13px",borderRadius:14,border:method==="upi"?"2px solid #111":"1px solid #ddd",fontWeight:800}}>📱 UPI Payment</button><button type="button" onClick={()=>setMethod("qr")} style={{padding:"13px",borderRadius:14,border:method==="qr"?"2px solid #111":"1px solid #ddd",fontWeight:800}}>▣ QR Payment</button></div>
+      {method==="upi"?(payment.upiId?<a className="primaryAction payLink" href={upiLink}>📱 ₹{amount} UPI से Pay करें →</a>:<div className="notice">अभी UPI payment उपलब्ध नहीं है.</div>):(payment.qrUrl?<div style={{textAlign:"center"}}><p className="small">QR scan karke exact ₹{amount} payment karein.</p><img src={payment.qrUrl} alt="UPI QR" style={{display:"block",width:"min(100%,300px)",margin:"12px auto",borderRadius:18}}/></div>:<div className="notice">अभी QR payment उपलब्ध नहीं है.</div>)}
       <form onSubmit={recharge} style={{marginTop:14}}><input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder="Payment ka UTR / Transaction ID"/><button className="primaryAction" disabled={saving}>{saving?"Sending...":"💳 Recharge Request भेजें →"}</button></form>
     </div>
     {pending.length>0&&<div className="notice" style={{marginTop:14}}>⏳ <b>आपका Recharge Pending है</b><br/>Admin payment verify कर रहे हैं. Approval के बाद selected amount Wallet में add होगा.</div>}
