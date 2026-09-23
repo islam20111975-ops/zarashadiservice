@@ -3,7 +3,7 @@
 import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged,signOut} from "firebase/auth";
-import {collection,deleteDoc,doc,getDoc,onSnapshot,query,orderBy,setDoc,serverTimestamp,updateDoc} from "firebase/firestore";
+import {collection,deleteDoc,doc,getDoc,onSnapshot,query,orderBy,setDoc,serverTimestamp,updateDoc,runTransaction} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 const ADMIN="ngogrant454@gmail.com";
@@ -42,10 +42,39 @@ export default function Admin(){
     try{
       if(x.status!=="pending")return;
       const amount=Number(x.approvedAmount||x.amount);
-      const uref=doc(db,"users",x.uid);const us=await getDoc(uref);const oldBalance=Number(us.exists()?us.data().walletBalance||0:0);
-      await updateDoc(doc(db,"walletRechargeRequests",x.id),{status:"approved",approvedAt:serverTimestamp(),approvedAmount:amount});
-      await setDoc(doc(db,"walletTransactions",x.id+"_recharge"),{uid:x.uid,type:"recharge",amount,utr:x.utr||"",requestId:x.id,status:"approved",createdAt:serverTimestamp()},{merge:true});
-      await setDoc(uref,{walletBalance:oldBalance+amount,lastRecharge:amount},{merge:true});
+      if(!Number.isFinite(amount)||amount<=0)throw new Error("Recharge amount valid nahi hai.");
+      const reqRef=doc(db,"walletRechargeRequests",x.id);
+      const userRef=doc(db,"users",x.uid);
+      const txRef=doc(db,"walletTransactions",x.id+"_recharge");
+
+      await runTransaction(db,async t=>{
+        const reqSnap=await t.get(reqRef);
+        if(!reqSnap.exists())throw new Error("Recharge request nahi mili.");
+        if(reqSnap.data().status!=="pending")throw new Error("Ye recharge already process ho chuka hai.");
+
+        const userSnap=await t.get(userRef);
+        const oldBalance=Number(userSnap.exists()?userSnap.data().walletBalance||0:0);
+        const newBalance=oldBalance+amount;
+
+        t.update(reqRef,{
+          status:"approved",
+          approvedAt:serverTimestamp(),
+          approvedAmount:amount
+        });
+        t.set(txRef,{
+          uid:x.uid,
+          type:"recharge",
+          amount,
+          utr:x.utr||"",
+          requestId:x.id,
+          status:"approved",
+          createdAt:serverTimestamp()
+        },{merge:true});
+        t.set(userRef,{
+          walletBalance:newBalance,
+          lastRecharge:amount
+        },{merge:true});
+      });
     }catch(e){setError("Recharge approve nahi hua: "+e.message)}
   }
   async function rejectRecharge(x){if(confirm("Recharge reject karein?"))await updateDoc(doc(db,"walletRechargeRequests",x.id),{status:"rejected",rejectedAt:serverTimestamp()})}
