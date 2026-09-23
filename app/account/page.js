@@ -10,7 +10,7 @@ function compressPhoto(file){return new Promise((resolve,reject)=>{const url=URL
 
 export default function Account(){
   const [user,setUser]=useState(null),[profile,setProfile]=useState(empty),[wallet,setWallet]=useState(0),[tx,setTx]=useState([]),[requests,setRequests]=useState([]);
-  const [file,setFile]=useState(null),[preview,setPreview]=useState(""),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
+  const [file,setFile]=useState(null),[preview,setPreview]=useState(""),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false),[loginError,setLoginError]=useState("");
 
   useEffect(()=>onAuthStateChanged(auth,async u=>{setUser(u);if(!u)return;const s=await getDoc(doc(db,"users",u.uid));if(s.exists())setProfile({...empty,...s.data()});getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setPayment({upiId:s.data().upiId||"",qrUrl:s.data().qrUrl||""})).catch(()=>{})}),[]);
   useEffect(()=>{
