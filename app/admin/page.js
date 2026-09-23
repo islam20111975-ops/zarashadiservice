@@ -128,8 +128,8 @@ export default function Admin(){
           utr:x.utr||"",
           requestId:x.id,
           paymentMethod:req.paymentMethod||"upi",
-          direction:req.paymentMethod==="wallet"?"debit":"credit",
-          signedAmount:req.paymentMethod==="wallet"?-amount:amount,
+          direction:req.paymentMethod==="wallet"?"debit":"none",
+          signedAmount:req.paymentMethod==="wallet"?-amount:0,
           balanceAfter,
           status:"approved",
           createdAt:serverTimestamp()
