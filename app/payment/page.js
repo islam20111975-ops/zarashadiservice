@@ -32,7 +32,7 @@ function Pay(){
     if(!/^[A-Z0-9]{6,40}$/.test(clean))return setMsg("Sahi UTR / Transaction ID bhariye.");
     setSaving(true);
     try{
-      const batch=writeBatch(db);const reqRef=doc(collection(db,"paidAccessRequests"));const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());const lockRef=doc(db,"pendingPaymentLocks",user.uid+"_"+profile+"_"+type);batch.set(claimRef,{uid:user.uid,utr:clean,kind:"access",requestId:reqRef.id,createdAt:serverTimestamp()});batch.set(lockRef,{uid:user.uid,profileId:profile,type,kind:"access",requestId:reqRef.id,status:"pending",createdAt:serverTimestamp()});batch.set(reqRef,{
+      const batch=writeBatch(db);const reqRef=doc(collection(db,"paidAccessRequests"));const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());const lockRef=doc(db,"pendingPaymentLocks",user.uid+"_"+profile+"_"+type);batch.set(claimRef,{uid:user.uid,utr:clean,kind:"access",profileId:profile,type,amount,requestId:reqRef.id,createdAt:serverTimestamp()});batch.set(lockRef,{uid:user.uid,profileId:profile,type,kind:"access",requestId:reqRef.id,status:"pending",createdAt:serverTimestamp()});batch.set(reqRef,{
         uid:user.uid,profileId:profile,type,amount,status:"pending",
         paymentMethod:"upi",utr:clean,lockId:lockRef.id,utrClaimId:claimRef.id,createdAt:serverTimestamp()
       });await batch.commit();
