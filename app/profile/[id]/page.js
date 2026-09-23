@@ -14,6 +14,7 @@ export default function Profile(){
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
   useEffect(()=>{
     if(!id)return;
+    setPrivateData(null);setContact(null);setUnlocked(false);setMobile(false);
     (async()=>{
       try{
         const s=await getDoc(doc(db,"profiles",id));if(!s.exists() || s.data().status === "deleted"){setLoading(false);setP(null);return}
