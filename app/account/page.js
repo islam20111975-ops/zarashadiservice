@@ -24,11 +24,13 @@ function compressPhoto(file){
 
 export default function Account(){
   const [user,setUser]=useState(null),[profile,setProfile]=useState(empty),[wallet,setWallet]=useState(0),[tx,setTx]=useState([]),[requests,setRequests]=useState([]);
+  const [payment,setPayment]=useState({upiId:"",qrUrl:""});
   const [file,setFile]=useState(null),[preview,setPreview]=useState(""),[amount,setAmount]=useState(500),[utr,setUtr]=useState(""),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
   useEffect(()=>onAuthStateChanged(auth,async u=>{
     setUser(u);if(!u)return;
     const s=await getDoc(doc(db,"users",u.uid));if(s.exists())setProfile({...empty,...s.data()});
+    getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setPayment({upiId:s.data().upiId||"",qrUrl:s.data().qrUrl||""})).catch(()=>{});
   }),[]);
   useEffect(()=>{
     if(!user)return;
@@ -56,6 +58,7 @@ export default function Account(){
     setSaving(true);setMsg("");
     try{await addDoc(collection(db,"walletRechargeRequests"),{uid:user.uid,amount:n,utr:clean,status:"pending",createdAt:serverTimestamp()});setUtr("");setMsg("₹"+n+" recharge request Admin ko bheji gayi. Approval ke baad wallet credit hoga.")}catch(e){setMsg(e.message)}finally{setSaving(false)}
   }
+  const upiLink=payment.upiId?"upi://pay?pa="+encodeURIComponent(payment.upiId)+"&pn="+encodeURIComponent("Zara Shadi Service")+"&am="+amount+"&cu=INR":"";
 
   if(!user)return <main><section className="cardPage"><div className="adminIcon">👤</div><h1>My Profile</h1><p>Google se login karein.</p><button className="primaryAction" onClick={()=>signInWithPopup(auth,new GoogleAuthProvider())}>Google se Login →</button></section></main>;
 
@@ -73,11 +76,13 @@ export default function Account(){
       <button className="primaryAction" disabled={saving}>{saving?"Saving...":"💾 Profile Save करें →"}</button>
     </form>
     <div className="adminBox"><div className="boxTitle"><div><span className="eyebrow">WALLET</span><h3>💰 Wallet Balance: ₹{wallet}</h3></div></div>
-      <p className="small">Pehle ₹100 / ₹500 / ₹1000 recharge select karein, phir UPI se payment karke UTR bhejein. Admin verify karne ke baad balance add hoga.</p>
+      <p className="small">₹100 / ₹500 / ₹1000 में से amount चुनें। UPI button पर क्लिक करने पर वही amount अपने-आप UPI payment में जाएगा.</p>
       <div className="rechargeOptions" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,margin:"12px 0"}}>
         {RECHARGE_OPTIONS.map(n=><button type="button" key={n} onClick={()=>{setAmount(n);setMsg("")}} style={{padding:"14px 8px",borderRadius:14,border:amount===n?"2px solid #111":"1px solid #ddd",background:amount===n?"#f3f3f3":"#fff",fontWeight:800,cursor:"pointer"}}>₹{n}<small style={{display:"block",fontWeight:500,marginTop:3}}>{amount===n?"Selected":"Recharge"}</small></button>)}
       </div>
       <div className="feeRow"><span><small>Selected Recharge</small><b>Wallet में ₹{amount}</b></span><strong>₹{amount}</strong></div>
+      {payment.upiId?<a className="primaryAction payLink" href={upiLink}>📱 ₹{amount} UPI से Pay करें →</a>:<div className="notice">Admin ने अभी UPI ID set नहीं की है।</div>}
+      {payment.qrUrl&&<div className="qr" style={{marginTop:12}}><img src={payment.qrUrl} alt="UPI QR" style={{maxWidth:250,width:"100%"}}/><small style={{display:"block",marginTop:8}}>QR scan के बाद ₹{amount} का payment करें और UTR नीचे डालें.</small></div>}
       <form onSubmit={recharge}>
         <input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder={"₹"+amount+" payment ka UTR / Transaction ID"}/>
         <button className="primaryAction" disabled={saving}>{saving?"Sending...":"💳 ₹"+amount+" Recharge Request भेजें →"}</button>
