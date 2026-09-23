@@ -67,7 +67,7 @@ export default function WalletRecharge(){
       <form onSubmit={recharge} style={{marginTop:14}}><input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder="Payment ka UTR / Transaction ID"/><button className="primaryAction" disabled={saving}>{saving?"Sending...":"💳 Recharge Request भेजें →"}</button></form>
     </div>
     {pending.length>0&&<div className="notice" style={{marginTop:14}}>⏳ <b>आपका Recharge Pending है</b><br/>Admin payment verify कर रहे हैं. Approval के बाद selected amount Wallet में add होगा.</div>}
-    <div className="adminList" style={{marginTop:14}}><div className="listHead"><h3>🧾 Recharge History</h3><span>{requests.length}</span></div>{requests.map(x=><div className="adminRow" key={x.id}><span><b>₹{x.amount} • {x.status}</b><small>UTR: {x.utr}</small></span></div>)}</div>
+    <div className="adminList" style={{marginTop:14}}><div className="listHead"><h3>🧾 Recharge History</h3><span>{requests.length}</span></div>{requests.map(x=><div className="adminRow" key={x.id}><span><b>₹{x.amount} • {x.status}</b><small>💳 Method: {(x.paymentMethod||"upi").toUpperCase()} • UTR: {x.utr}</small></span></div>)}</div>
     {msg&&<div className="messageBox">{msg}</div>}
     <button className="backAction" onClick={()=>location.href="/account"}>← My Account पर जाएँ</button>
   </section></main>;
