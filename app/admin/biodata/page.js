@@ -73,6 +73,7 @@ function BiodataAdminPage(){
   async function save(e){
     e.preventDefault();setError("");
     const id=form.id.trim(),phone=form.phone.replace(/\D/g,"");
+    if(!/^[A-Za-z0-9_-]{2,40}$/.test(id))return setError("Profile ID sirf letters, numbers, _ ya - mein 2–40 characters ka hona chahiye.");
     if(!id||!form.name.trim()||!form.address.trim()||!/^[6-9]\d{9}$/.test(phone)||!form.age||!form.income.trim()||!form.description.trim())
       return setError("Profile ID, Name, Address, Mobile, Age, Income aur Description sab bharna zaroori hai.");
     setSaving(true);
