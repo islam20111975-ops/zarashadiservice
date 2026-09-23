@@ -111,6 +111,16 @@ service cloud.firestore {
         && (
           (request.resource.data.kind == "recharge"
             && request.resource.data.amount is number
+            && request.resource.data.uid + "_recharge_" + request.resource.data.amount == lockId)
+          ||
+          (request.resource.data.kind == "access"
+            && request.resource.data.profileId is string
+            && request.resource.data.type is string
+            && request.resource.data.uid + "_" + request.resource.data.profileId + "_" + request.resource.data.type == lockId)
+        )
+        && (
+          (request.resource.data.kind == "recharge"
+            && request.resource.data.amount is number
             && (request.resource.data.amount == 100 || request.resource.data.amount == 500 || request.resource.data.amount == 1000))
           ||
           (request.resource.data.kind == "access"
@@ -136,8 +146,7 @@ service cloud.firestore {
         && request.resource.data.phone is string
         && request.resource.data.utr is string
         && request.resource.data.utr != ""
-        && request.resource.data.paymentMethod is string
-        && (request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
+        && request.resource.data.paymentMethod == "upi"
         && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId
         && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid
         && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.kind == "recharge"
