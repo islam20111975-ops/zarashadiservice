@@ -72,3 +72,19 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
   .paymentPremium .feeRow{padding:11px 12px}
   .paymentPremium .paymentOption{min-height:48px;padding:12px 13px;font-size:12px}
 }
+
+
+/* Payment page finishing touches */
+.paymentPremium .paymentOptions:before{content:"Choose your payment method";display:block;text-align:left;color:#64748b;font-size:10px;font-weight:900;letter-spacing:.8px;text-transform:uppercase;margin:2px 2px 0}
+.paymentPremium .paymentOption{position:relative}
+.paymentPremium .paymentOption:active,.paymentPremium .walletButton:active{transform:translateY(1px)}
+.walletPanel .walletTop{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.walletPanel .walletTop span{font-size:11px;font-weight:800;color:#475569}
+.walletPanel .walletTop b{font-size:18px;color:#166534}
+.walletPanel small{display:block;margin-top:5px;color:#64748b;font-size:10px;line-height:1.45}
+.paymentPremium .walletButton{min-height:48px;padding:12px 14px;font-size:12px}
+@media(max-width:600px){
+  .paymentPremium .paymentOptions{gap:8px}
+  .paymentPremium .paymentOptions:before{font-size:9px;margin-bottom:1px}
+  .paymentPremium .walletButton{min-height:48px}
+}
