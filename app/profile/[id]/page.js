@@ -34,13 +34,13 @@ export default function Profile(){
   if(loading)return <main><section className="cardPage"><div className="notFound">Loading...</div></section></main>;
   if(!p)return <main><section className="cardPage"><div className="notFound">Profile not found</div></section></main>;
 
-  return <main><header className="siteHeader"><div className="headerInner"><button className="logo" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA SHADI</strong><small>Service</small></span></button><button className="headerLogin" onClick={()=>router.push(user?.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account")}>{user?.email?.toLowerCase()==="ngogrant454@gmail.com"?"🔐 Admin Dashboard":"👤 My Profile"}</button></div></header>
+  return <main><header className="siteHeader"><div className="headerInner"><button className="logo" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA SHADI</strong><small>Service</small></span></button><button className="headerLogin" onClick={()=>user?router.push(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account"):login()}>{!user?"🔐 Login":user.email?.toLowerCase()==="ngogrant454@gmail.com"?"🔐 Admin Dashboard":"👤 My Profile"}</button></div></header>
     <section className="detail cardPage"><div className="detailTop"><button className="miniBack" onClick={()=>router.push("/")}>← Profiles</button><span className="detailBadge">✓ Verified</span></div>
       <div className="detailPhoto" onClick={()=>setLightbox(true)}>{photos[0]?<img src={photos[0]} alt="Marriage profile"/>:<div className="notFound">Photo not found</div>}</div>
       <div className="detailBody"><span className="profileId">{id}</span><h1>{unlocked&&privateData?privateData.name:"Rishta ki Jankari"}</h1>
       {!unlocked?<><p className="detailLead">Complete biodata dekhne ke liye ₹100 payment required hai.</p><div className="notice">इस रिश्ते की पूरी जानकारी के लिए ₹100 भुगतान करें</div><button className="primaryAction" onClick={()=>user?router.push("/payment?profile="+encodeURIComponent(id)+"&type=biodata"):login()}>₹100 Biodata Unlock करें →</button></>:
       <div className="biodataBox"><p><b>नाम:</b> {privateData?.name||"-"}</p><p><b>पता:</b> {privateData?.address||"-"}</p><p><b>उम्र:</b> {privateData?.age||"-"}</p><p><b>आमदनी:</b> {privateData?.income||"-"}</p>{privateData?.description&&<div className="descriptionBox"><b>📝 विवरण:</b><p>{privateData.description}</p></div>}
-        <div className="notice">{mobile?"📱 Mobile Number: "+(privateData?.phone||"-"):"Mobile Number देखने के लिए ₹500 भुगतान करें"}</div>
+        <div className="notice">{mobile?"📱 Mobile Number: "+(contact?.phone||"-"):"Mobile Number देखने के लिए ₹500 भुगतान करें"}</div>
         {!mobile&&<button className="primaryAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(id)+"&type=mobile")}>₹500 Mobile Number Access →</button>}
       </div>}
       {!user&&<p className="small">Payment/access ke liye Google login zaroori hai.</p>}
