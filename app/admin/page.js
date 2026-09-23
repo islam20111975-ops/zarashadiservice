@@ -43,6 +43,8 @@ export default function Admin(){
       if(x.status!=="pending")return;
       const amount=Number(x.amount);
       if(![100,500,1000].includes(amount))throw new Error("Recharge amount valid nahi hai.");
+      if(!["upi","qr"].includes(x.paymentMethod))throw new Error("Recharge payment method valid nahi hai.");
+      if(!x.utr)throw new Error("Recharge UTR missing hai.");
       const reqRef=doc(db,"walletRechargeRequests",x.id);
       const userRef=doc(db,"users",x.uid);
       const txRef=doc(db,"walletTransactions",x.id+"_recharge");
@@ -99,6 +101,9 @@ export default function Admin(){
         if(!reqSnap.exists())throw new Error("Access request nahi mili.");
         const req=reqSnap.data();
         if(req.status!=="pending")throw new Error("Ye request already process ho chuki hai.");
+        if(!["wallet","upi","qr"].includes(req.paymentMethod))throw new Error("Payment method valid nahi hai.");
+        if(req.paymentMethod==="wallet" && req.utr!=="")throw new Error("Wallet request me UTR nahi hona chahiye.");
+        if(req.paymentMethod!=="wallet" && (!req.utr || !["upi","qr"].includes(req.paymentMethod)))throw new Error("UPI/QR request incomplete hai.");
 
         const profileSnap=await t.get(doc(db,"profiles",req.profileId));
         if(!profileSnap.exists() || profileSnap.data().status==="deleted"){
@@ -159,7 +164,7 @@ export default function Admin(){
   if(!user)return <main><section className="admin cardPage"><div className="adminIcon">🔐</div><h1>Admin Login</h1><button className="primaryAction" onClick={login}>Google Login →</button>{error&&<div className="errorBox">{error}</div>}</section></main>;
   if(user.email?.toLowerCase()!==ADMIN)return <main><section className="admin cardPage"><div className="adminIcon">🚫</div><h1>Access Denied</h1><button className="backAction" onClick={logout}>Logout</button></section></main>;
 
-  const nav=[["dashboard","🏠 Dashboard"],["users","👥 All Users"],["biodata","📋 Biodata"],["access100","₹100 Biodata Payments"],["access500","₹500 Mobile Payments"],["wallet","💰 Wallet / Recharge"],["transactions","🧾 Transactions"],["registrations","📝 Old Registrations"],["settings","⚙️ Settings"]];
+  const nav=[["dashboard","🏠 Dashboard"],["users","👥 All Users"],["biodata","📋 Biodata"],["access100","₹100 Biodata Payments"],["access500","₹500 Mobile Payments"],["wallet","💰 Wallet / Recharge"],["transactions","🧾 Transactions"],["settings","⚙️ Settings"]];
 
   return <main><section className="admin dashboardPage">
     <div className="dashTop"><div><span className="eyebrow">ZARA SHADI SERVICE</span><h1>Central Admin Board</h1><p>Users, biodata, payments, wallet aur access sab ek jagah.</p></div><button className="logout" onClick={logout}>🚪 Logout</button></div>
