@@ -118,7 +118,8 @@ export default function Admin(){
           uid:x.uid,profileId:x.profileId,amount,status:"approved",
           type:x.type,approvedAt:serverTimestamp(),paymentMethod:req.paymentMethod||"upi"
         },{merge:true});
-        t.update(reqRef,{status:"approved",approvedAt:serverTimestamp(),approvedPaymentMethod:req.paymentMethod||"upi"});\n        if(req.lockId)t.delete(doc(db,"pendingPaymentLocks",req.lockId));
+        t.update(reqRef,{status:"approved",approvedAt:serverTimestamp(),approvedPaymentMethod:req.paymentMethod||"upi"});
+        if(req.lockId)t.delete(doc(db,"pendingPaymentLocks",req.lockId));
         t.set(txRef,{
           uid:x.uid,
           type:x.type==="biodata"?"biodata_unlock":"mobile_access",
