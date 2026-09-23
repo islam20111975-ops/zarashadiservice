@@ -8,7 +8,7 @@ import {auth,db} from "../../../lib/firebase";
 
 export default function Profile(){
   const {id}=useParams(),router=useRouter();
-  const [p,setP]=useState(null),[privateData,setPrivateData]=useState(null),[user,setUser]=useState(null);
+  const [p,setP]=useState(null),[privateData,setPrivateData]=useState(null),[contact,setContact]=useState(null),[user,setUser]=useState(null);
   const [loading,setLoading]=useState(true),[unlocked,setUnlocked]=useState(false),[mobile,setMobile]=useState(false),[lightbox,setLightbox]=useState(false);
 
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
@@ -22,7 +22,8 @@ export default function Profile(){
           const uid=auth.currentUser.uid;
           const [b,m]=await Promise.all([getDoc(doc(db,"biodataUnlocks",uid+"_"+id)),getDoc(doc(db,"mobileAccess",uid+"_"+id))]);
           setUnlocked(b.exists()&&b.data().status==="approved");setMobile(m.exists()&&m.data().status==="approved");
-          if(b.exists()&&b.data().status==="approved"){const pr=await getDoc(doc(db,"profilePrivate",id));if(pr.exists())setPrivateData(pr.data())}
+          if(m.exists()&&m.data().status==="approved"){const cr=await getDoc(doc(db,"profileContact",id));if(cr.exists())setContact(cr.data())}
+          if(b.exists()&&b.data().status==="approved"){const pr=await getDoc(doc(db,"profileBiodataPrivate",id));if(pr.exists())setPrivateData(pr.data())}
         }
       }finally{setLoading(false)}
     })();
@@ -38,7 +39,7 @@ export default function Profile(){
       <div className="detailPhoto" onClick={()=>setLightbox(true)}>{photos[0]?<img src={photos[0]} alt="Marriage profile"/>:<div className="notFound">Photo not found</div>}</div>
       <div className="detailBody"><span className="profileId">{id}</span><h1>{unlocked&&privateData?privateData.name:"Rishta ki Jankari"}</h1>
       {!unlocked?<><p className="detailLead">Complete biodata dekhne ke liye ₹100 payment required hai.</p><div className="notice">इस रिश्ते की पूरी जानकारी के लिए ₹100 भुगतान करें</div><button className="primaryAction" onClick={()=>user?router.push("/payment?profile="+encodeURIComponent(id)+"&type=biodata"):login()}>₹100 Biodata Unlock करें →</button></>:
-      <div className="biodataBox"><p><b>नाम:</b> {privateData?.name||"-"}</p><p><b>पता:</b> {privateData?.address||"-"}</p><p><b>उम्र:</b> {privateData?.age||"-"}</p><p><b>आमदनी:</b> {privateData?.income||"-"}</p>
+      <div className="biodataBox"><p><b>नाम:</b> {privateData?.name||"-"}</p><p><b>पता:</b> {privateData?.address||"-"}</p><p><b>उम्र:</b> {privateData?.age||"-"}</p><p><b>आमदनी:</b> {privateData?.income||"-"}</p>{privateData?.description&&<div className="descriptionBox"><b>📝 विवरण:</b><p>{privateData.description}</p></div>}
         <div className="notice">{mobile?"📱 Mobile Number: "+(privateData?.phone||"-"):"Mobile Number देखने के लिए ₹500 भुगतान करें"}</div>
         {!mobile&&<button className="primaryAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(id)+"&type=mobile")}>₹500 Mobile Number Access →</button>}
       </div>}
