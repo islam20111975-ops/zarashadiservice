@@ -95,7 +95,9 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.amount is number
-        && request.resource.data.amount > 0
+        && (request.resource.data.amount == 100
+          || request.resource.data.amount == 500
+          || request.resource.data.amount == 1000)
         && request.resource.data.status == "pending"
         && request.resource.data.utr is string
         && request.resource.data.utr != "";
@@ -113,17 +115,13 @@ service cloud.firestore {
     }
 
     match /mobileAccess/{accessId} {
-      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == resource.data.uid);
       allow create, update, delete: if isAdmin();
     }
 
     match /paidAccessRequests/{requestId} {
       allow read: if isAdmin()
         || (signedIn() && resource.data.uid == request.auth.uid);
-
-      // A logged-in user may submit only their own pending access request.
-      // Keep this rule simple so the UTR request cannot be blocked by an
-      // unrelated field/type validation failure.
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.profileId is string
@@ -138,7 +136,6 @@ service cloud.firestore {
         && request.resource.data.status == "pending"
         && request.resource.data.utr is string
         && request.resource.data.utr.size() >= 6;
-
       allow update, delete: if isAdmin();
     }
 
