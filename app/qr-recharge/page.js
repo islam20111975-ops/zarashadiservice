@@ -10,6 +10,7 @@ function PageBody(){
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
  useEffect(()=>getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setQrUrl(s.data().qrUrl||"")).catch(()=>{}),[]);
  useEffect(()=>{if(!user)return;return onSnapshot(query(collection(db,"paidAccessRequests"),where("uid","==",user.uid)),s=>setRequests(s.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.profileId===profile&&x.type===type).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).slice(0,5)))},[user,profile,type]);
+ useEffect(()=>{if(!user||!profile)return;return onSnapshot(doc(db,type==="mobile"?"mobileAccess":"biodataUnlocks",user.uid+"_"+profile),s=>{if(s.exists()&&s.data().status==="approved")router.replace("/profile/"+encodeURIComponent(profile))})},[user,profile,type,router]);
  async function login(){try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setMsg(e.message)}}
  async function submit(e){
   e.preventDefault();setMsg("");
@@ -18,14 +19,12 @@ function PageBody(){
   if(!qrUrl)return setMsg("Admin ne QR payment set nahi kiya hai.");
   const clean=utr.trim().replace(/\s+/g,"").toUpperCase();
   if(!/^[A-Z0-9]{6,40}$/.test(clean))return setMsg("Sahi UTR / Transaction ID bhariye.");
-  if(requests.some(x=>x.status==="pending"))return setMsg("Is profile ka payment request already Pending hai.");
   if(requests.some(x=>x.status==="approved"))return setMsg("Is profile ka access pehle hi approved hai.");
   setSaving(true);
   try{
-   const batch=writeBatch(db),reqRef=doc(collection(db,"paidAccessRequests")),claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase()),lockId=reqRef.id+"_"+type,lockRef=doc(db,"pendingPaymentLocks",lockId);
+   const batch=writeBatch(db),reqRef=doc(collection(db,"paidAccessRequests")),claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());
    batch.set(claimRef,{uid:user.uid,utr:clean,kind:"access",profileId:profile,type,amount,requestId:reqRef.id,createdAt:serverTimestamp()});
-   batch.set(lockRef,{uid:user.uid,requestId:reqRef.id,kind:"access",profileId:profile,type,amount,status:"pending",createdAt:serverTimestamp()});
-   batch.set(reqRef,{uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"qr",utr:clean,utrClaimId:claimRef.id,lockId,createdAt:serverTimestamp()});
+   batch.set(reqRef,{uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"qr",utr:clean,utrClaimId:claimRef.id,createdAt:serverTimestamp()});
    await batch.commit();setSent(true);setUtr("");setMsg("⏳ Payment request Admin ko bhej di gayi hai. UTR verify hone ke baad access approve hoga.");
   }catch(e){setMsg("Payment request save nahi hui: "+e.message)}finally{setSaving(false)}
  }
