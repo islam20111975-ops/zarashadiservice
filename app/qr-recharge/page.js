@@ -3,7 +3,7 @@
 import {Suspense,useEffect,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {collection,doc,getDoc,onSnapshot,query,where,serverTimestamp,writeBatch} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,query,where,serverTimestamp,writeBatch,deleteDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 function PageBody(){
@@ -66,7 +66,7 @@ function PageBody(){
       return setMsg("⏳ Is profile ka payment request pehle se Admin ke paas Pending hai. Dobara payment submit na karein.");
      }
      // Stale lock: its request no longer exists/is no longer pending. Remove it, then create the new request.
-     await import("firebase/firestore").then(({deleteDoc})=>deleteDoc(doc(db,"pendingPaymentLocks",lockId)));
+     await deleteDoc(doc(db,"pendingPaymentLocks",lockId));
     } else {
      return setMsg("⏳ Is profile ki payment request already process ho rahi hai. Page refresh karke status dekhein.");
     }
@@ -83,8 +83,17 @@ function PageBody(){
    setMsg("⏳ Payment request Admin ko bhej di gayi hai. UTR verify hone ke baad exact Profile "+profile+" ka access approve hoga.");
   }catch(e){
    const code=e?.code||"";
-   if(code==="already-exists"||code==="permission-denied")setMsg(code==="already-exists"?"❌ Ye UTR ya payment lock pehle hi use ho chuka hai.":"❌ Request save nahi hui. Aapki payment request already pending ho sakti hai; page refresh karke status dekhein.");
-   else setMsg("❌ Payment request save nahi hui: "+(e?.message||"Unknown error"));
+   if(code==="already-exists"){
+    setMsg("❌ Ye UTR ya payment lock pehle hi use ho chuka hai. Page refresh karke status dekhein.");
+   }else if(code==="permission-denied"){
+    setMsg("❌ Firebase Rules ne request ko reject kiya. Firebase Console me latest firestore.rules Publish hua hai ya nahi check karein.");
+   }else if(code==="failed-precondition"){
+    setMsg("❌ Firebase configuration/precondition error. Kripya page refresh karke dobara try karein.");
+   }else if(code==="unavailable"){
+    setMsg("❌ Firebase service abhi available nahi hai. Internet check karke dobara try karein.");
+   }else{
+    setMsg("❌ Payment request save nahi hui: "+(e?.message||"Unknown error"));
+   }
   }finally{setSaving(false)}
  }
 
