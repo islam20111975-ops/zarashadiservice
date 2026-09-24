@@ -114,10 +114,11 @@ function BiodataAdminPage(){
   }
 
   async function remove(p){
-    if(!confirm("Is biodata ko delete karein? Paid payment/access history delete nahi hogi."))return;
+    if(p.status==="deleted")return;
+    if(!confirm("Is biodata ko hide karein? Paid payment/access history delete nahi hogi."))return;
     try{
       await setDoc(doc(db,"profiles",p.id),{status:"deleted",updatedAt:serverTimestamp()},{merge:true});
-      alert("Biodata delete/hidden ho gaya.");
+      alert("Biodata hide ho gaya.");
     }catch(e){setError(e.message)}
   }
 
@@ -198,7 +199,7 @@ function BiodataAdminPage(){
         const photos=p.photos?.length?p.photos:[p.photo].filter(Boolean);
         return <div className="userAdminCard" key={p.id}>
           <div className="rowProfile">{photos[0]?<img src={photos[0]} alt=""/>:<div className="rowPlaceholder">📷</div>}<div><b>{p.id}</b><small>{p.gender==="female"?"Female":"Male"}</small><small>{p.status==="deleted"?"⚠️ Hidden":"✓ Active"}</small></div></div>
-          <div className="cardButtons"><button onClick={()=>edit(p)}>✏️ Edit</button><button onClick={()=>remove(p)}>🗑 Delete</button><button onClick={()=>router.push("/profile/"+encodeURIComponent(p.id))}>👁 View</button></div>
+          <div className="cardButtons"><button onClick={()=>edit(p)}>✏️ Edit</button>{p.status==="deleted"?<button onClick={async()=>{try{await setDoc(doc(db,"profiles",p.id),{status:"active",updatedAt:serverTimestamp()},{merge:true});alert("Biodata restore ho gaya.");}catch(e){setError(e.message)}}}>↩️ Restore</button>:<button onClick={()=>remove(p)}>🗑 Hide</button>}<button onClick={()=>router.push("/profile/"+encodeURIComponent(p.id))}>👁 View</button></div>
         </div>
       })}
     </div>
