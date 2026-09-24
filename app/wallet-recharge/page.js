@@ -2,7 +2,7 @@
 
 import {useEffect,useState} from "react";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {doc,getDoc,collection,onSnapshot,query,where,serverTimestamp,writeBatch} from "firebase/firestore";
+import {doc,getDoc,collection,onSnapshot,query,where,serverTimestamp,writeBatch,deleteDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 const RECHARGE_OPTIONS=[100,500,1000];
@@ -42,9 +42,22 @@ export default function WalletRecharge(){
   if(existing)return setMsg("⏳ Is amount ka recharge already Pending hai. Admin verification ka wait karein.");
   setSaving(true);
   try{
+   const lockId=user.uid+"_recharge_"+n;
+   const lockRef=doc(db,"pendingPaymentLocks",lockId);
+   const lockSnap=await getDoc(lockRef);
+   if(lockSnap.exists()){
+    const oldLock=lockSnap.data()||{};
+    if(oldLock.status==="pending"&&oldLock.requestId){
+     const oldReqSnap=await getDoc(doc(db,"walletRechargeRequests",oldLock.requestId));
+     if(oldReqSnap.exists()&&oldReqSnap.data()?.status==="pending")
+      return setMsg("⏳ Is amount ka recharge pehle se Admin ke paas Pending hai. Dobara payment submit na karein.");
+     await deleteDoc(lockRef);
+    }else{
+     return setMsg("⏳ Is recharge ki payment already process ho rahi hai. Page refresh karke status dekhein.");
+    }
+   }
    const batch=writeBatch(db);
    const reqRef=doc(collection(db,"walletRechargeRequests"));
-   const lockRef=doc(db,"pendingPaymentLocks",user.uid+"_recharge_"+n);
    const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());
    batch.set(lockRef,{uid:user.uid,kind:"recharge",amount:n,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()});
    batch.set(claimRef,{uid:user.uid,utr:clean,kind:"recharge",amount:n,requestId:reqRef.id,createdAt:serverTimestamp()});
@@ -54,7 +67,10 @@ export default function WalletRecharge(){
    setMsg("⏳ Recharge request Admin ko bhej di gayi hai. UTR verify hone ke baad ₹"+n+" Wallet me add hoga.");
   }catch(e){
    const code=e?.code||"";
-   if(code==="already-exists"||code==="permission-denied")setMsg("❌ Recharge save nahi hua. Is amount ka request already pending ho sakta hai; status check karke dobara try karein.");
+   if(code==="already-exists")setMsg("❌ Ye UTR ya recharge lock pehle hi use ho chuka hai. Page refresh karke status dekhein.");
+   else if(code==="permission-denied")setMsg("❌ Firebase Rules ne recharge reject kiya. Latest firestore.rules Firebase Console me Publish karein.");
+   else if(code==="failed-precondition")setMsg("❌ Firebase precondition/configuration error. Page refresh karke dobara try karein.");
+   else if(code==="unavailable")setMsg("❌ Firebase service abhi available nahi hai. Internet check karke dobara try karein.");
    else setMsg("❌ Recharge request save nahi hui: "+(e?.message||"Unknown error"));
   }finally{setSaving(false)}
  }
