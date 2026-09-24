@@ -3,7 +3,7 @@
 import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {doc,getDoc,collection,onSnapshot,query,where,serverTimestamp,writeBatch,deleteDoc} from "firebase/firestore";
+import {doc,getDoc,collection,onSnapshot,query,where,serverTimestamp,setDoc,deleteDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 const RECHARGE_OPTIONS=[100,500,1000];
@@ -58,19 +58,21 @@ export default function WalletRecharge(){
      return setMsg("⏳ Is recharge ki payment already process ho rahi hai. Page refresh karke status dekhein.");
     }
    }
-   const batch=writeBatch(db);
    const reqRef=doc(collection(db,"walletRechargeRequests"));
    const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());
-   batch.set(lockRef,{uid:user.uid,kind:"recharge",amount:n,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()});
-   batch.set(claimRef,{uid:user.uid,utr:clean,kind:"recharge",amount:n,requestId:reqRef.id,createdAt:serverTimestamp()});
-   batch.set(reqRef,{uid:user.uid,email:user.email||"",name:profile.name||"",phone:profile.phone||"",amount:n,utr:clean,status:"pending",paymentMethod:method,utrClaimId:claimRef.id,lockId:lockRef.id,createdAt:serverTimestamp()});
-   await batch.commit();
+   try{
+    await setDoc(lockRef,{uid:user.uid,kind:"recharge",amount:n,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()});
+    try{await setDoc(claimRef,{uid:user.uid,utr:clean,kind:"recharge",amount:n,requestId:reqRef.id,createdAt:serverTimestamp()});}
+    catch(e){try{await deleteDoc(lockRef)}catch{};throw Object.assign(e,{stage:"UTR claim"})}
+    try{await setDoc(reqRef,{uid:user.uid,email:user.email||"",name:profile.name||"",phone:profile.phone||"",amount:n,utr:clean,status:"pending",paymentMethod:method,utrClaimId:claimRef.id,lockId:lockRef.id,createdAt:serverTimestamp()});}
+    catch(e){try{await deleteDoc(claimRef);await deleteDoc(lockRef)}catch{};throw Object.assign(e,{stage:"recharge request"})}
+   }catch(e){throw Object.assign(e,{stage:e?.stage||"recharge lock"})}
    setUtr("");
    setMsg("⏳ Recharge request Admin ko bhej di gayi hai. UTR verify hone ke baad ₹"+n+" Wallet me add hoga.");
   }catch(e){
    const code=e?.code||"";
    if(code==="already-exists")setMsg("❌ Ye UTR ya recharge lock pehle hi use ho chuka hai. Page refresh karke status dekhein.");
-   else if(code==="permission-denied")setMsg("❌ Firebase Rules ne recharge reject kiya. Latest firestore.rules Firebase Console me Publish karein.");
+   else if(code==="permission-denied")setMsg("❌ Firebase Permission Denied — "+(e?.stage||"recharge request")+" ko Firebase Rules ne reject kiya. Details: "+(e?.message||"Permission denied"));
    else if(code==="failed-precondition")setMsg("❌ Firebase precondition/configuration error. Page refresh karke dobara try karein.");
    else if(code==="unavailable")setMsg("❌ Firebase service abhi available nahi hai. Internet check karke dobara try karein.");
    else setMsg("❌ Recharge request save nahi hui: "+(e?.message||"Unknown error"));
