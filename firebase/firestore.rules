@@ -188,15 +188,7 @@ service cloud.firestore {
         && (request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
         && request.resource.data.utrClaimId is string
         && request.resource.data.lockId == rechargeLockId(request.auth.uid, request.resource.data.amount)
-        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId
-        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid
-        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.kind == "recharge"
-        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.amount == request.resource.data.amount
-        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.requestId == requestId
-        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.uid == request.auth.uid
-        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.kind == "recharge"
-        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.amount == request.resource.data.amount
-        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.utr == request.resource.data.utr;
+        // The request is created together with its lock/UTR claim by the client batch.
 
       allow update, delete: if isAdmin();
     }
@@ -239,32 +231,9 @@ service cloud.firestore {
           (request.resource.data.type == "mobile"
             && !exists(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + request.resource.data.profileId)))
         )
-        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId
-        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid
-        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.kind == "access"
-        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.profileId == request.resource.data.profileId
-        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.type == request.resource.data.type
-        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.amount == request.resource.data.amount
-        && (
-          (
-            request.resource.data.paymentMethod == "wallet"
-            && request.resource.data.utr == ""
-            && !request.resource.data.keys().hasAny(["utrClaimId"])
-          )
-          ||
-          (
-            (request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
-            && validUtr(request.resource.data.utr)
-            && request.resource.data.utrClaimId is string
-            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.requestId == requestId
-            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.uid == request.auth.uid
-            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.kind == "access"
-            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.profileId == request.resource.data.profileId
-            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.type == request.resource.data.type
-            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.amount == request.resource.data.amount
-            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.utr == request.resource.data.utr
-          )
-        );
+        && (request.resource.data.paymentMethod == "wallet" || request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
+        && request.resource.data.utr is string
+        && request.resource.data.utrClaimId is string;
 
       allow update, delete: if isAdmin();
     }
