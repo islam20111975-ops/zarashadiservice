@@ -305,7 +305,7 @@ export default function Account(){
         <button type="submit" className="primaryAction saveProfileBtn" disabled={saving}>
           {saving?"⏳ Saving...":"💾 Profile Save करें →"}
         </button>
-      </form>
+      </form>)}
 
       <div className="adminBox accountWalletBox">
         <div className="boxTitle">
