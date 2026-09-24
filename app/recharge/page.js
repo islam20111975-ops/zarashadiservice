@@ -3,7 +3,7 @@
 import {Suspense,useEffect,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {collection,doc,getDoc,onSnapshot,query,where,serverTimestamp,writeBatch,deleteDoc} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,query,where,serverTimestamp,setDoc,deleteDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 function PageBody(){
@@ -68,20 +68,21 @@ function PageBody(){
      return setMsg("⏳ Is profile ki payment request already process ho rahi hai. Page refresh karke status dekhein.");
     }
    }
-   const batch=writeBatch(db);
    const reqRef=doc(collection(db,"paidAccessRequests"));
-
    const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());
-   batch.set(lockRef,{uid:user.uid,profileId:profile,type,kind:"access",amount,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()});
-   batch.set(claimRef,{uid:user.uid,utr:clean,kind:"access",profileId:profile,type,amount,requestId:reqRef.id,createdAt:serverTimestamp()});
-   batch.set(reqRef,{uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"upi",utr:clean,utrClaimId:claimRef.id,lockId:lockRef.id,createdAt:serverTimestamp()});
-   await batch.commit();
+   try{
+    await setDoc(lockRef,{uid:user.uid,profileId:profile,type,kind:"access",amount,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()});
+    try{await setDoc(claimRef,{uid:user.uid,utr:clean,kind:"access",profileId:profile,type,amount,requestId:reqRef.id,createdAt:serverTimestamp()});}
+    catch(e){try{await deleteDoc(lockRef)}catch{};throw Object.assign(e,{stage:"UTR claim"})}
+    try{await setDoc(reqRef,{uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"upi",utr:clean,utrClaimId:claimRef.id,lockId:lockRef.id,createdAt:serverTimestamp()});}
+    catch(e){try{await deleteDoc(claimRef);await deleteDoc(lockRef)}catch{};throw Object.assign(e,{stage:"payment request"})}
+   }catch(e){throw Object.assign(e,{stage:e?.stage||"payment lock"})}
    setUtr("");
    setMsg("⏳ Payment request Admin ko bhej di gayi hai. UTR verify hone ke baad exact Profile "+profile+" ka access approve hoga.");
   }catch(e){
    const code=e?.code||"";
    if(code==="already-exists")setMsg("❌ Ye UTR ya payment lock pehle hi use ho chuka hai. Page refresh karke status dekhein.");
-   else if(code==="permission-denied")setMsg("❌ Firebase Rules ne request reject ki. Latest firestore.rules Firebase Console me Publish karein.");
+   else if(code==="permission-denied")setMsg("❌ Firebase Permission Denied — "+(e?.stage||"payment request")+" ko Firebase Rules ne reject kiya. Details: "+(e?.message||"Permission denied"));
    else if(code==="failed-precondition")setMsg("❌ Firebase precondition/configuration error. Page refresh karke dobara try karein.");
    else if(code==="unavailable")setMsg("❌ Firebase service abhi available nahi hai. Internet check karke dobara try karein.");
    else setMsg("❌ Payment request save nahi hui: "+(e?.message||"Unknown error"));
