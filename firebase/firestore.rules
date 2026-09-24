@@ -188,7 +188,7 @@ service cloud.firestore {
         && (request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
         && request.resource.data.utrClaimId is string
         && request.resource.data.lockId == rechargeLockId(request.auth.uid, request.resource.data.amount)
-        // The request is created together with its lock/UTR claim by the client batch.
+        ;
 
       allow update, delete: if isAdmin();
     }
