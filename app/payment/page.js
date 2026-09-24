@@ -3,7 +3,7 @@
 import {Suspense,useEffect,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {collection,doc,getDoc,onSnapshot,serverTimestamp,writeBatch} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,serverTimestamp,writeBatch,deleteDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 function Pay(){
@@ -49,16 +49,32 @@ function Pay(){
    const accessRef=doc(db,type==="biodata"?"biodataUnlocks":"mobileAccess",user.uid+"_"+profile);
    const accessSnap=await getDoc(accessRef);
    if(accessSnap.exists()&&accessSnap.data().status==="approved")return setMsg("Is profile ka access pehle hi approved hai.");
+   const lockId=user.uid+"_"+profile+"_"+type;
+   const lockRef=doc(db,"pendingPaymentLocks",lockId);
+   const lockSnap=await getDoc(lockRef);
+   if(lockSnap.exists()){
+    const oldLock=lockSnap.data()||{};
+    if(oldLock.status==="pending"&&oldLock.requestId){
+     const oldReqSnap=await getDoc(doc(db,"paidAccessRequests",oldLock.requestId));
+     if(oldReqSnap.exists()&&oldReqSnap.data()?.status==="pending")
+      return setMsg("⏳ Is profile ka payment request pehle se Admin ke paas Pending hai. Dobara payment submit na karein.");
+     await deleteDoc(lockRef);
+    }else{
+     return setMsg("⏳ Is profile ki payment request already process ho rahi hai. Page refresh karke status dekhein.");
+    }
+   }
    const batch=writeBatch(db);
    const reqRef=doc(collection(db,"paidAccessRequests"));
-   const lockRef=doc(db,"pendingPaymentLocks",user.uid+"_"+profile+"_"+type);
    batch.set(lockRef,{uid:user.uid,profileId:profile,type,kind:"access",amount,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()});
    batch.set(reqRef,{uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"wallet",utr:"",lockId:lockRef.id,createdAt:serverTimestamp()});
    await batch.commit();
    setMsg("💰 Wallet payment request Admin ko bhej di gayi hai. Approval ke baad ₹"+amount+" Wallet se deduct hoga aur exact Profile "+profile+" unlock hoga.");
   }catch(e){
    const code=e?.code||"";
-   if(code==="permission-denied"||code==="already-exists")setMsg("❌ Request save nahi hui. Is profile ki request already pending ho sakti hai. Status check karke dobara try karein.");
+   if(code==="already-exists")setMsg("❌ Payment lock already use ho chuka hai. Page refresh karke status dekhein.");
+   else if(code==="permission-denied")setMsg("❌ Firebase Rules ne request reject ki. Latest firestore.rules Firebase Console me Publish karein.");
+   else if(code==="failed-precondition")setMsg("❌ Firebase precondition/configuration error. Page refresh karke dobara try karein.");
+   else if(code==="unavailable")setMsg("❌ Firebase service abhi available nahi hai. Internet check karke dobara try karein.");
    else setMsg("❌ Wallet request save nahi hui: "+(e?.message||"Unknown error"));
   }finally{setSaving(false)}
  }
