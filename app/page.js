@@ -4,8 +4,7 @@ import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
 import {collection,doc,getDoc,onSnapshot,query,where} from "firebase/firestore";
-import {auth} from "../lib/firebase";
-import {db} from "../lib/firebase";
+import {auth,db} from "../lib/firebase";
 
 export default function Home(){
   const [r,setR]=useState(null);
@@ -21,8 +20,8 @@ export default function Home(){
   useEffect(()=>{
     if(!r){setData([]);return}
     setLoading(true);
-    const q=query(collection(db,"profiles"),where("gender","==",r));
-    return onSnapshot(q,s=>{setData(s.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted"));setLoading(false)},()=>setLoading(false));
+    const q=query(collection(db,"profiles"),where("gender","==",r),where("status","==","active"));
+    return onSnapshot(q,s=>{setData(s.docs.map(d=>({id:d.id,...d.data()})));setLoading(false)},e=>{setLoading(false);setLoginError(e?.message||"Profiles load nahi ho sake.")});
   },[r]);
 
   const shown=data;
