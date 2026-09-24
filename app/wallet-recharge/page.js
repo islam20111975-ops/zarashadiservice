@@ -1,6 +1,7 @@
 "use client";
 
 import {useEffect,useState} from "react";
+import {useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
 import {doc,getDoc,collection,onSnapshot,query,where,serverTimestamp,writeBatch,deleteDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
@@ -8,6 +9,7 @@ import {auth,db} from "../../lib/firebase";
 const RECHARGE_OPTIONS=[100,500,1000];
 
 export default function WalletRecharge(){
+ const router=useRouter();
  const [user,setUser]=useState(null),[profile,setProfile]=useState({name:"",phone:""}),[wallet,setWallet]=useState(0);
  const [payment,setPayment]=useState({upiId:"",qrUrl:""}),[amount,setAmount]=useState(100),[method,setMethod]=useState("upi"),[utr,setUtr]=useState("");
  const [requests,setRequests]=useState([]),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false),[loginError,setLoginError]=useState("");
@@ -98,6 +100,6 @@ export default function WalletRecharge(){
   {pending.length>0&&<div className="notice" style={{marginTop:14}}>⏳ <b>आपके recharge request pending हैं</b><br/>Admin payment verify कर रहे हैं. Approval के बाद amount Wallet में add होगा.</div>}
   <div className="adminList" style={{marginTop:14}}><div className="listHead"><h3>🧾 Recharge History</h3><span>{requests.length}</span></div>{requests.slice(0,20).map(x=><div className="adminRow" key={x.id}><span><b>₹{x.amount} • {x.status}</b><small>💳 Method: {(x.paymentMethod||"upi").toUpperCase()} • UTR: {x.utr||"-"}</small></span></div>)}</div>
   {msg&&<div className="messageBox" role="status">{msg}</div>}
-  <button type="button" className="backAction" onClick={()=>location.href="/account"}>← My Account पर जाएँ</button>
+  <button type="button" className="backAction" onClick={()=>router.push("/account")}>← My Account पर जाएँ</button>
  </section></main>;
 }
