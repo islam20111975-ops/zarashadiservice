@@ -222,3 +222,18 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
  .accountReadonly{grid-template-columns:1fr;gap:9px}
  .accountSectionTitle{font-size:14px}
 }
+
+
+/* Account wallet/history polish */
+.accountWalletBox{background:linear-gradient(135deg,#faf5ff,#fff7ed)!important;border:1px solid #eadcf5!important;box-shadow:0 14px 35px #35105b12!important}
+.accountWalletBox .boxTitle{display:flex;align-items:center;justify-content:space-between;gap:15px}
+.walletAmount{font-size:34px;font-weight:950;margin-top:3px;background:linear-gradient(90deg,#7c3aed,#db2777,#ea580c);-webkit-background-clip:text;background-clip:text;color:transparent}
+.walletStatus{font-size:10px;font-weight:900;padding:7px 10px;border-radius:99px;background:#ecfdf5;color:#047857;border:1px solid #bbf7d0}
+.listSub{display:block;margin-top:3px;color:#8a7b91;font-size:10px;font-weight:600}
+.accountWalletBox .primaryAction{margin-top:6px}
+@media(max-width:600px){
+ .accountWalletBox .boxTitle{align-items:flex-start}
+ .walletAmount{font-size:30px}
+ .walletStatus{font-size:9px}
+ .listSub{font-size:9px}
+}
