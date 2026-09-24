@@ -10,38 +10,41 @@ function compressPhoto(file){return new Promise((resolve,reject)=>{const url=URL
 
 export default function Account(){
   const [user,setUser]=useState(null),[profile,setProfile]=useState(empty),[wallet,setWallet]=useState(0),[tx,setTx]=useState([]),[requests,setRequests]=useState([]);
-  const [file,setFile]=useState(null),[preview,setPreview]=useState(""),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false),[loginError,setLoginError]=useState(""),[loading,setLoading]=useState(true);
+  const [file,setFile]=useState(null),[preview,setPreview]=useState(""),[msg,setMsg]=useState(""),[msgType,setMsgType]=useState("success"),[saving,setSaving]=useState(false),[loginError,setLoginError]=useState(""),[loading,setLoading]=useState(true);
 
-  useEffect(()=>{const unsub=onAuthStateChanged(auth,async u=>{setUser(u);if(!u){setLoading(false);return}try{const s=await getDoc(doc(db,"users",u.uid));if(s.exists())setProfile({...empty,...s.data()})}catch(e){setMsg("Profile load nahi ho saka: "+(e?.message||"error"))}finally{setLoading(false)}});return()=>unsub()},[]);
+  function showMsg(text,type="success"){setMsg(text);setMsgType(type)}
+
+  useEffect(()=>{const unsub=onAuthStateChanged(auth,async u=>{setUser(u);if(!u){setLoading(false);return}try{const s=await getDoc(doc(db,"users",u.uid));if(s.exists())setProfile({...empty,...s.data()})}catch(e){showMsg("Profile load nahi ho saka: "+(e?.message||"error"),"error")}finally{setLoading(false)}});return()=>unsub()},[]);
   useEffect(()=>{
     if(!user)return;
-    const unsubTx=onSnapshot(
-      query(collection(db,"walletTransactions"),where("uid","==",user.uid)),
-      s=>setTx(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))),
-      e=>setMsg("Transactions load error: "+(e?.message||"permission error"))
-    );
-    const unsubReq=onSnapshot(
-      query(collection(db,"walletRechargeRequests"),where("uid","==",user.uid)),
-      s=>setRequests(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))),
-      e=>setMsg("Recharge History load error: "+(e?.message||"permission error"))
-    );
-    const unsubUser=onSnapshot(
-      doc(db,"users",user.uid),
-      s=>{if(s.exists())setWallet(Number(s.data().walletBalance||0))},
-      e=>setMsg("Wallet/Profile load error: "+(e?.message||"permission error"))
-    );
+    const unsubTx=onSnapshot(query(collection(db,"walletTransactions"),where("uid","==",user.uid)),s=>setTx(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))),e=>showMsg("Transactions load error: "+(e?.message||"permission error"),"error"));
+    const unsubReq=onSnapshot(query(collection(db,"walletRechargeRequests"),where("uid","==",user.uid)),s=>setRequests(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))),e=>showMsg("Recharge History load error: "+(e?.message||"permission error"),"error"));
+    const unsubUser=onSnapshot(doc(db,"users",user.uid),s=>{if(s.exists())setWallet(Number(s.data().walletBalance||0))},e=>showMsg("Wallet/Profile load error: "+(e?.message||"permission error"),"error"));
     return()=>{unsubTx();unsubReq();unsubUser()};
   },[user]);
 
-  function choosePhoto(e){const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith("image/")||f.size>10*1024*1024)return setMsg("Image 10 MB se chhoti honi chahiye.");setFile(f);setPreview(URL.createObjectURL(f))}
-  async function save(e){e.preventDefault();if(!user)return;const phone=profile.phone.replace(/\D/g,"");if(!profile.name.trim())return setMsg("⚠️ पूरा नाम भरना जरूरी है.");if(!profile.address.trim())return setMsg("⚠️ पूरा Address भरना जरूरी है.");if(!/^[6-9]\d{9}$/.test(phone))return setMsg("⚠️ सही 10 digit Mobile Number भरें.");if(!profile.age||Number(profile.age)<18||Number(profile.age)>100)return setMsg("⚠️ Age 18 से 100 के बीच भरें.");if(!profile.income.trim())return setMsg("⚠️ Income भरना जरूरी है.");setSaving(true);setMsg("");try{let photoURL=profile.photoURL||"";if(file)photoURL=await compressPhoto(file);const userRef=doc(db,"users",user.uid);const existing=await getDoc(userRef);const payload={uid:user.uid,name:profile.name.trim(),address:profile.address.trim(),phone,age:Number(profile.age),income:profile.income.trim(),photoURL,email:user.email||"",updatedAt:serverTimestamp()};if(existing.exists()){await updateDoc(userRef,payload)}else{await setDoc(userRef,{...payload,createdAt:serverTimestamp()})};setProfile({...profile,phone,photoURL});setFile(null);setPreview(photoURL);setMsg("Profile save ho gaya.")}catch(e){setMsg("Profile save nahi hui: "+(e?.message||"Unknown error"))}finally{setSaving(false)}}
+  function choosePhoto(e){const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith("image/")||f.size>10*1024*1024)return showMsg("Image 10 MB se chhoti honi chahiye.","error");setFile(f);setPreview(URL.createObjectURL(f));showMsg("Photo select ho gayi. Save button dabakar profile save karein.","success")}
+  async function save(e){
+    e.preventDefault();if(!user)return;
+    const phone=profile.phone.replace(/\D/g,"");
+    if(!profile.name.trim())return showMsg("⚠️ पूरा नाम भरना जरूरी है.","error");
+    if(!profile.address.trim())return showMsg("⚠️ पूरा Address भरना जरूरी है.","error");
+    if(!/^[6-9]\d{9}$/.test(phone))return showMsg("⚠️ सही 10 digit Mobile Number भरें.","error");
+    if(!profile.age||Number(profile.age)<18||Number(profile.age)>100)return showMsg("⚠️ Age 18 से 100 के बीच भरें.","error");
+    if(!profile.income.trim())return showMsg("⚠️ Income भरना जरूरी है.","error");
+    setSaving(true);showMsg("⏳ Profile save हो रही है...","success");
+    try{
+      let photoURL=profile.photoURL||"";if(file)photoURL=await compressPhoto(file);
+      const userRef=doc(db,"users",user.uid);const existing=await getDoc(userRef);
+      const payload={uid:user.uid,name:profile.name.trim(),address:profile.address.trim(),phone,age:Number(profile.age),income:profile.income.trim(),photoURL,email:user.email||"",updatedAt:serverTimestamp()};
+      if(existing.exists())await updateDoc(userRef,payload);else await setDoc(userRef,{...payload,createdAt:serverTimestamp()});
+      setProfile({...profile,phone,photoURL});setFile(null);setPreview(photoURL);
+      showMsg("✅ Profile successfully save ho gayi!","success");
+    }catch(e){showMsg("❌ Profile save nahi hui: "+(e?.message||"Unknown error"),"error")}finally{setSaving(false)}
+  }
   if(loading)return <main><section className="cardPage" style={{maxWidth:560,margin:"25px auto",textAlign:"center"}}><div className="adminIcon">⏳</div><h1>My Account</h1><p>Profile load ho rahi hai...</p></section></main>;
   if(!user)return <main><section className="cardPage"><div className="adminIcon">👤</div><h1>My Profile</h1><p>Google se login karein.</p><button className="primaryAction" onClick={async()=>{setLoginError("");try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}}}>Google se Login →</button>{loginError&&<div className="errorBox">{loginError}</div>}</section></main>;
-  const pending=requests.filter(x=>x.status==="pending");
-  const credits=tx.filter(x=>x.direction==="credit");
-  const debits=tx.filter(x=>x.direction==="debit");
-  const accessTx=tx.filter(x=>x.type==="biodata_unlock"||x.type==="mobile_access");
-  const profilesAccessed=[...new Set(accessTx.map(x=>x.profileId).filter(Boolean))];
+  const pending=requests.filter(x=>x.status==="pending"),credits=tx.filter(x=>x.direction==="credit"),debits=tx.filter(x=>x.direction==="debit"),accessTx=tx.filter(x=>x.type==="biodata_unlock"||x.type==="mobile_access"),profilesAccessed=[...new Set(accessTx.map(x=>x.profileId).filter(Boolean))];
   return <main><section className="cardPage" style={{maxWidth:760,margin:"25px auto"}}>
     <div style={{textAlign:"center"}}><span className="eyebrow">MY ACCOUNT</span><h1>Apni Profile & Wallet</h1><div style={{margin:"15px auto",width:120,height:120,borderRadius:"50%",overflow:"hidden",background:"#eee"}}>{(preview||profile.photoURL)?<img src={preview||profile.photoURL} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:55,lineHeight:"120px"}}>👤</span>}</div></div>
     <form className="paymentForm accountProfileForm" onSubmit={save}>
@@ -62,6 +65,6 @@ export default function Account(){
     </div>
     <div className="adminList"><div className="listHead"><div><h3>🧾 Recharge History</h3><small className="listSub">Wallet में जमा किए गए पैसे</small></div><span>{requests.length}</span></div>{pending.length>0&&<div className="notice" style={{marginBottom:12}}>⏳ <b>आपका Recharge Pending है</b><br/>आपका UTR मिल गया है। Admin payment verify कर रहे हैं।<br/>💰 Verification के बाद amount आपके Wallet में जल्द ही आ जाएगा।<br/>🙏 कृपया अभी थोड़ा इंतज़ार करें।</div>}{requests.length?requests.map(x=><div className="adminRow" key={x.id}><span><b>₹{x.amount} • {x.status}</b><small>💳 {(x.paymentMethod||"upi").toUpperCase()} • UTR: {x.utr}</small></span></div>):<div className="empty">अभी कोई Recharge नहीं किया गया है.<br/><small>Recharge करने के बाद यहाँ पूरी history दिखेगी.</small></div>}</div>
     <div className="adminList"><div className="listHead"><div><h3>📊 Access Transactions</h3><small className="listSub">Biodata और Mobile Access की payment history</small></div><span>{accessTx.length}</span></div>{accessTx.length?accessTx.map(x=><div className="adminRow" key={x.id}><span><b>{x.type==="biodata_unlock"?"📋 Biodata Access":"📱 Mobile Access"} • ₹{x.amount}</b><small>Profile {x.profileId||"-"}{x.utr?" • UTR "+x.utr:""}{x.balanceAfter!=null?" • Balance ₹"+x.balanceAfter:""}</small></span></div>):<div className="empty">अभी कोई Access Transaction नहीं है.</div>}</div>
-    {msg&&<div className="messageBox">{msg}</div>}<button className="backAction" onClick={()=>signOut(auth)}>🚪 Logout</button>
+    {msg&&<div className={msgType==="error"?"errorBox":"successBox"}>{msg}</div>}<button className="backAction" onClick={()=>signOut(auth)}>🚪 Logout</button>
   </section></main>;
 }
