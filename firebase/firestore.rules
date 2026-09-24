@@ -71,7 +71,7 @@ service cloud.firestore {
     // Only these two settings documents are public because the customer-facing
     // pages need them. Never put secrets in /settings.
     match /settings/{settingId} {
-      allow read: if settingId == "payment" || settingId == "social";
+      allow read: if settingId == "payment" || settingId == "social" || settingId == "appearance";
       allow write: if isAdmin();
     }
 
@@ -103,7 +103,29 @@ service cloud.firestore {
               || (request.resource.data.type == "mobile" && request.resource.data.amount == 500))
           )
         );
-      allow delete: if isAdmin();
+      allow delete: if isAdmin()
+        || (
+          signedIn()
+          && resource.data.uid == request.auth.uid
+          && resource.data.requestId is string
+          && (
+            (
+              resource.data.kind == "access"
+              && (
+                !exists(/databases/$(database)/documents/paidAccessRequests/$(resource.data.requestId))
+                || get(/databases/$(database)/documents/paidAccessRequests/$(resource.data.requestId)).data.status != "pending"
+              )
+            )
+            ||
+            (
+              resource.data.kind == "recharge"
+              && (
+                !exists(/databases/$(database)/documents/walletRechargeRequests/$(resource.data.requestId))
+                || get(/databases/$(database)/documents/walletRechargeRequests/$(resource.data.requestId)).data.status != "pending"
+              )
+            )
+          )
+        );
     }
 
     match /pendingPaymentLocks/{lockId} {
