@@ -204,7 +204,8 @@ export default function Account(){
         previewUrlRef.current="";
       }
       setPreview(photoURL);
-      setEditing(false);\n      showMsg("✅ Profile successfully save ho gayi!","success");
+      setEditing(false);
+      showMsg("✅ Profile successfully save ho gayi!","success");
     }catch(e){
       let error=e?.message||"Unknown error";
       if(error.toLowerCase().includes("permission")){
