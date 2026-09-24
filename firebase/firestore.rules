@@ -7,66 +7,229 @@ service cloud.firestore {
     function owner(uid) { return signedIn() && request.auth.uid == uid; }
     function validUtr(v) { return v is string && v.matches("^[A-Za-z0-9]{6,40}$"); }
 
+    function accessLockId(uid, profileId, type) {
+      return uid + "_" + profileId + "_" + type;
+    }
+    function rechargeLockId(uid, amount) {
+      return uid + "_recharge_" + amount;
+    }
+
     match /users/{userId} {
       allow read: if owner(userId) || isAdmin();
-      allow create: if owner(userId) && request.resource.data.keys().hasOnly(["uid","email","name","address","phone","age","income","photoURL","createdAt","updatedAt"]) && request.resource.data.uid == userId && request.resource.data.email == request.auth.token.email && request.resource.data.name is string && request.resource.data.address is string && request.resource.data.phone is string && request.resource.data.phone.matches("^[6-9][0-9]{9}$") && request.resource.data.age is number && request.resource.data.age >= 18 && request.resource.data.age <= 100 && request.resource.data.income is string && request.resource.data.photoURL is string;
-      allow update: if isAdmin() || (owner(userId) && request.resource.data.uid == resource.data.uid && request.resource.data.email == resource.data.email && request.resource.data.name is string && request.resource.data.address is string && request.resource.data.phone is string && request.resource.data.phone.matches("^[6-9][0-9]{9}$") && request.resource.data.age is number && request.resource.data.age >= 18 && request.resource.data.age <= 100 && request.resource.data.income is string && request.resource.data.photoURL is string && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["name","address","phone","age","income","photoURL","updatedAt"]));
+      allow create: if owner(userId)
+        && request.resource.data.keys().hasOnly(["uid","email","name","address","phone","age","income","photoURL","createdAt","updatedAt"])
+        && request.resource.data.uid == userId
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.name is string
+        && request.resource.data.address is string
+        && request.resource.data.phone is string
+        && request.resource.data.phone.matches("^[6-9][0-9]{9}$")
+        && request.resource.data.age is number
+        && request.resource.data.age >= 18
+        && request.resource.data.age <= 100
+        && request.resource.data.income is string
+        && request.resource.data.photoURL is string;
+      allow update: if isAdmin() || (owner(userId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.name is string
+        && request.resource.data.address is string
+        && request.resource.data.phone is string
+        && request.resource.data.phone.matches("^[6-9][0-9]{9}$")
+        && request.resource.data.age is number
+        && request.resource.data.age >= 18
+        && request.resource.data.age <= 100
+        && request.resource.data.income is string
+        && request.resource.data.photoURL is string
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["name","address","phone","age","income","photoURL","updatedAt"]));
       allow delete: if isAdmin();
     }
 
-    match /profiles/{profileId} { allow read: if true; allow create, update, delete: if isAdmin(); }
+    match /profiles/{profileId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
 
     match /profileBiodataPrivate/{profileId} {
-      allow read: if isAdmin() || (signedIn() && get(/databases/$(database)/documents/profiles/$(profileId)).data.status != "deleted" && exists(/databases/$(database)/documents/biodataUnlocks/$(request.auth.uid + "_" + profileId)) && get(/databases/$(database)/documents/biodataUnlocks/$(request.auth.uid + "_" + profileId)).data.status == "approved");
+      allow read: if isAdmin() || (signedIn()
+        && get(/databases/$(database)/documents/profiles/$(profileId)).data.status != "deleted"
+        && exists(/databases/$(database)/documents/biodataUnlocks/$(request.auth.uid + "_" + profileId))
+        && get(/databases/$(database)/documents/biodataUnlocks/$(request.auth.uid + "_" + profileId)).data.status == "approved");
       allow write: if isAdmin();
     }
+
     match /profileContact/{profileId} {
-      allow read: if isAdmin() || (signedIn() && get(/databases/$(database)/documents/profiles/$(profileId)).data.status != "deleted" && exists(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + profileId)) && get(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + profileId)).data.status == "approved");
+      allow read: if isAdmin() || (signedIn()
+        && get(/databases/$(database)/documents/profiles/$(profileId)).data.status != "deleted"
+        && exists(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + profileId))
+        && get(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + profileId)).data.status == "approved");
       allow write: if isAdmin();
     }
+
     match /profilePrivate/{profileId} { allow read, write: if isAdmin(); }
-    match /settings/{settingId} { allow read: if true; allow write: if isAdmin(); }
+
+    // Public payment/social settings are intentionally readable by payment pages.
+    // Do not store secrets in /settings.
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /registrations/{registrationId} { allow read, write: if false; }
     match /utrClaims/{utrId} { allow read, write: if false; }
 
     match /paymentUtrClaims/{utrId} {
       allow read: if isAdmin();
-      allow create: if signedIn() && !exists(/databases/$(database)/documents/paymentUtrClaims/$(utrId)) && request.resource.data.uid == request.auth.uid && validUtr(request.resource.data.utr) && request.resource.data.utr.lower() == utrId && request.resource.data.requestId is string && request.resource.data.kind is string && (request.resource.data.kind == "recharge" || request.resource.data.kind == "access") &&
-        ((request.resource.data.kind == "recharge" && request.resource.data.amount is number && (request.resource.data.amount == 100 || request.resource.data.amount == 500 || request.resource.data.amount == 1000)) ||
-        (request.resource.data.kind == "access" && request.resource.data.profileId is string && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile") && request.resource.data.amount is number && ((request.resource.data.type == "biodata" && request.resource.data.amount == 100) || (request.resource.data.type == "mobile" && request.resource.data.amount == 500))));
+      allow create: if signedIn()
+        && !exists(/databases/$(database)/documents/paymentUtrClaims/$(utrId))
+        && request.resource.data.uid == request.auth.uid
+        && validUtr(request.resource.data.utr)
+        && request.resource.data.utr.lower() == utrId
+        && request.resource.data.requestId is string
+        && request.resource.data.kind is string
+        && (request.resource.data.kind == "recharge" || request.resource.data.kind == "access")
+        && (
+          (request.resource.data.kind == "recharge"
+            && request.resource.data.amount is number
+            && (request.resource.data.amount == 100 || request.resource.data.amount == 500 || request.resource.data.amount == 1000))
+          ||
+          (request.resource.data.kind == "access"
+            && request.resource.data.profileId is string
+            && exists(/databases/$(database)/documents/profiles/$(request.resource.data.profileId))
+            && get(/databases/$(database)/documents/profiles/$(request.resource.data.profileId)).data.status != "deleted"
+            && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")
+            && request.resource.data.amount is number
+            && ((request.resource.data.type == "biodata" && request.resource.data.amount == 100)
+              || (request.resource.data.type == "mobile" && request.resource.data.amount == 500))
+          )
+        );
       allow delete: if isAdmin();
     }
 
     match /pendingPaymentLocks/{lockId} {
       allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
-      allow create: if signedIn() && !exists(/databases/$(database)/documents/pendingPaymentLocks/$(lockId)) && request.resource.data.uid == request.auth.uid && request.resource.data.requestId is string && request.resource.data.status == "pending" &&
-        ((request.resource.data.kind == "recharge" && request.resource.data.amount is number && request.resource.data.uid + "_recharge_" + request.resource.data.amount == lockId) ||
-        (request.resource.data.kind == "access" && request.resource.data.profileId is string && request.resource.data.type is string && request.resource.data.requestId + "_" + request.resource.data.type == lockId)) &&
-        ((request.resource.data.kind == "recharge" && request.resource.data.amount is number && (request.resource.data.amount == 100 || request.resource.data.amount == 500 || request.resource.data.amount == 1000)) ||
-        (request.resource.data.kind == "access" && request.resource.data.profileId is string && exists(/databases/$(database)/documents/profiles/$(request.resource.data.profileId)) && get(/databases/$(database)/documents/profiles/$(request.resource.data.profileId)).data.status != "deleted" && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")));
+
+      // One deterministic lock per user + target, so another pending request cannot be created
+      // for the same recharge amount or the same profile/type.
+      allow create: if signedIn()
+        && !exists(/databases/$(database)/documents/pendingPaymentLocks/$(lockId))
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.requestId is string
+        && request.resource.data.status == "pending"
+        && (
+          (
+            request.resource.data.kind == "recharge"
+            && request.resource.data.amount is number
+            && (request.resource.data.amount == 100 || request.resource.data.amount == 500 || request.resource.data.amount == 1000)
+            && lockId == rechargeLockId(request.auth.uid, request.resource.data.amount)
+          )
+          ||
+          (
+            request.resource.data.kind == "access"
+            && request.resource.data.profileId is string
+            && request.resource.data.type is string
+            && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")
+            && exists(/databases/$(database)/documents/profiles/$(request.resource.data.profileId))
+            && get(/databases/$(database)/documents/profiles/$(request.resource.data.profileId)).data.status != "deleted"
+            && lockId == accessLockId(request.auth.uid, request.resource.data.profileId, request.resource.data.type)
+          )
+        );
       allow delete, update: if isAdmin();
     }
 
     match /walletRechargeRequests/{requestId} {
       allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid && request.resource.data.amount is number && (request.resource.data.amount == 100 || request.resource.data.amount == 500 || request.resource.data.amount == 1000) && request.resource.data.status == "pending" && request.resource.data.email is string && request.resource.data.name is string && request.resource.data.phone is string && validUtr(request.resource.data.utr) && (request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr") && request.resource.data.utrClaimId is string && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.requestId == requestId && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.uid == request.auth.uid && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.kind == "recharge" && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.amount == request.resource.data.amount && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.utr == request.resource.data.utr;
+
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.amount is number
+        && (request.resource.data.amount == 100 || request.resource.data.amount == 500 || request.resource.data.amount == 1000)
+        && request.resource.data.status == "pending"
+        && request.resource.data.email is string
+        && request.resource.data.name is string
+        && request.resource.data.phone is string
+        && validUtr(request.resource.data.utr)
+        && (request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
+        && request.resource.data.utrClaimId is string
+        && request.resource.data.lockId == rechargeLockId(request.auth.uid, request.resource.data.amount)
+        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId
+        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.kind == "recharge"
+        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.amount == request.resource.data.amount
+        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.requestId == requestId
+        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.kind == "recharge"
+        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.amount == request.resource.data.amount
+        && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.utr == request.resource.data.utr;
+
       allow update, delete: if isAdmin();
     }
 
-    match /walletTransactions/{transactionId} { allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid); allow create, update, delete: if isAdmin(); }
-    match /biodataUnlocks/{unlockId} { allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid); allow create, update, delete: if isAdmin(); }
-    match /mobileAccess/{accessId} { allow read: if isAdmin() || (signedIn() && request.auth.uid == resource.data.uid); allow create, update, delete: if isAdmin(); }
+    match /walletTransactions/{transactionId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /biodataUnlocks/{unlockId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /mobileAccess/{accessId} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == resource.data.uid);
+      allow create, update, delete: if isAdmin();
+    }
 
     match /paidAccessRequests/{requestId} {
       allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid && request.resource.data.profileId is string && request.resource.data.type is string && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile") && request.resource.data.amount is number &&
-        ((request.resource.data.type == "biodata" && request.resource.data.amount == 100) || (request.resource.data.type == "mobile" && request.resource.data.amount == 500)) && request.resource.data.status == "pending" &&
-        ((request.resource.data.type == "biodata" && !exists(/databases/$(database)/documents/biodataUnlocks/$(request.auth.uid + "_" + request.resource.data.profileId))) ||
-         (request.resource.data.type == "mobile" && !exists(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + request.resource.data.profileId)))) &&
-        ((request.resource.data.paymentMethod == "wallet" && request.resource.data.utr == "" &&
-          getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.kind == "access" && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.amount == request.resource.data.amount && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.profileId == request.resource.data.profileId && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.type == request.resource.data.type) ||
-        ((request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr") && validUtr(request.resource.data.utr) &&
-          getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.requestId == requestId && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.uid == request.auth.uid && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.kind == "access" && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.profileId == request.resource.data.profileId && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.type == request.resource.data.type && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.amount == request.resource.data.amount));
+
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.profileId is string
+        && exists(/databases/$(database)/documents/profiles/$(request.resource.data.profileId))
+        && get(/databases/$(database)/documents/profiles/$(request.resource.data.profileId)).data.status != "deleted"
+        && request.resource.data.type is string
+        && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")
+        && request.resource.data.amount is number
+        && ((request.resource.data.type == "biodata" && request.resource.data.amount == 100)
+          || (request.resource.data.type == "mobile" && request.resource.data.amount == 500))
+        && request.resource.data.status == "pending"
+        && request.resource.data.lockId is string
+        && request.resource.data.lockId == accessLockId(request.auth.uid, request.resource.data.profileId, request.resource.data.type)
+        && (
+          (request.resource.data.type == "biodata"
+            && !exists(/databases/$(database)/documents/biodataUnlocks/$(request.auth.uid + "_" + request.resource.data.profileId)))
+          ||
+          (request.resource.data.type == "mobile"
+            && !exists(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + request.resource.data.profileId)))
+        )
+        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.requestId == requestId
+        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.kind == "access"
+        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.profileId == request.resource.data.profileId
+        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.type == request.resource.data.type
+        && getAfter(/databases/$(database)/documents/pendingPaymentLocks/$(request.resource.data.lockId)).data.amount == request.resource.data.amount
+        && (
+          (
+            request.resource.data.paymentMethod == "wallet"
+            && request.resource.data.utr == ""
+            && !request.resource.data.keys().hasAny(["utrClaimId"])
+          )
+          ||
+          (
+            (request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
+            && validUtr(request.resource.data.utr)
+            && request.resource.data.utrClaimId is string
+            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.requestId == requestId
+            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.uid == request.auth.uid
+            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.kind == "access"
+            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.profileId == request.resource.data.profileId
+            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.type == request.resource.data.type
+            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.amount == request.resource.data.amount
+            && getAfter(/databases/$(database)/documents/paymentUtrClaims/$(request.resource.data.utr.lower())).data.utr == request.resource.data.utr
+          )
+        );
+
       allow update, delete: if isAdmin();
     }
 
