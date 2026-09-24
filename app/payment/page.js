@@ -3,7 +3,7 @@
 import {Suspense,useEffect,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {collection,doc,getDoc,onSnapshot,serverTimestamp,writeBatch,deleteDoc} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,serverTimestamp,setDoc,deleteDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 function Pay(){
@@ -63,16 +63,17 @@ function Pay(){
      return setMsg("⏳ Is profile ki payment request already process ho rahi hai. Page refresh karke status dekhein.");
     }
    }
-   const batch=writeBatch(db);
    const reqRef=doc(collection(db,"paidAccessRequests"));
-   batch.set(lockRef,{uid:user.uid,profileId:profile,type,kind:"access",amount,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()});
-   batch.set(reqRef,{uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"wallet",utr:"",lockId:lockRef.id,createdAt:serverTimestamp()});
-   await batch.commit();
+   try{
+    await setDoc(lockRef,{uid:user.uid,profileId:profile,type,kind:"access",amount,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()});
+    try{await setDoc(reqRef,{uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"wallet",utr:"",lockId:lockRef.id,createdAt:serverTimestamp()});}
+    catch(e){try{await deleteDoc(lockRef)}catch{};throw Object.assign(e,{stage:"wallet payment request"})}
+   }catch(e){throw Object.assign(e,{stage:e?.stage||"wallet payment lock"})}
    setMsg("💰 Wallet payment request Admin ko bhej di gayi hai. Approval ke baad ₹"+amount+" Wallet se deduct hoga aur exact Profile "+profile+" unlock hoga.");
   }catch(e){
    const code=e?.code||"";
    if(code==="already-exists")setMsg("❌ Payment lock already use ho chuka hai. Page refresh karke status dekhein.");
-   else if(code==="permission-denied")setMsg("❌ Firebase Rules ne request reject ki. Latest firestore.rules Firebase Console me Publish karein.");
+   else if(code==="permission-denied")setMsg("❌ Firebase Permission Denied — "+(e?.stage||"payment request")+" ko Firebase Rules ne reject kiya. Details: "+(e?.message||"Permission denied"));
    else if(code==="failed-precondition")setMsg("❌ Firebase precondition/configuration error. Page refresh karke dobara try karein.");
    else if(code==="unavailable")setMsg("❌ Firebase service abhi available nahi hai. Internet check karke dobara try karein.");
    else setMsg("❌ Wallet request save nahi hui: "+(e?.message||"Unknown error"));
