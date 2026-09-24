@@ -3,7 +3,7 @@
 import {Suspense,useEffect,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {collection,doc,getDoc,onSnapshot,query,where,serverTimestamp,writeBatch,deleteDoc} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,query,where,serverTimestamp,setDoc,deleteDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 function PageBody(){
@@ -71,14 +71,29 @@ function PageBody(){
      return setMsg("⏳ Is profile ki payment request already process ho rahi hai. Page refresh karke status dekhein.");
     }
    }
-   const batch=writeBatch(db);
    const reqRef=doc(collection(db,"paidAccessRequests"));
    const lockRef=doc(db,"pendingPaymentLocks",lockId);
    const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());
-   batch.set(lockRef,{uid:user.uid,profileId:profile,type,kind:"access",amount,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()});
-   batch.set(claimRef,{uid:user.uid,utr:clean,kind:"access",profileId:profile,type,amount,requestId:reqRef.id,createdAt:serverTimestamp()});
-   batch.set(reqRef,{uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"qr",utr:clean,utrClaimId:claimRef.id,lockId:lockRef.id,createdAt:serverTimestamp()});
-   await batch.commit();
+   const lockData={uid:user.uid,profileId:profile,type,kind:"access",amount,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()};
+   const claimData={uid:user.uid,utr:clean,kind:"access",profileId:profile,type,amount,requestId:reqRef.id,createdAt:serverTimestamp()};
+   const requestData={uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"qr",utr:clean,utrClaimId:claimRef.id,lockId:lockRef.id,createdAt:serverTimestamp()};
+
+   // Write separately so a Rules rejection tells us exactly which document failed.
+   // If a later step fails, remove the earlier temporary documents.
+   await setDoc(lockRef,lockData);
+   try{
+    await setDoc(claimRef,claimData);
+   }catch(e){
+    await deleteDoc(lockRef).catch(()=>{});
+    throw Object.assign(new Error("UTR claim save failed: "+(e?.message||"Permission denied")), {code:e?.code||"permission-denied",stage:"paymentUtrClaims"});
+   }
+   try{
+    await setDoc(reqRef,requestData);
+   }catch(e){
+    await deleteDoc(claimRef).catch(()=>{});
+    await deleteDoc(lockRef).catch(()=>{});
+    throw Object.assign(new Error("Payment request save failed: "+(e?.message||"Permission denied")), {code:e?.code||"permission-denied",stage:"paidAccessRequests"});
+   }
    setUtr("");
    setMsg("⏳ Payment request Admin ko bhej di gayi hai. UTR verify hone ke baad exact Profile "+profile+" ka access approve hoga.");
   }catch(e){
@@ -87,7 +102,8 @@ function PageBody(){
     setMsg("❌ Ye UTR ya payment lock pehle hi use ho chuka hai. Page refresh karke status dekhein.");
    }else if(code==="permission-denied"){
     const detail=e?.message||"Permission denied";
-    setMsg("❌ Firebase Permission Denied\\n\\nRequest Firebase Rules se reject hui. Details: "+detail);
+    const stage=e?.stage||"payment request";
+    setMsg("❌ Firebase Permission Denied\\n\\n"+stage+" ko Firebase Rules ne reject kiya. Details: "+detail);
    }else if(code==="failed-precondition"){
     setMsg("❌ Firebase configuration/precondition error. Kripya page refresh karke dobara try karein.");
    }else if(code==="unavailable"){
