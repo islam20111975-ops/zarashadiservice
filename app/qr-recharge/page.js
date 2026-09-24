@@ -80,7 +80,11 @@ function PageBody(){
 
    // Write separately so a Rules rejection tells us exactly which document failed.
    // If a later step fails, remove the earlier temporary documents.
-   await setDoc(lockRef,lockData);
+   try{
+    await setDoc(lockRef,lockData);
+   }catch(e){
+    throw Object.assign(new Error("Payment lock save failed: "+(e?.message||"Permission denied")), {code:e?.code||"permission-denied",stage:"pendingPaymentLocks"});
+   }
    try{
     await setDoc(claimRef,claimData);
    }catch(e){
