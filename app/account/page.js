@@ -262,7 +262,7 @@ export default function Account(){
         </div>
       </div>
 
-      {msg&&msgType==="success"&&<div className="successBox" style={{marginBottom:14,textAlign:"center"}}>{msg}</div>}\n\n      {editing&&<form className="paymentForm accountProfileForm" onSubmit={save}>
+      {msg&&msgType==="success"&&<div className="successBox" style={{marginBottom:14,textAlign:"center"}}>{msg}</div>}\n\n      {editing&&(<form className="paymentForm accountProfileForm" onSubmit={save}>
         <div className="accountSectionTitle">👤 अपनी जानकारी</div>
 
         <label>
