@@ -30,12 +30,12 @@ export default function WalletRecharge(){
   async function recharge(e){
     e.preventDefault();
     const n=Number(amount),clean=utr.trim().replace(/\s+/g,"").toUpperCase();
+    if(!user)return setMsg("Pehle Google se Login karein.");
     if(!RECHARGE_OPTIONS.includes(n))return setMsg("₹100, ₹500 या ₹1000 select करें.");
     if(method==="upi"&&!payment.upiId)return setMsg("Admin ne UPI ID set nahi ki hai.");
     if(method==="qr"&&!payment.qrUrl)return setMsg("Admin ne QR payment set nahi kiya hai.");
     if(!/^[A-Z0-9]{6,40}$/.test(clean))return setMsg("Sahi UTR / Transaction ID bhariye.");
     if(requests.some(x=>x.status==="pending"&&Number(x.amount)===n))return setMsg("Is amount ka recharge already Pending hai.");
-    if(!user)return setMsg("Pehle Google se Login karein.");
     setSaving(true);setMsg("");
     try{
       const batch=writeBatch(db);
@@ -47,8 +47,12 @@ export default function WalletRecharge(){
       batch.set(reqRef,{uid:user.uid,email:user.email||"",name:profile.name||"",phone:profile.phone||"",amount:n,utr:clean,status:"pending",paymentMethod:method,lockId:lockRef.id,utrClaimId:claimRef.id,createdAt:serverTimestamp()});
       await batch.commit();
       setUtr("");
-      setMsg("⏳ Recharge Pending है। Admin payment verify करेंगे। Verification के बाद amount आपके Wallet में आ जाएगा.");
-    }catch(e){setMsg(e.message)}finally{setSaving(false)}
+      setMsg("⏳ Recharge request successfully Admin को भेज दी गई है। UTR verify होने के बाद amount Wallet में add होगा.");
+    }catch(e){
+      const code=e?.code||"";
+      const detail=code==="permission-denied"?" Firebase permission denied हुआ है. कृपया फिर से Login करके सही UTR के साथ submit करें.":(e?.message||"Unknown error");
+      setMsg("Recharge request save नहीं हुई: "+detail);
+    }finally{setSaving(false)}
   }
 
   const upiLink=payment.upiId?"upi://pay?pa="+encodeURIComponent(payment.upiId)+"&pn="+encodeURIComponent("Zara Shadi Service")+"&am="+amount+"&cu=INR":"";
