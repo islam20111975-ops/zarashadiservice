@@ -306,3 +306,69 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 .payment .qr p{position:relative;z-index:2;margin:6px 0 0;line-height:1.35;}
 .paymentForm{position:relative;z-index:5;}
 .paymentForm .primaryAction{position:relative;z-index:6;pointer-events:auto;}
+
+/* FINAL UTR CLICK FIX: keep QR, input and submit button in separate touch layers */
+.payment .qr{
+  height:auto!important;
+  min-height:220px;
+  width:250px;
+  max-width:100%;
+  margin:18px auto 22px!important;
+  padding:10px!important;
+  overflow:hidden!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  position:relative!important;
+  z-index:1!important;
+  pointer-events:none!important;
+}
+.payment .qr img{
+  display:block!important;
+  width:auto!important;
+  max-width:100%!important;
+  height:auto!important;
+  max-height:185px!important;
+  object-fit:contain!important;
+  pointer-events:none!important;
+}
+.payment .qr p{
+  position:relative!important;
+  z-index:2!important;
+  margin:7px 0 0!important;
+  line-height:1.3!important;
+  pointer-events:none!important;
+}
+.paymentForm{
+  position:relative!important;
+  z-index:100!important;
+  display:block!important;
+  clear:both!important;
+  margin-top:10px!important;
+  isolation:isolate!important;
+}
+.paymentForm label,
+.paymentForm .adminInput,
+.paymentForm .primaryAction{
+  position:relative!important;
+  z-index:101!important;
+  pointer-events:auto!important;
+}
+.paymentForm .adminInput{
+  display:block!important;
+  min-height:48px;
+}
+.paymentForm .primaryAction{
+  display:block!important;
+  width:100%!important;
+  min-height:52px!important;
+  margin-top:2px!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+@media(max-width:600px){
+  .payment .qr{width:220px;min-height:220px;margin-bottom:24px!important}
+  .payment .qr img{max-height:175px!important}
+  .paymentForm .primaryAction{min-height:54px!important;font-size:14px!important}
+}
