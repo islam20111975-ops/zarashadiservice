@@ -41,7 +41,7 @@ service cloud.firestore {
       allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       allow create: if signedIn() && !exists(/databases/$(database)/documents/pendingPaymentLocks/$(lockId)) && request.resource.data.uid == request.auth.uid && request.resource.data.requestId is string && request.resource.data.status == "pending" &&
         ((request.resource.data.kind == "recharge" && request.resource.data.amount is number && request.resource.data.uid + "_recharge_" + request.resource.data.amount == lockId) ||
-        (request.resource.data.kind == "access" && request.resource.data.profileId is string && request.resource.data.type is string && request.resource.data.uid + "_" + request.resource.data.profileId + "_" + request.resource.data.type == lockId)) &&
+        (request.resource.data.kind == "access" && request.resource.data.profileId is string && request.resource.data.type is string && request.resource.data.requestId + "_" + request.resource.data.type == lockId)) &&
         ((request.resource.data.kind == "recharge" && request.resource.data.amount is number && (request.resource.data.amount == 100 || request.resource.data.amount == 500 || request.resource.data.amount == 1000)) ||
         (request.resource.data.kind == "access" && request.resource.data.profileId is string && exists(/databases/$(database)/documents/profiles/$(request.resource.data.profileId)) && get(/databases/$(database)/documents/profiles/$(request.resource.data.profileId)).data.status != "deleted" && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")));
       allow delete, update: if isAdmin();
