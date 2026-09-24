@@ -192,7 +192,13 @@ export default function Admin(){
     <div className="adminNav">{nav.map(n=><button key={n[0]} className={tab===n[0]?"active":""} onClick={()=>n[0]==="biodata"?router.push("/admin/biodata"):setTab(n[0])}>{n[1]}</button>)}</div>
     {error&&<div className="errorBox">{error}</div>}
 
-    {tab==="dashboard"&&<div className="dashboardGrid"><div className="statCard"><span className="statIcon">👥</span><small>Google Users</small><strong>{users.length}</strong></div><div className="statCard"><span className="statIcon">📋</span><small>Biodata</small><strong>{profiles.length}</strong></div><div className="statCard"><span className="statIcon">₹</span><small>Pending Access</small><strong>{requests.filter(x=>x.status==="pending").length}</strong></div><div className="statCard"><span className="statIcon">💰</span><small>Pending Recharge</small><strong>{recharges.filter(x=>x.status==="pending").length}</strong></div></div>}
+    {tab==="dashboard"&&<div className="dashboardGrid">
+      <div className="statCard"><span className="statIcon">👥</span><small>Google Users</small><strong>{users.length}</strong></div>
+      <div className="statCard"><span className="statIcon">📋</span><small>Biodata</small><strong>{profiles.length}</strong></div>
+      <div className="statCard" role="button" tabIndex={0} onClick={()=>setTab("access100")} onKeyDown={e=>e.key==="Enter"&&setTab("access100")}><span className="statIcon">₹100</span><small>Pending Biodata</small><strong>{requests.filter(x=>x.status==="pending"&&Number(x.amount)===100).length}</strong><small>Click करके पूरी list देखें →</small></div>
+      <div className="statCard" role="button" tabIndex={0} onClick={()=>setTab("access500")} onKeyDown={e=>e.key==="Enter"&&setTab("access500")}><span className="statIcon">₹500</span><small>Pending Mobile</small><strong>{requests.filter(x=>x.status==="pending"&&Number(x.amount)===500).length}</strong><small>Click करके पूरी list देखें →</small></div>
+      <div className="statCard" role="button" tabIndex={0} onClick={()=>setTab("wallet")} onKeyDown={e=>e.key==="Enter"&&setTab("wallet")}><span className="statIcon">💰</span><small>Pending Recharge</small><strong>{recharges.filter(x=>x.status==="pending").length}</strong><small>Click करके पूरी list देखें →</small></div>
+    </div>}
 
     {tab==="users"&&<div className="adminList"><div className="listHead"><h3>👥 All Google Login Users</h3><span>{users.length}</span></div>{users.map(x=><div className="userAdminCard" key={x.id}><div className="rowProfile">{x.photoURL?<img src={x.photoURL} alt=""/>:<div className="rowPlaceholder">👤</div>}<div><b>{x.name||"Name not set"}</b><small>{x.email||""}</small><small>UID: {x.uid||x.id}</small></div></div><div className="userDetails"><span>📍 {x.address||"-"}</span><span>📱 {x.phone||"-"}</span><span>🎂 {x.age||"-"}</span><span>💼 {x.income||"-"}</span><span>💰 Wallet: ₹{x.walletBalance||0}</span></div></div>)}</div>}
 
