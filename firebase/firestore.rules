@@ -68,10 +68,10 @@ service cloud.firestore {
 
     match /profilePrivate/{profileId} { allow read, write: if isAdmin(); }
 
-    // Public payment/social settings are intentionally readable by payment pages.
-    // Do not store secrets in /settings.
+    // Only these two settings documents are public because the customer-facing
+    // pages need them. Never put secrets in /settings.
     match /settings/{settingId} {
-      allow read: if true;
+      allow read: if settingId == "payment" || settingId == "social";
       allow write: if isAdmin();
     }
 
