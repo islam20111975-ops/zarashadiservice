@@ -86,7 +86,8 @@ function PageBody(){
    if(code==="already-exists"){
     setMsg("❌ Ye UTR ya payment lock pehle hi use ho chuka hai. Page refresh karke status dekhein.");
    }else if(code==="permission-denied"){
-    setMsg("❌ Firebase Rules ne request ko reject kiya. Firebase Console me latest firestore.rules Publish hua hai ya nahi check karein.");
+    const detail=e?.message||"Permission denied";
+    setMsg("❌ Firebase Permission Denied\\n\\nRequest Firebase Rules se reject hui. Details: "+detail);
    }else if(code==="failed-precondition"){
     setMsg("❌ Firebase configuration/precondition error. Kripya page refresh karke dobara try karein.");
    }else if(code==="unavailable"){
