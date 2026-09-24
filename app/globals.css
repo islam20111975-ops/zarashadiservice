@@ -199,3 +199,26 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
   .adminBox h3{font-size:15px!important}
   .adminInput{font-size:12px!important;padding:12px!important}
 }
+
+
+/* My Account profile form */
+.accountProfileForm{display:flex!important;flex-direction:column!important;gap:14px!important;text-align:left}
+.accountProfileForm label{display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:900;color:#43384d}
+.accountProfileForm .adminInput{width:100%;box-sizing:border-box}
+.accountSectionTitle{font-size:15px;font-weight:950;padding:13px 15px;border-radius:16px;background:linear-gradient(135deg,#f5f3ff,#fff1f8);border:1px solid #eadff2;box-shadow:0 6px 16px #35105b0b}
+.required{color:#dc2626}
+.fieldHint{font-size:10px!important;font-weight:600!important;color:#64748b!important}
+.accountReadonly{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:13px;border-radius:16px;background:#f8fafc;border:1px solid #e2e8f0}
+.accountReadonly div{min-width:0}
+.accountReadonly small{display:block;color:#64748b;font-size:9px;margin-bottom:4px}
+.accountReadonly b{display:block;font-size:10px;overflow-wrap:anywhere;color:#334155}
+.saveProfileBtn{margin-top:2px}
+@media(max-width:600px){
+ .cardPage{width:auto!important}
+ .accountProfileForm{gap:12px!important}
+ .accountProfileForm label{font-size:11px}
+ .accountProfileForm .adminInput{min-height:46px;font-size:13px!important}
+ .accountProfileForm textarea.adminInput{min-height:82px}
+ .accountReadonly{grid-template-columns:1fr;gap:9px}
+ .accountSectionTitle{font-size:14px}
+}
