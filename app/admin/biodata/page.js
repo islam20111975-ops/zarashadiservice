@@ -4,7 +4,7 @@ import {useEffect,useState} from "react";
 import {Suspense} from "react";
 import {useRouter,useSearchParams} from "next/navigation";
 import {GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signInWithRedirect} from "firebase/auth";
-import {collection,deleteDoc,doc,getDoc,onSnapshot,setDoc,serverTimestamp} from "firebase/firestore";
+import {collection,deleteDoc,doc,getDoc,onSnapshot,setDoc,serverTimestamp,writeBatch} from "firebase/firestore";
 import {auth,db} from "../../../lib/firebase";
 
 const ADMIN="ngogrant454@gmail.com";
@@ -86,8 +86,9 @@ function BiodataAdminPage(){
       if(files.length)photos=await Promise.all(files.map(f=>imageToDataUrl(f)));
       else if(editing)photos=old.data().photos||[old.data().photo].filter(Boolean);
       if(!photos.length)return setError("Kam se kam 1 photo zaroori hai.");
-      await setDoc(ref,{profileId:id,gender:form.gender,photos,photo:photos[0],status:"active",updatedAt:serverTimestamp()},{merge:true});
-      await setDoc(doc(db,"profileBiodataPrivate",id),{
+      const batch=writeBatch(db);
+      batch.set(ref,{profileId:id,gender:form.gender,photos,photo:photos[0],status:"active",updatedAt:serverTimestamp()},{merge:true});
+      batch.set(doc(db,"profileBiodataPrivate",id),{
         profileId:id,name:form.name.trim(),address:form.address.trim(),age:Number(form.age),income:form.income.trim(),
         maritalStatus:form.maritalStatus.trim(),height:form.height.trim(),dob:form.dob.trim(),birthPlace:form.birthPlace.trim(),
         education:form.education.trim(),occupation:form.occupation.trim(),company:form.company.trim(),city:form.city.trim(),
@@ -98,9 +99,10 @@ function BiodataAdminPage(){
         preferredLocation:form.preferredLocation.trim(),otherExpectations:form.otherExpectations.trim(),otherInfo:form.otherInfo.trim(),
         updatedAt:serverTimestamp()
       },{merge:true});
-      await setDoc(doc(db,"profileContact",id),{
+      batch.set(doc(db,"profileContact",id),{
         profileId:id,phone,updatedAt:serverTimestamp()
       },{merge:true});
+      await batch.commit();
       alert(editing?"Biodata update ho gaya.":"Naya Biodata save ho gaya.");
       resetForm();
     }catch(e){setError("Biodata save nahi hua: "+e.message)}finally{setSaving(false)}
