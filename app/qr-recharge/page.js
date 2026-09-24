@@ -22,7 +22,7 @@ function PageBody(){
   if(requests.some(x=>x.status==="approved"))return setMsg("Is profile ka access pehle hi approved hai.");
   setSaving(true);
   try{
-   const batch=writeBatch(db),reqRef=doc(collection(db,"paidAccessRequests")),claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase()),lockId=user.uid+"_"+profile+"_"+type,lockRef=doc(db,"pendingPaymentLocks",lockId);
+   const batch=writeBatch(db),reqRef=doc(collection(db,"paidAccessRequests")),claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase()),lockId=reqRef.id+"_"+type,lockRef=doc(db,"pendingPaymentLocks",lockId);
    batch.set(claimRef,{uid:user.uid,utr:clean,kind:"access",profileId:profile,type,amount,requestId:reqRef.id,createdAt:serverTimestamp()});
    batch.set(lockRef,{uid:user.uid,requestId:reqRef.id,kind:"access",profileId:profile,type,amount,status:"pending",createdAt:serverTimestamp()});
    batch.set(reqRef,{uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"qr",utr:clean,utrClaimId:claimRef.id,lockId,createdAt:serverTimestamp()});
