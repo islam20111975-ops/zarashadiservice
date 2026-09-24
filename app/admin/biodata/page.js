@@ -82,7 +82,6 @@ function BiodataAdminPage(){
     setSaving(true);
     try{
       const ref=doc(db,"profiles",id),old=await getDoc(ref),editing=old.exists();
-      if(!editing && old.exists())return;
       let photos=[];
       if(files.length)photos=await Promise.all(files.map(f=>imageToDataUrl(f)));
       else if(editing)photos=old.data().photos||[old.data().photo].filter(Boolean);
