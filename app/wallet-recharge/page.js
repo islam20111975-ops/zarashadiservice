@@ -41,10 +41,8 @@ export default function WalletRecharge(){
       const batch=writeBatch(db);
       const reqRef=doc(collection(db,"walletRechargeRequests"));
       const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());
-      const lockRef=doc(db,"pendingPaymentLocks",user.uid+"_recharge_"+n);
       batch.set(claimRef,{uid:user.uid,utr:clean,kind:"recharge",amount:n,requestId:reqRef.id,createdAt:serverTimestamp()});
-      batch.set(lockRef,{uid:user.uid,kind:"recharge",amount:n,requestId:reqRef.id,status:"pending",createdAt:serverTimestamp()});
-      batch.set(reqRef,{uid:user.uid,email:user.email||"",name:profile.name||"",phone:profile.phone||"",amount:n,utr:clean,status:"pending",paymentMethod:method,lockId:lockRef.id,utrClaimId:claimRef.id,createdAt:serverTimestamp()});
+      batch.set(reqRef,{uid:user.uid,email:user.email||"",name:profile.name||"",phone:profile.phone||"",amount:n,utr:clean,status:"pending",paymentMethod:method,utrClaimId:claimRef.id,createdAt:serverTimestamp()});
       await batch.commit();
       setUtr("");
       setMsg("⏳ Recharge request successfully Admin को भेज दी गई है। UTR verify होने के बाद amount Wallet में add होगा.");
