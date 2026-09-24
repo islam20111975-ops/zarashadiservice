@@ -2,7 +2,7 @@
 
 import {useEffect,useState} from "react";
 import {GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged} from "firebase/auth";
-import {doc,getDoc,setDoc,collection,onSnapshot,query,where,serverTimestamp} from "firebase/firestore";
+import {doc,getDoc,setDoc,updateDoc,collection,onSnapshot,query,where,serverTimestamp} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 const empty={name:"",address:"",phone:"",age:"",income:"",photoURL:""};
@@ -17,21 +17,24 @@ export default function Account(){
     if(!user)return;
     const unsubTx=onSnapshot(
       query(collection(db,"walletTransactions"),where("uid","==",user.uid)),
-      s=>setTx(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)))
+      s=>setTx(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))),
+      e=>setMsg("Transactions load error: "+(e?.message||"permission error"))
     );
     const unsubReq=onSnapshot(
       query(collection(db,"walletRechargeRequests"),where("uid","==",user.uid)),
-      s=>setRequests(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)))
+      s=>setRequests(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))),
+      e=>setMsg("Recharge History load error: "+(e?.message||"permission error"))
     );
     const unsubUser=onSnapshot(
       doc(db,"users",user.uid),
-      s=>{if(s.exists())setWallet(Number(s.data().walletBalance||0))}
+      s=>{if(s.exists()){setWallet(Number(s.data().walletBalance||0));setProfile(p=>({...p,...s.data()}))}},
+      e=>setMsg("Wallet/Profile load error: "+(e?.message||"permission error"))
     );
     return()=>{unsubTx();unsubReq();unsubUser()};
   },[user]);
 
   function choosePhoto(e){const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith("image/")||f.size>10*1024*1024)return setMsg("Image 10 MB se chhoti honi chahiye.");setFile(f);setPreview(URL.createObjectURL(f))}
-  async function save(e){e.preventDefault();if(!user)return;const phone=profile.phone.replace(/\D/g,"");if(!profile.name.trim()||!profile.address.trim()||!/^[6-9]\d{9}$/.test(phone)||!profile.age||!profile.income.trim())return setMsg("Name, Address, Mobile, Age aur Income sab bharna zaroori hai.");setSaving(true);setMsg("");try{let photoURL=profile.photoURL||"";if(file)photoURL=await compressPhoto(file);await setDoc(doc(db,"users",user.uid),{uid:user.uid,name:profile.name.trim(),address:profile.address.trim(),phone,age:Number(profile.age),income:profile.income.trim(),photoURL,email:user.email||"",createdAt:profile.createdAt||serverTimestamp(),updatedAt:serverTimestamp()},{merge:true});setProfile({...profile,phone,photoURL});setFile(null);setPreview(photoURL);setMsg("Profile save ho gaya.")}catch(e){setMsg(e.message)}finally{setSaving(false)}}
+  async function save(e){e.preventDefault();if(!user)return;const phone=profile.phone.replace(/\D/g,"");if(!profile.name.trim()||!profile.address.trim()||!/^[6-9]\d{9}$/.test(phone)||!profile.age||!profile.income.trim())return setMsg("Name, Address, Mobile, Age aur Income sab bharna zaroori hai.");setSaving(true);setMsg("");try{let photoURL=profile.photoURL||"";if(file)photoURL=await compressPhoto(file);const userRef=doc(db,"users",user.uid);const existing=await getDoc(userRef);const payload={uid:user.uid,name:profile.name.trim(),address:profile.address.trim(),phone,age:Number(profile.age),income:profile.income.trim(),photoURL,email:user.email||"",updatedAt:serverTimestamp()};if(existing.exists()){await updateDoc(userRef,payload)}else{await setDoc(userRef,{...payload,createdAt:serverTimestamp()})};setProfile({...profile,phone,photoURL});setFile(null);setPreview(photoURL);setMsg("Profile save ho gaya.")}catch(e){setMsg("Profile save nahi hui: "+(e?.message||"Unknown error"))}finally{setSaving(false)}}
   if(!user)return <main><section className="cardPage"><div className="adminIcon">👤</div><h1>My Profile</h1><p>Google se login karein.</p><button className="primaryAction" onClick={async()=>{setLoginError("");try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}}}>Google se Login →</button>{loginError&&<div className="errorBox">{loginError}</div>}</section></main>;
   const pending=requests.filter(x=>x.status==="pending");
   return <main><section className="cardPage" style={{maxWidth:760,margin:"25px auto"}}>
