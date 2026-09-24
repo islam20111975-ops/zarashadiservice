@@ -59,7 +59,8 @@ export default function Account(){
   const [msgType,setMsgType]=useState("success");
   const [saving,setSaving]=useState(false);
   const [loginError,setLoginError]=useState("");
-  const [loading,setLoading]=useState(true);\n  const [editing,setEditing]=useState(true);
+  const [loading,setLoading]=useState(true);
+  const [editing,setEditing]=useState(true);
   const previewUrlRef=useRef("");
 
   function showMsg(text,type="success"){
@@ -76,7 +77,10 @@ export default function Account(){
       }
       try{
         const s=await getDoc(doc(db,"users",u.uid));
-        if(s.exists()){\n          setProfile({...empty,...s.data()});\n          setEditing(false);\n        }
+        if(s.exists()){
+          setProfile({...empty,...s.data()});
+          setEditing(false);
+        }
       }catch(e){
         showMsg("Profile load nahi ho saka: "+(e?.message||"error"),"error");
       }finally{
