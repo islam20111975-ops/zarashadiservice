@@ -103,7 +103,7 @@ service cloud.firestore {
           (request.resource.data.kind == "access"
             && request.resource.data.profileId is string
             && exists(/databases/$(database)/documents/profiles/$(request.resource.data.profileId))
-            && get(/databases/$(database)/documents/profiles/$(request.resource.data.profileId)).data.status != "deleted"
+            && profileNotDeleted(request.resource.data.profileId)
             && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")
             && request.resource.data.amount is number
             && ((request.resource.data.type == "biodata" && request.resource.data.amount == 100)
@@ -159,7 +159,7 @@ service cloud.firestore {
             && request.resource.data.type is string
             && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")
             && exists(/databases/$(database)/documents/profiles/$(request.resource.data.profileId))
-            && get(/databases/$(database)/documents/profiles/$(request.resource.data.profileId)).data.status != "deleted"
+            && profileNotDeleted(request.resource.data.profileId)
             && lockId == accessLockId(request.auth.uid, request.resource.data.profileId, request.resource.data.type)
           )
         );
@@ -215,7 +215,7 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.profileId is string
         && exists(/databases/$(database)/documents/profiles/$(request.resource.data.profileId))
-        && get(/databases/$(database)/documents/profiles/$(request.resource.data.profileId)).data.status != "deleted"
+        && profileNotDeleted(request.resource.data.profileId)
         && request.resource.data.type is string
         && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")
         && request.resource.data.amount is number
