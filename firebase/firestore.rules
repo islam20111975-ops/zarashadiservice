@@ -134,7 +134,14 @@ service cloud.firestore {
             && lockId == accessLockId(request.auth.uid, request.resource.data.profileId, request.resource.data.type)
           )
         );
-      allow delete, update: if isAdmin();
+      allow delete: if isAdmin() || (signedIn()
+        && resource.data.uid == request.auth.uid
+        && resource.data.requestId is string
+        && (
+          !exists(/databases/$(database)/documents/paidAccessRequests/$(resource.data.requestId))
+          || get(/databases/$(database)/documents/paidAccessRequests/$(resource.data.requestId)).data.status != "pending"
+        ));
+      allow update: if isAdmin();
     }
 
     match /walletRechargeRequests/{requestId} {
