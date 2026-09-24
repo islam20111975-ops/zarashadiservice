@@ -373,7 +373,7 @@ export default function Account(){
 
       {msg&&msgType==="error"&&<div className="errorBox">{msg}</div>}
 
-      <button type="button" className="backAction" onClick={()=>signOut(auth)}>🚪 Logout</button>
+      <div style={{display:"flex",gap:10,marginTop:18,flexWrap:"wrap"}}>\n        <button type="button" className="backAction" onClick={()=>{window.location.href="/"}}>🏠 Home पर जाएँ</button>\n        <button type="button" className="backAction" onClick={()=>signOut(auth)}>🚪 Logout</button>\n      </div>
     </section>
   </main>;
 }
