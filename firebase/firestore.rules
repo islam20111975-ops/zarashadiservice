@@ -218,7 +218,15 @@ service cloud.firestore {
         && request.resource.data.lockId == accessLockId(request.auth.uid, request.resource.data.profileId, request.resource.data.type)
         && (request.resource.data.paymentMethod == "wallet" || request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
         && request.resource.data.utr is string
-        && request.resource.data.utrClaimId is string;
+        && (
+          (request.resource.data.paymentMethod == "wallet"
+            && request.resource.data.utr == ""
+            && (!request.resource.data.keys().hasAny(["utrClaimId"]) || request.resource.data.utrClaimId == ""))
+          ||
+          (request.resource.data.paymentMethod != "wallet"
+            && validUtr(request.resource.data.utr)
+            && request.resource.data.utrClaimId is string)
+        );
 
       allow update, delete: if isAdmin();
     }
