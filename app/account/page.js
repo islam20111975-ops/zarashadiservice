@@ -59,7 +59,7 @@ export default function Account(){
   const [msgType,setMsgType]=useState("success");
   const [saving,setSaving]=useState(false);
   const [loginError,setLoginError]=useState("");
-  const [loading,setLoading]=useState(true);
+  const [loading,setLoading]=useState(true);\n  const [editing,setEditing]=useState(true);
   const previewUrlRef=useRef("");
 
   function showMsg(text,type="success"){
@@ -76,7 +76,7 @@ export default function Account(){
       }
       try{
         const s=await getDoc(doc(db,"users",u.uid));
-        if(s.exists())setProfile({...empty,...s.data()});
+        if(s.exists()){\n          setProfile({...empty,...s.data()});\n          setEditing(false);\n        }
       }catch(e){
         showMsg("Profile load nahi ho saka: "+(e?.message||"error"),"error");
       }finally{
@@ -200,7 +200,7 @@ export default function Account(){
         previewUrlRef.current="";
       }
       setPreview(photoURL);
-      showMsg("✅ Profile successfully save ho gayi!","success");
+      setEditing(false);\n      showMsg("✅ Profile successfully save ho gayi!","success");
     }catch(e){
       let error=e?.message||"Unknown error";
       if(error.toLowerCase().includes("permission")){
@@ -257,7 +257,7 @@ export default function Account(){
         </div>
       </div>
 
-      <form className="paymentForm accountProfileForm" onSubmit={save}>
+      {msg&&msgType==="success"&&<div className="successBox" style={{marginBottom:14,textAlign:"center"}}>{msg}</div>}\n\n      {editing&&<form className="paymentForm accountProfileForm" onSubmit={save}>
         <div className="accountSectionTitle">👤 अपनी जानकारी</div>
 
         <label>
@@ -366,7 +366,7 @@ export default function Account(){
           :<div className="empty">अभी कोई Access Transaction नहीं है.</div>}
       </div>
 
-      {msg&&<div className={msgType==="error"?"errorBox":"successBox"}>{msg}</div>}
+      {msg&&msgType==="error"&&<div className="errorBox">{msg}</div>}
 
       <button type="button" className="backAction" onClick={()=>signOut(auth)}>🚪 Logout</button>
     </section>
