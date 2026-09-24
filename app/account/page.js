@@ -38,6 +38,10 @@ export default function Account(){
   if(loading)return <main><section className="cardPage" style={{maxWidth:560,margin:"25px auto",textAlign:"center"}}><div className="adminIcon">⏳</div><h1>My Account</h1><p>Profile load ho rahi hai...</p></section></main>;
   if(!user)return <main><section className="cardPage"><div className="adminIcon">👤</div><h1>My Profile</h1><p>Google se login karein.</p><button className="primaryAction" onClick={async()=>{setLoginError("");try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}}}>Google se Login →</button>{loginError&&<div className="errorBox">{loginError}</div>}</section></main>;
   const pending=requests.filter(x=>x.status==="pending");
+  const credits=tx.filter(x=>x.direction==="credit");
+  const debits=tx.filter(x=>x.direction==="debit");
+  const accessTx=tx.filter(x=>x.type==="biodata_unlock"||x.type==="mobile_access");
+  const profilesAccessed=[...new Set(accessTx.map(x=>x.profileId).filter(Boolean))];
   return <main><section className="cardPage" style={{maxWidth:760,margin:"25px auto"}}>
     <div style={{textAlign:"center"}}><span className="eyebrow">MY ACCOUNT</span><h1>Apni Profile & Wallet</h1><div style={{margin:"15px auto",width:120,height:120,borderRadius:"50%",overflow:"hidden",background:"#eee"}}>{(preview||profile.photoURL)?<img src={preview||profile.photoURL} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:55,lineHeight:"120px"}}>👤</span>}</div></div>
     <form className="paymentForm accountProfileForm" onSubmit={save}>
@@ -50,9 +54,14 @@ export default function Account(){
       <div className="accountReadonly"><div><small>Email</small><b>{user.email||"-"}</b></div><div><small>User ID</small><b>{user.uid}</b></div></div>
       <button className="primaryAction saveProfileBtn" disabled={saving}>{saving?"⏳ Saving...":"💾 Profile Save करें →"}</button>
     </form>
-    <div className="adminBox accountWalletBox"><div className="boxTitle"><div><span className="eyebrow">WALLET</span><h3>💰 Wallet Balance</h3><div className="walletAmount">₹{wallet}</div></div><span className="walletStatus">{wallet>0?"ACTIVE":"₹0"}</span></div><p className="small">Wallet से ₹100 Biodata या ₹500 Mobile Access लिया जा सकता है.</p><button type="button" className="primaryAction" onClick={()=>location.href="/wallet-recharge"}>💰 Wallet Recharge →</button></div>
+    <div className="adminBox accountWalletBox">
+      <div className="boxTitle"><div><span className="eyebrow">WALLET</span><h3>💰 Wallet Balance</h3><div className="walletAmount">₹{wallet}</div></div><span className="walletStatus">{wallet>0?"ACTIVE":"₹0"}</span></div>
+      <div className="accountMiniStats"><div><small>Credit</small><b>₹{credits.reduce((n,x)=>n+Number(x.amount||0),0)}</b></div><div><small>Debit</small><b>₹{debits.reduce((n,x)=>n+Number(x.amount||0),0)}</b></div><div><small>Profiles Accessed</small><b>{profilesAccessed.length}</b></div></div>
+      <p className="small">Wallet से ₹100 Biodata या ₹500 Mobile Access लिया जा सकता है.</p>
+      <button type="button" className="primaryAction" onClick={()=>location.href="/wallet-recharge"}>💰 Wallet Recharge →</button>
+    </div>
     <div className="adminList"><div className="listHead"><div><h3>🧾 Recharge History</h3><small className="listSub">Wallet में जमा किए गए पैसे</small></div><span>{requests.length}</span></div>{pending.length>0&&<div className="notice" style={{marginBottom:12}}>⏳ <b>आपका Recharge Pending है</b><br/>आपका UTR मिल गया है। Admin payment verify कर रहे हैं।<br/>💰 Verification के बाद amount आपके Wallet में जल्द ही आ जाएगा।<br/>🙏 कृपया अभी थोड़ा इंतज़ार करें।</div>}{requests.length?requests.map(x=><div className="adminRow" key={x.id}><span><b>₹{x.amount} • {x.status}</b><small>💳 {(x.paymentMethod||"upi").toUpperCase()} • UTR: {x.utr}</small></span></div>):<div className="empty">अभी कोई Recharge नहीं किया गया है.<br/><small>Recharge करने के बाद यहाँ पूरी history दिखेगी.</small></div>}</div>
-    <div className="adminList"><div className="listHead"><div><h3>📊 Access Transactions</h3><small className="listSub">Biodata और Mobile Access की payment history</small></div><span>{tx.length}</span></div>{tx.length?tx.map(x=><div className="adminRow" key={x.id}><span><b>{x.type} • ₹{x.amount}</b><small>{x.direction==="credit"?"🟢 Credit":x.direction==="debit"?"🔴 Debit":"ℹ️ Access"}{x.profileId?" • Profile "+x.profileId:""}{x.utr?" • UTR "+x.utr:""}{x.balanceAfter!=null?" • Balance ₹"+x.balanceAfter:""}</small></span></div>):<div className="empty">अभी कोई Access Transaction नहीं है.</div>}</div>
+    <div className="adminList"><div className="listHead"><div><h3>📊 Access Transactions</h3><small className="listSub">Biodata और Mobile Access की payment history</small></div><span>{accessTx.length}</span></div>{accessTx.length?accessTx.map(x=><div className="adminRow" key={x.id}><span><b>{x.type==="biodata_unlock"?"📋 Biodata Access":"📱 Mobile Access"} • ₹{x.amount}</b><small>Profile {x.profileId||"-"}{x.utr?" • UTR "+x.utr:""}{x.balanceAfter!=null?" • Balance ₹"+x.balanceAfter:""}</small></span></div>):<div className="empty">अभी कोई Access Transaction नहीं है.</div>}</div>
     {msg&&<div className="messageBox">{msg}</div>}<button className="backAction" onClick={()=>signOut(auth)}>🚪 Logout</button>
   </section></main>;
 }
