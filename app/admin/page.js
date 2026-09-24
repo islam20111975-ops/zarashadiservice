@@ -3,7 +3,7 @@
 import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged,signOut} from "firebase/auth";
-import {collection,doc,getDoc,onSnapshot,query,orderBy,setDoc,serverTimestamp,updateDoc,runTransaction} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,setDoc,serverTimestamp,updateDoc,runTransaction} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 const ADMIN="ngogrant454@gmail.com";
@@ -22,8 +22,8 @@ export default function Admin(){
     if(user?.email?.toLowerCase()!==ADMIN)return;
     const unsubs=[];
     const watch=(path,setter,ordered=false)=>{
-      const q=ordered?query(collection(db,path),orderBy("createdAt","desc")):collection(db,path);
-      unsubs.push(onSnapshot(q,s=>setter(s.docs.map(d=>({id:d.id,...d.data()}))),e=>setError(path+" load error: "+e.message)));
+      const q=collection(db,path);
+      unsubs.push(onSnapshot(q,s=>{const rows=s.docs.map(d=>({id:d.id,...d.data()})); if(ordered) rows.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0)); setter(rows)},e=>setError(path+" load error: "+e.message)));
     };
     watch("profiles",setProfiles);watch("users",setUsers);
     watch("walletRechargeRequests",setRecharges,true);watch("paidAccessRequests",setRequests,true);watch("walletTransactions",setTransactions,true);
