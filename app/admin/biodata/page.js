@@ -8,7 +8,10 @@ import {collection,deleteDoc,doc,getDoc,onSnapshot,setDoc,serverTimestamp} from 
 import {auth,db} from "../../../lib/firebase";
 
 const ADMIN="ngogrant454@gmail.com";
-const empty={id:"",gender:"female",name:"",address:"",phone:"",age:"",income:"",description:""};
+const empty={id:"",gender:"female",name:"",address:"",phone:"",age:"",income:"",description:"",
+ maritalStatus:"",height:"",dob:"",birthPlace:"",education:"",occupation:"",company:"",city:"",district:"",state:"",nativePlace:"",
+ religion:"",caste:"",language:"",fatherName:"",motherName:"",brothers:"",sisters:"",familyDetails:"",expectations:"",
+ preferredAge:"",preferredEducation:"",preferredLocation:"",otherExpectations:"",otherInfo:""};
 
 function imageToDataUrl(file,maxSide=700,maxChars=140000){
   return new Promise((resolve,reject)=>{
@@ -48,7 +51,7 @@ function BiodataAdminPage(){
     if(!p)return;
     getDoc(doc(db,"profileBiodataPrivate",edit)).then(s=>{
       const d=s.exists()?s.data():{};
-      setForm({id:edit,gender:p.gender||"female",name:d.name||"",address:d.address||"",phone:d.phone||"",age:d.age||"",income:d.income||"",description:d.description||""});
+      setForm({...empty,id:edit,gender:p.gender||"female",...d,phone:d.phone||""});
       setPreview(p.photos||[p.photo].filter(Boolean));
     }).catch(e=>setError(e.message));
   },[params,profiles]);
@@ -74,8 +77,8 @@ function BiodataAdminPage(){
     e.preventDefault();setError("");
     const id=form.id.trim(),phone=form.phone.replace(/\D/g,"");
     if(!/^[A-Za-z0-9_-]{2,40}$/.test(id))return setError("Profile ID sirf letters, numbers, _ ya - mein 2–40 characters ka hona chahiye.");
-    if(!id||!form.name.trim()||!form.address.trim()||!/^[6-9]\d{9}$/.test(phone)||!form.age||!form.income.trim()||!form.description.trim())
-      return setError("Profile ID, Name, Address, Mobile, Age, Income aur Description sab bharna zaroori hai.");
+    if(!id||!form.name.trim()||!form.address.trim()||!/^[6-9]\d{9}$/.test(phone)||!form.age||!form.income.trim())
+      return setError("Profile ID, Name, Address, Mobile, Age aur Income bharna zaroori hai.");
     setSaving(true);
     try{
       const ref=doc(db,"profiles",id),old=await getDoc(ref),editing=old.exists();
@@ -86,8 +89,15 @@ function BiodataAdminPage(){
       if(!photos.length)return setError("Kam se kam 1 photo zaroori hai.");
       await setDoc(ref,{profileId:id,gender:form.gender,photos,photo:photos[0],status:"active",updatedAt:serverTimestamp()},{merge:true});
       await setDoc(doc(db,"profileBiodataPrivate",id),{
-        profileId:id,name:form.name.trim(),address:form.address.trim(),age:Number(form.age),
-        income:form.income.trim(),description:form.description.trim(),updatedAt:serverTimestamp()
+        profileId:id,name:form.name.trim(),address:form.address.trim(),age:Number(form.age),income:form.income.trim(),
+        maritalStatus:form.maritalStatus.trim(),height:form.height.trim(),dob:form.dob.trim(),birthPlace:form.birthPlace.trim(),
+        education:form.education.trim(),occupation:form.occupation.trim(),company:form.company.trim(),city:form.city.trim(),
+        district:form.district.trim(),state:form.state.trim(),nativePlace:form.nativePlace.trim(),religion:form.religion.trim(),
+        caste:form.caste.trim(),language:form.language.trim(),fatherName:form.fatherName.trim(),motherName:form.motherName.trim(),
+        brothers:form.brothers.trim(),sisters:form.sisters.trim(),familyDetails:form.familyDetails.trim(),description:form.description.trim(),
+        expectations:form.expectations.trim(),preferredAge:form.preferredAge.trim(),preferredEducation:form.preferredEducation.trim(),
+        preferredLocation:form.preferredLocation.trim(),otherExpectations:form.otherExpectations.trim(),otherInfo:form.otherInfo.trim(),
+        updatedAt:serverTimestamp()
       },{merge:true});
       await setDoc(doc(db,"profileContact",id),{
         profileId:id,phone,updatedAt:serverTimestamp()
@@ -100,7 +110,7 @@ function BiodataAdminPage(){
   async function edit(p){
     const [s,cs]=await Promise.all([getDoc(doc(db,"profileBiodataPrivate",p.id)),getDoc(doc(db,"profileContact",p.id))]);
     const d=s.exists()?s.data():{},contact=cs.exists()?cs.data():{};
-    setForm({id:p.id,gender:p.gender||"female",name:d.name||"",address:d.address||"",phone:contact.phone||"",age:d.age||"",income:d.income||"",description:d.description||""});
+    setForm({...empty,id:p.id,gender:p.gender||"female",...d,phone:contact.phone||""});
     setPreview(p.photos||[p.photo].filter(Boolean));setFiles([]);router.replace("/admin/biodata?edit="+encodeURIComponent(p.id));window.scrollTo({top:0,behavior:"smooth"});
   }
 
@@ -133,7 +143,50 @@ function BiodataAdminPage(){
         <input className="adminInput" type="number" min="18" max="100" placeholder="Age" value={form.age} onChange={e=>setForm({...form,age:e.target.value})}/>
       </div>
       <input className="adminInput" placeholder="Income" value={form.income} onChange={e=>setForm({...form,income:e.target.value})}/>
-      <textarea className="adminInput descriptionBox" rows="7" placeholder="Biodata Description — education, family, job/business, expectations, etc." value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/>
+      <div className="formGrid">
+        <input className="adminInput" placeholder="Marital Status" value={form.maritalStatus} onChange={e=>setForm({...form,maritalStatus:e.target.value})}/>
+        <input className="adminInput" placeholder="Height" value={form.height} onChange={e=>setForm({...form,height:e.target.value})}/>
+      </div>
+      <div className="formGrid">
+        <input className="adminInput" placeholder="Date of Birth" value={form.dob} onChange={e=>setForm({...form,dob:e.target.value})}/>
+        <input className="adminInput" placeholder="Birth Place" value={form.birthPlace} onChange={e=>setForm({...form,birthPlace:e.target.value})}/>
+      </div>
+      <div className="formGrid">
+        <input className="adminInput" placeholder="Education" value={form.education} onChange={e=>setForm({...form,education:e.target.value})}/>
+        <input className="adminInput" placeholder="Occupation / Business" value={form.occupation} onChange={e=>setForm({...form,occupation:e.target.value})}/>
+      </div>
+      <input className="adminInput" placeholder="Company / Institution" value={form.company} onChange={e=>setForm({...form,company:e.target.value})}/>
+      <div className="formGrid">
+        <input className="adminInput" placeholder="City" value={form.city} onChange={e=>setForm({...form,city:e.target.value})}/>
+        <input className="adminInput" placeholder="District" value={form.district} onChange={e=>setForm({...form,district:e.target.value})}/>
+      </div>
+      <div className="formGrid">
+        <input className="adminInput" placeholder="State" value={form.state} onChange={e=>setForm({...form,state:e.target.value})}/>
+        <input className="adminInput" placeholder="Native Place / Hometown" value={form.nativePlace} onChange={e=>setForm({...form,nativePlace:e.target.value})}/>
+      </div>
+      <div className="formGrid">
+        <input className="adminInput" placeholder="Religion / Maslak" value={form.religion} onChange={e=>setForm({...form,religion:e.target.value})}/>
+        <input className="adminInput" placeholder="Biradari / Community" value={form.caste} onChange={e=>setForm({...form,caste:e.target.value})}/>
+      </div>
+      <input className="adminInput" placeholder="Language / Mother Tongue" value={form.language} onChange={e=>setForm({...form,language:e.target.value})}/>
+      <div className="formGrid">
+        <input className="adminInput" placeholder="Father Name" value={form.fatherName} onChange={e=>setForm({...form,fatherName:e.target.value})}/>
+        <input className="adminInput" placeholder="Mother Name" value={form.motherName} onChange={e=>setForm({...form,motherName:e.target.value})}/>
+      </div>
+      <div className="formGrid">
+        <input className="adminInput" placeholder="Brothers" value={form.brothers} onChange={e=>setForm({...form,brothers:e.target.value})}/>
+        <input className="adminInput" placeholder="Sisters" value={form.sisters} onChange={e=>setForm({...form,sisters:e.target.value})}/>
+      </div>
+      <textarea className="adminInput" rows="3" placeholder="Family Details" value={form.familyDetails} onChange={e=>setForm({...form,familyDetails:e.target.value})}/>
+      <textarea className="adminInput descriptionBox" rows="5" placeholder="About / Biodata Description" value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/>
+      <textarea className="adminInput" rows="4" placeholder="Marriage / Partner Expectations" value={form.expectations} onChange={e=>setForm({...form,expectations:e.target.value})}/>
+      <div className="formGrid">
+        <input className="adminInput" placeholder="Preferred Age" value={form.preferredAge} onChange={e=>setForm({...form,preferredAge:e.target.value})}/>
+        <input className="adminInput" placeholder="Preferred Education" value={form.preferredEducation} onChange={e=>setForm({...form,preferredEducation:e.target.value})}/>
+      </div>
+      <input className="adminInput" placeholder="Preferred Location" value={form.preferredLocation} onChange={e=>setForm({...form,preferredLocation:e.target.value})}/>
+      <textarea className="adminInput" rows="3" placeholder="Other Expectations" value={form.otherExpectations} onChange={e=>setForm({...form,otherExpectations:e.target.value})}/>
+      <textarea className="adminInput" rows="3" placeholder="Other Important Information" value={form.otherInfo} onChange={e=>setForm({...form,otherInfo:e.target.value})}/>
       <label className="uploadBox">📷 1–5 Photos<input type="file" accept="image/*" multiple onChange={chooseFiles}/><small>Photos compress hokar Firestore mein save hongi.</small></label>
       {preview.length>0&&<div className="photoPreviewGrid">{preview.map((s,i)=><img key={i} src={s} alt={"Preview "+(i+1)}/>)}</div>}
       <button className="primaryAction" disabled={saving}>{saving?"Saving...":"💾 Biodata Save करें →"}</button>
