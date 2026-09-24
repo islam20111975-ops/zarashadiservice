@@ -20,6 +20,8 @@ function PageBody(){
   const clean=utr.trim().replace(/\s+/g,"").toUpperCase();
   if(!/^[A-Z0-9]{6,40}$/.test(clean))return setMsg("Sahi UTR / Transaction ID bhariye.");
   if(requests.some(x=>x.status==="approved"))return setMsg("Is profile ka access pehle hi approved hai.");
+  const existingAccess=await getDoc(doc(db,type==="mobile"?"mobileAccess":"biodataUnlocks",user.uid+"_"+profile));
+  if(existingAccess.exists()&&existingAccess.data().status==="approved")return setMsg("Is profile ka access pehle hi approved hai.");
   setSaving(true);
   try{
    const batch=writeBatch(db),reqRef=doc(collection(db,"paidAccessRequests")),claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());
