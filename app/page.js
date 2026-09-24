@@ -20,8 +20,8 @@ export default function Home(){
   useEffect(()=>{
     if(!r){setData([]);return}
     setLoading(true);
-    const q=query(collection(db,"profiles"),where("gender","==",r),where("status","==","active"));
-    return onSnapshot(q,s=>{setData(s.docs.map(d=>({id:d.id,...d.data()})));setLoading(false)},e=>{setLoading(false);setLoginError(e?.message||"Profiles load nahi ho sake.")});
+    const q=query(collection(db,"profiles"),where("gender","==",r));
+    return onSnapshot(q,s=>{setData(s.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted"));setLoading(false)},e=>{setLoading(false);setLoginError(e?.message||"Profiles load nahi ho sake.")});
   },[r]);
 
   const shown=data;
