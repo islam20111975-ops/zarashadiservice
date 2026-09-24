@@ -88,7 +88,6 @@ service cloud.firestore {
     match /paymentUtrClaims/{utrId} {
       allow read: if isAdmin();
       allow create: if signedIn()
-        && !exists(/databases/$(database)/documents/paymentUtrClaims/$(utrId))
         && request.resource.data.uid == request.auth.uid
         && validUtr(request.resource.data.utr)
         && request.resource.data.utr.lower() == utrId
@@ -102,8 +101,6 @@ service cloud.firestore {
           ||
           (request.resource.data.kind == "access"
             && request.resource.data.profileId is string
-            && exists(/databases/$(database)/documents/profiles/$(request.resource.data.profileId))
-            && profileNotDeleted(request.resource.data.profileId)
             && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")
             && request.resource.data.amount is number
             && ((request.resource.data.type == "biodata" && request.resource.data.amount == 100)
@@ -141,7 +138,6 @@ service cloud.firestore {
       // One deterministic lock per user + target, so another pending request cannot be created
       // for the same recharge amount or the same profile/type.
       allow create: if signedIn()
-        && !exists(/databases/$(database)/documents/pendingPaymentLocks/$(lockId))
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.requestId is string
         && request.resource.data.status == "pending"
@@ -158,8 +154,6 @@ service cloud.firestore {
             && request.resource.data.profileId is string
             && request.resource.data.type is string
             && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")
-            && exists(/databases/$(database)/documents/profiles/$(request.resource.data.profileId))
-            && profileNotDeleted(request.resource.data.profileId)
             && lockId == accessLockId(request.auth.uid, request.resource.data.profileId, request.resource.data.type)
           )
         );
@@ -214,8 +208,6 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.profileId is string
-        && exists(/databases/$(database)/documents/profiles/$(request.resource.data.profileId))
-        && profileNotDeleted(request.resource.data.profileId)
         && request.resource.data.type is string
         && (request.resource.data.type == "biodata" || request.resource.data.type == "mobile")
         && request.resource.data.amount is number
