@@ -3,7 +3,7 @@
 import {Suspense,useEffect,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {collection,doc,getDoc,onSnapshot,query,where,serverTimestamp,writeBatch} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,query,where,serverTimestamp,writeBatch,deleteDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 function PageBody(){
@@ -54,9 +54,23 @@ function PageBody(){
    const accessRef=doc(db,type==="mobile"?"mobileAccess":"biodataUnlocks",user.uid+"_"+profile);
    const accessSnap=await getDoc(accessRef);
    if(accessSnap.exists()&&accessSnap.data().status==="approved")return setMsg("✅ Is profile ka access pehle hi approved hai.");
+   const lockId=user.uid+"_"+profile+"_"+type;
+   const lockRef=doc(db,"pendingPaymentLocks",lockId);
+   const lockSnap=await getDoc(lockRef);
+   if(lockSnap.exists()){
+    const oldLock=lockSnap.data()||{};
+    if(oldLock.status==="pending"&&oldLock.requestId){
+     const oldReqSnap=await getDoc(doc(db,"paidAccessRequests",oldLock.requestId));
+     if(oldReqSnap.exists()&&oldReqSnap.data()?.status==="pending")
+      return setMsg("⏳ Is profile ka payment request pehle se Admin ke paas Pending hai. Dobara payment submit na karein.");
+     await deleteDoc(lockRef);
+    }else{
+     return setMsg("⏳ Is profile ki payment request already process ho rahi hai. Page refresh karke status dekhein.");
+    }
+   }
    const batch=writeBatch(db);
    const reqRef=doc(collection(db,"paidAccessRequests"));
-   const lockRef=doc(db,"pendingPaymentLocks",user.uid+"_"+profile+"_"+type);
+
    const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());
    batch.set(lockRef,{uid:user.uid,profileId:profile,type,kind:"access",amount,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()});
    batch.set(claimRef,{uid:user.uid,utr:clean,kind:"access",profileId:profile,type,amount,requestId:reqRef.id,createdAt:serverTimestamp()});
