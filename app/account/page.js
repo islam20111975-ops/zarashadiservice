@@ -36,8 +36,12 @@ export default function Account(){
     try{
       let photoURL=profile.photoURL||"";if(file)photoURL=await compressPhoto(file);
       const userRef=doc(db,"users",user.uid);const existing=await getDoc(userRef);
-      const payload={uid:user.uid,name:profile.name.trim(),address:profile.address.trim(),phone,age:Number(profile.age),income:profile.income.trim(),photoURL,email:user.email||"",updatedAt:serverTimestamp()};
-      if(existing.exists())await updateDoc(userRef,payload);else await setDoc(userRef,{...payload,createdAt:serverTimestamp()});
+      const payload={name:profile.name.trim(),address:profile.address.trim(),phone,age:Number(profile.age),income:profile.income.trim(),photoURL,updatedAt:serverTimestamp()};
+      if(existing.exists()){
+        await updateDoc(userRef,payload);
+      }else{
+        await setDoc(userRef,{uid:user.uid,email:user.email||"",...payload,createdAt:serverTimestamp()});
+      }
       setProfile({...profile,phone,photoURL});setFile(null);setPreview(photoURL);
       showMsg("✅ Profile successfully save ho gayi!","success");
     }catch(e){showMsg("❌ Profile save nahi hui: "+(e?.message||"Unknown error"),"error")}finally{setSaving(false)}
