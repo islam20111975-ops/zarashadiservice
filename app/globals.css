@@ -88,3 +88,114 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
   .paymentPremium .paymentOptions:before{font-size:9px;margin-bottom:1px}
   .paymentPremium .walletButton{min-height:48px}
 }
+
+
+/* Central Admin Board — responsive 3D premium UI */
+.dashboardPage{
+  background:
+    radial-gradient(circle at 8% 8%,#fce7f3 0,transparent 25%),
+    radial-gradient(circle at 92% 12%,#dbeafe 0,transparent 28%),
+    linear-gradient(145deg,#ffffff,#f8f5ff 55%,#f0f9ff)!important;
+}
+.dashTop{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.dashTop>div:first-child{min-width:0}
+.eyebrow{padding:7px 11px;border-radius:999px;background:linear-gradient(90deg,#f3e8ff,#fce7f3);border:1px solid #eadcff}
+.dashTop h1{line-height:1.08}
+.adminUser{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.adminUser b{overflow-wrap:anywhere}
+.adminNav{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  margin:22px 0;
+  padding:10px;
+  border-radius:22px;
+  background:linear-gradient(145deg,#f8f5ff,#fff);
+  border:1px solid #e8ddf2;
+  box-shadow:0 12px 28px #35105b10,0 2px 0 #fff inset;
+}
+.adminNav button{
+  min-height:48px;
+  border:1px solid #e7def0;
+  border-radius:15px;
+  padding:10px 12px;
+  background:linear-gradient(145deg,#fff,#f8f4ff);
+  color:#4b3b58;
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 5px 0 #e9def2,0 8px 18px #35105b0b;
+  transition:.2s;
+}
+.adminNav button:hover{transform:translateY(-2px)}
+.adminNav button.active{
+  color:#fff;
+  border-color:transparent;
+  background:linear-gradient(135deg,#6d28d9,#db2777,#f43f5e);
+  box-shadow:0 7px 0 #a21caf,0 13px 25px #7c3aed30;
+}
+.dashboardGrid{margin:22px 0 25px!important}
+.statCard:nth-child(1){background:linear-gradient(145deg,#eff6ff,#fff)!important}
+.statCard:nth-child(2){background:linear-gradient(145deg,#faf5ff,#fff)!important}
+.statCard:nth-child(3){background:linear-gradient(145deg,#fff1f2,#fff)!important}
+.statCard:nth-child(4){background:linear-gradient(145deg,#ecfdf5,#fff)!important}
+.statCard strong{color:#6d28d9!important}
+.userAdminCard{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:17px 20px;
+  border-bottom:1px solid #f0ebf4;
+  background:linear-gradient(90deg,#fff,#fcf9ff);
+}
+.userAdminCard:last-child{border-bottom:0}
+.userAdminCard:hover{background:linear-gradient(90deg,#faf7ff,#fff7fb)}
+.userAdminCard>div:first-child{min-width:0}
+.userAdminCard small{display:block;color:#777;margin-top:4px;font-size:11px;overflow-wrap:anywhere}
+.userDetails{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.userDetails span{padding:7px 9px;border-radius:999px;background:#f7f3fb;border:1px solid #ece3f3;font-size:10px;font-weight:800;color:#5d4e67}
+.cardButtons{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.cardButtons button{
+  border:0;border-radius:12px;padding:10px 13px;
+  background:#fee2e2;color:#b91c1c;font-weight:900;cursor:pointer;
+  box-shadow:0 4px 0 #fecaca;
+}
+.cardButtons .approve{background:linear-gradient(135deg,#16a34a,#059669);color:#fff;box-shadow:0 4px 0 #047857}
+@media(max-width:900px){
+  .adminNav{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .userAdminCard{align-items:flex-start;flex-direction:column}
+  .userDetails,.cardButtons{justify-content:flex-start}
+}
+@media(max-width:600px){
+  .dashboardPage{margin:8px!important;padding:13px!important;border-radius:22px!important}
+  .dashTop{gap:10px;align-items:flex-start}
+  .dashTop h1{font-size:24px!important;margin:7px 0 5px!important}
+  .dashTop p{font-size:11px!important;line-height:1.45}
+  .eyebrow{font-size:8px;letter-spacing:1px;padding:6px 8px}
+  .logout{padding:9px 10px!important;font-size:10px!important;border-radius:11px!important}
+  .adminUser{font-size:10px!important;padding:11px 12px!important;margin:12px 0}
+  .adminNav{grid-template-columns:repeat(2,1fr);gap:7px;padding:7px;margin:14px 0;border-radius:17px}
+  .adminNav button{min-height:48px;padding:8px 5px;font-size:9px;border-radius:12px;line-height:1.2}
+  .dashboardGrid{gap:8px!important;margin:14px 0 18px!important}
+  .statCard{min-height:112px!important;padding:13px!important;border-radius:17px!important}
+  .statIcon{font-size:22px!important;margin-bottom:7px}
+  .statCard small{font-size:9px!important}
+  .statCard strong{font-size:27px!important;margin-top:3px}
+  .adminList{margin:12px 0!important;border-radius:18px!important}
+  .listHead{padding:14px!important}
+  .listHead h3{font-size:13px}
+  .listHead>span{font-size:9px;padding:5px 8px}
+  .userAdminCard{padding:13px!important;gap:11px}
+  .rowProfile{width:100%}
+  .rowProfile>div:last-child{min-width:0}
+  .rowProfile b{font-size:12px}
+  .userAdminCard small{font-size:9px;margin-top:3px}
+  .userDetails{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .userDetails span{font-size:8px;padding:7px 6px;white-space:normal}
+  .cardButtons{width:100%;display:grid;grid-template-columns:1fr 1fr}
+  .cardButtons button{width:100%;padding:10px 6px;font-size:10px}
+  .adminBox{margin:12px 0!important;padding:14px!important;border-radius:18px!important}
+  .adminBox h3{font-size:15px!important}
+  .adminInput{font-size:12px!important;padding:12px!important}
+}
