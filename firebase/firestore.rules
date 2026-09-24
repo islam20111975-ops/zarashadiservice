@@ -24,7 +24,7 @@ service cloud.firestore {
       allow read: if isAdmin() || (signedIn() && get(/databases/$(database)/documents/profiles/$(profileId)).data.status != "deleted" && exists(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + profileId)) && get(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + profileId)).data.status == "approved");
       allow write: if isAdmin();
     }
-    match /profilePrivate/{profileId> { allow read, write: if isAdmin(); }
+    match /profilePrivate/{profileId} { allow read, write: if isAdmin(); }
     match /settings/{settingId} { allow read: if true; allow write: if isAdmin(); }
     match /registrations/{registrationId} { allow read, write: if false; }
     match /utrClaims/{utrId} { allow read, write: if false; }
