@@ -7,6 +7,13 @@ service cloud.firestore {
     function owner(uid) { return signedIn() && request.auth.uid == uid; }
     function validUtr(v) { return v is string && v.matches("^[A-Za-z0-9]{6,40}$"); }
 
+    // Legacy profiles may not have a status field. Treat a missing status as active,
+    // while still blocking profiles explicitly marked as deleted.
+    function profileNotDeleted(profileId) {
+      let p = get(/databases/$(database)/documents/profiles/$(profileId)).data;
+      return !p.keys().hasAny(["status"]) || p.status != "deleted";
+    }
+
     function accessLockId(uid, profileId, type) {
       return uid + "_" + profileId + "_" + type;
     }
@@ -52,7 +59,7 @@ service cloud.firestore {
 
     match /profileBiodataPrivate/{profileId} {
       allow read: if isAdmin() || (signedIn()
-        && get(/databases/$(database)/documents/profiles/$(profileId)).data.status != "deleted"
+        && profileNotDeleted(profileId)
         && exists(/databases/$(database)/documents/biodataUnlocks/$(request.auth.uid + "_" + profileId))
         && get(/databases/$(database)/documents/biodataUnlocks/$(request.auth.uid + "_" + profileId)).data.status == "approved");
       allow write: if isAdmin();
@@ -60,7 +67,7 @@ service cloud.firestore {
 
     match /profileContact/{profileId} {
       allow read: if isAdmin() || (signedIn()
-        && get(/databases/$(database)/documents/profiles/$(profileId)).data.status != "deleted"
+        && profileNotDeleted(profileId)
         && exists(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + profileId))
         && get(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + profileId)).data.status == "approved");
       allow write: if isAdmin();
