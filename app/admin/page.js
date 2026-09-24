@@ -132,7 +132,16 @@ export default function Admin(){
 
         const unlockSnap=await t.get(unlockRef);
         if(unlockSnap.exists() && unlockSnap.data().status==="approved"){
-          throw new Error("Is profile ka access pehle hi approved hai.");
+          // A legacy/stale pending request can remain after an earlier request was approved.
+          // Never grant the same access twice. Close this duplicate request cleanly instead
+          // of showing an approval error forever.
+          t.update(reqRef,{
+            status:"rejected",
+            rejectedAt:serverTimestamp(),
+            rejectionReason:"access_already_approved"
+          });
+          if(req.lockId)t.delete(doc(db,"pendingPaymentLocks",req.lockId));
+          return;
         }
 
         let balanceAfter=null;
