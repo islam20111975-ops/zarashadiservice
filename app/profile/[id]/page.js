@@ -5,7 +5,22 @@ import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/au
 import {collection,doc,getDoc,getDocs,query,where} from "firebase/firestore";
 import {auth,db} from "../../../lib/firebase";
 
-const first=(o,keys)=>{for(const k of keys){if(o?.[k]!==undefined&&o?.[k]!==null&&String(o[k]).trim()!=="")return o[k]}return "-";};
+const first=(o,keys)=>{
+ for(const k of keys){
+  const v=o?.[k];
+  if(v===undefined||v===null)continue;
+  if(typeof v==="string"||typeof v==="number"||typeof v==="boolean"){
+   if(String(v).trim()!=="")return String(v);
+  }else if(Array.isArray(v)){
+   const text=v.map(x=>typeof x==="object"&&x!==null?JSON.stringify(x):String(x)).join(", ");
+   if(text.trim())return text;
+  }else if(typeof v==="object"){
+   const text=Object.entries(v).map(([key,val])=>key+": "+(typeof val==="object"?JSON.stringify(val):String(val))).join(", ");
+   if(text.trim())return text;
+  }
+ }
+ return "-";
+};
 const Row=({label,value})=><div className="biodataRow"><span>{label}</span><b>{value}</b></div>;
 const Section=({title,children})=><div className="biodataSection"><h3>{title}</h3>{children}</div>;
 
