@@ -31,15 +31,15 @@ export default function Profile(){
     // Use the user's paidAccessRequests status as the realtime source of truth.
     // The protected biodataUnlocks/mobileAccess documents are still used by Rules
     // to authorize the private reads, but the client does not subscribe to them.
-    stopRequests=onSnapshot(query(collection(db,"paidAccessRequests"),where("uid","==",uid)),async snap=>{
+    stopRequests=onSnapshot(query(collection(db,"paidAccessRequests"),where("uid","==",uid)),snap=>{
       const matches=snap.docs.map(d=>d.data()).filter(x=>x.profileId===id);
       const biodataOk=matches.some(x=>x.type==="biodata"&&x.status==="approved");
       const mobileOk=matches.some(x=>x.type==="mobile"&&x.status==="approved");
       if(!alive)return;
       setUnlocked(biodataOk);
       setMobile(mobileOk);
-      if(biodataOk)await loadPrivate(); else setPrivateData(null);
-      if(mobileOk)await loadContact(); else setContact(null);
+      if(biodataOk)loadPrivate(); else setPrivateData(null);
+      if(mobileOk)loadContact(); else setContact(null);
     },e=>alive&&setLoadError(e?.message||"Access status load nahi ho saka."));
    }catch(e){if(alive)setLoadError(e?.message||"Profile load nahi ho saka.");}
    finally{if(alive)setLoading(false)}
