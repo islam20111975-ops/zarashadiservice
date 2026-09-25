@@ -659,3 +659,10 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 }
 @keyframes islamicCalendarShine{0%,58%{left:-45%;opacity:0}68%{opacity:1}82%,100%{left:120%;opacity:0}}
 @media(prefers-reduced-motion:reduce){.mainNav a[href="/islamic-calendar"]::before{animation:none;display:none}}
+
+
+/* Clean photo gallery close icon — no text or zoom controls */
+.galleryCard{position:relative!important}
+.galleryClose{position:absolute!important;top:10px!important;right:10px!important;z-index:10!important;width:34px!important;height:34px!important;padding:0!important;margin:0!important;border:0!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important;background:rgba(0,0,0,.72)!important;color:#fff!important;font-size:18px!important;font-weight:900!important;line-height:1!important;cursor:pointer!important;box-shadow:0 5px 14px rgba(0,0,0,.28)!important}
+.galleryClose:hover{transform:scale(1.06)!important;background:rgba(0,0,0,.86)!important}
+.zoomControls{display:none!important}
