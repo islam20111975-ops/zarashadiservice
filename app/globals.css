@@ -537,3 +537,30 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
   .siteHeader .brand3d strong{font-size:17px!important;letter-spacing:.7px!important}
   .siteHeader .brand3d small{font-size:7px!important;letter-spacing:3px!important}
 }
+
+
+/* MULTICOLOR HEADER STRIP — colorful top bar */
+.siteHeader{
+  position:sticky!important;
+  top:0!important;
+  border-top:5px solid transparent!important;
+  border-image:linear-gradient(90deg,#2563eb 0%,#06b6d4 16%,#22c55e 30%,#facc15 44%,#f97316 58%,#ec4899 74%,#8b5cf6 88%,#2563eb 100%) 1!important;
+  background:
+    linear-gradient(90deg,#fff8fc 0%,#f7f5ff 35%,#f0fbff 68%,#fffaf0 100%)!important;
+  box-shadow:0 8px 30px #7c3aed20,0 2px 0 #ffffff inset!important;
+}
+.siteHeader:after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:3px;
+  background:linear-gradient(90deg,#2563eb,#06b6d4,#22c55e,#facc15,#f97316,#ec4899,#8b5cf6,#2563eb);
+  background-size:200% 100%;
+  pointer-events:none;
+}
+.siteHeader .headerInner{
+  position:relative!important;
+  z-index:1!important;
+}
