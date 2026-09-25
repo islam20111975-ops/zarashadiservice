@@ -620,3 +620,37 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 .calendarFooter a{color:#5b3a8f;text-decoration:none;font-size:12px;font-weight:900}
 @media(max-width:800px){.monthGrid{grid-template-columns:repeat(2,1fr)}.eventList,.upcomingList{grid-template-columns:1fr}}
 @media(max-width:600px){.calendarHero{padding:20px 12px 25px}.calendarHero h1{font-size:29px}.calendarMoon{font-size:43px}.todayCalendarCard{grid-template-columns:1fr;gap:8px}.todayCalendarCard strong{font-size:15px}.calendarBody{padding:22px 10px 35px}.calendarSectionTitle h2{font-size:18px}.monthGrid{grid-template-columns:1fr 1fr;gap:8px}.monthCard{padding:13px;min-height:82px}.monthCard b{font-size:14px}.eventCard{padding:11px;gap:9px}.eventDate{min-width:78px;font-size:9px}.eventInfo strong{font-size:10px}.upcomingItem{grid-template-columns:78px 1fr;gap:6px}.upcomingItem small{grid-column:2}.calendarFooter{gap:14px}}
+
+
+/* 3D Islamic Calendar navigation button */
+.mainNav a[href="/islamic-calendar"]{
+  position:relative;
+  overflow:hidden;
+  color:#ffffff!important;
+  background:linear-gradient(135deg,#0f766e 0%,#06b6d4 38%,#2563eb 72%,#7c3aed 100%)!important;
+  border:1px solid rgba(255,255,255,.55)!important;
+  box-shadow:0 6px 0 #164e63,0 11px 20px rgba(37,99,235,.28),inset 0 1px 0 rgba(255,255,255,.7),inset 0 -5px 10px rgba(30,41,59,.18)!important;
+  text-shadow:0 2px 2px rgba(15,23,42,.45);
+  transform:translateY(0);
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+}
+.mainNav a[href="/islamic-calendar"]::before{
+  content:"";
+  position:absolute;
+  top:0;left:-45%;width:35%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);
+  transform:skewX(-20deg);
+  animation:islamicCalendarShine 3.2s ease-in-out infinite;
+}
+.mainNav a[href="/islamic-calendar"]:hover{
+  color:#fff!important;
+  filter:saturate(1.15) brightness(1.04);
+  transform:translateY(-2px);
+  box-shadow:0 8px 0 #164e63,0 15px 25px rgba(37,99,235,.34),inset 0 1px 0 rgba(255,255,255,.75),inset 0 -5px 10px rgba(30,41,59,.16)!important;
+}
+.mainNav a[href="/islamic-calendar"]:active{
+  transform:translateY(3px);
+  box-shadow:0 3px 0 #164e63,0 7px 12px rgba(37,99,235,.24),inset 0 2px 7px rgba(30,41,59,.18)!important;
+}
+@keyframes islamicCalendarShine{0%,58%{left:-45%;opacity:0}68%{opacity:1}82%,100%{left:120%;opacity:0}}
+@media(prefers-reduced-motion:reduce){.mainNav a[href="/islamic-calendar"]::before{animation:none;display:none}}
