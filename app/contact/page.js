@@ -1,7 +1,14 @@
-import Link from "next/link";
+"use client";
 
-export const metadata={title:"Contact",description:"Zara Shadi Service contact details"};
+import {useEffect,useState} from "react";
+import Link from "next/link";
+import {doc,getDoc} from "firebase/firestore";
+import {db} from "../../lib/firebase";
+
+const fallback="Contact details aur zaroori information yahan admin dashboard se likhi jayegi.";
 
 export default function Contact(){
-  return <main><section className="cardPage siteState"><div className="siteStateIcon">📩</div><h1>Contact Zara Shadi Service</h1><p>Website, profile, registration ya rishta service se related madad ke liye WhatsApp par message karein.</p><div className="siteStateActions"><a className="primaryAction" href="https://wa.me/" target="_blank" rel="noreferrer">🟢 WhatsApp Message</a><Link className="backAction" href="/">← Home</Link></div><p style={{marginTop:18,fontSize:13}}>Please message karein; zaroori details aur query text mein bhejein.</p></section></main>;
+  const [content,setContent]=useState("");
+  useEffect(()=>{getDoc(doc(db,"settings","legalPages")).then(s=>{if(s.exists())setContent(s.data().contact||"")}).catch(()=>{})},[]);
+  return <main><section className="cardPage siteState"><div className="siteStateIcon">📩</div><h1>Contact Zara Shadi Service</h1><div className="pageContent">{content||fallback}</div><div className="siteStateActions"><Link className="primaryAction" href="/">← Home</Link><Link className="backAction" href="/privacy">Privacy Policy</Link></div></section></main>;
 }
