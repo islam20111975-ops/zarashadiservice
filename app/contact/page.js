@@ -5,7 +5,7 @@ import Link from "next/link";
 import {doc,getDoc} from "firebase/firestore";
 import {db} from "../../lib/firebase";
 
-const fallback="Contact details aur zaroori information yahan admin dashboard se likhi jayegi.";
+const fallback="Zara Shadi Service se contact karne ke liye website par diye gaye WhatsApp/social contact option ka use karein.\n\nMessage mein apna naam aur apni query ya zaroori details likhein, taaki aapki request ko samajhna aur jawab dena aasaan ho.\n\nProfile, registration, payment, biodata access ya mobile-number access se related sawal bhi message ke zariye bheje ja sakte hain.\n\nPlease bina zaroorat personal ya sensitive information share na karein.";
 
 export default function Contact(){
   const [content,setContent]=useState("");
