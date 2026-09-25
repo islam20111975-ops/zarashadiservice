@@ -15,7 +15,9 @@ function PageBody(){
  const [requests,setRequests]=useState([]),[profileData,setProfileData]=useState(null),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
- useEffect(()=>{\n  getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists())setUpiId((s.data().upiId||"").trim())}).catch(()=>{});\n },[]);
+ useEffect(()=>{
+  getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists())setUpiId((s.data().upiId||"").trim())}).catch(()=>{});
+ },[]);
  useEffect(()=>{
   if(!profile)return;
   getDoc(doc(db,"profiles",profile)).then(s=>setProfileData(s.exists()&&s.data().status!=="deleted"?{id:s.id,...s.data()}:null)).catch(()=>setProfileData(null));
