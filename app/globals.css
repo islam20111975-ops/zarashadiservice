@@ -381,3 +381,11 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
  .galleryCard .galleryPhoto{height:calc(100dvh - 20px)!important;padding:0!important}
  .galleryCard .galleryPhoto img{width:auto!important;height:auto!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important}
 }
+
+
+/* FINAL HOME PROFILE IMAGE FIX: show complete photo on desktop without cropping */
+.profiles .photoWrap{background:#111!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}
+.profiles .photoWrap img{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;background:#111!important}
+@media(max-width:600px){
+  .profiles .photoWrap img{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important}
+}
