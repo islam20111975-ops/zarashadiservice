@@ -89,11 +89,11 @@ function PageBody(){
   }finally{setSaving(false)}
  }
 
- const link=upiId?"upi://pay?pa="+encodeURIComponent(upiId)+"&pn="+encodeURIComponent("Zara Shadi Service")+"&am="+amount+"&cu=INR":"";
+ const link=upiId?"upi://pay?pa="+encodeURIComponent(upiId)+"&pn="+encodeURIComponent("Zara Nikah Service")+"&am="+amount+"&cu=INR":"";
  const photo=profileData?.photos?.[0]||profileData?.photo||"";
  const pending=requests.find(x=>x.status==="pending");
  return <main>
-  <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA SHADI</strong><small>Service</small></span></button></div></header>
+  <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button></div></header>
   <section className="cardPage payment" style={{maxWidth:760,margin:"25px auto"}}>
    <div style={{textAlign:"center"}}>
     <div className="paymentIcon">₹</div><span className="eyebrow">DIRECT UPI PAYMENT</span>
