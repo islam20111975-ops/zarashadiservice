@@ -81,7 +81,7 @@ function Pay(){
  const pending=requests.find(x=>x.status==="pending");
  const approved=requests.find(x=>x.status==="approved");
  return <main className="paymentPage">
-  <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA SHADI</strong><small>Service</small></span></button></div></header>
+  <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button></div></header>
   <section className="payment paymentPremium cardPage">
    <div className="paymentIcon">₹</div><span className="eyebrow">{type==="mobile"?"MOBILE ACCESS":"BIODATA UNLOCK"}</span>
    <h1>₹{amount} {type==="mobile"?"Mobile Number":"Biodata"} Access</h1>
