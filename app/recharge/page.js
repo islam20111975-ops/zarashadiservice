@@ -68,18 +68,6 @@ function PageBody(){
   try{
    const lockId=user.uid+"_"+profile+"_"+type;
    const lockRef=doc(db,"pendingPaymentLocks",lockId);
-   const lockSnap=await getDoc(lockRef);
-   if(lockSnap.exists()){
-    const oldLock=lockSnap.data()||{};
-    if(oldLock.status==="pending"&&oldLock.requestId){
-     const oldReqSnap=await getDoc(doc(db,"paidAccessRequests",oldLock.requestId));
-     if(oldReqSnap.exists()&&oldReqSnap.data()?.status==="pending")
-      return setMsg("⏳ Is profile ka payment request pehle se Admin ke paas Pending hai. Dobara payment submit na karein.");
-     await deleteDoc(lockRef);
-    }else{
-     return setMsg("⏳ Is profile ki payment request already process ho rahi hai. Page refresh karke status dekhein.");
-    }
-   }
    const reqRef=doc(collection(db,"paidAccessRequests"));
    const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());
    try{
