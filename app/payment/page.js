@@ -3,7 +3,7 @@
 import {Suspense,useEffect,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {collection,doc,getDoc,onSnapshot,serverTimestamp,setDoc,deleteDoc} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,query,where,serverTimestamp,setDoc,deleteDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 function Pay(){
@@ -25,7 +25,7 @@ function Pay(){
  },[profile]);
  useEffect(()=>{
   if(!user)return;
-  return onSnapshot(collection(db,"paidAccessRequests"),s=>{
+  return onSnapshot(query(collection(db,"paidAccessRequests"),where("uid","==",user.uid)),s=>{
    setRequests(s.docs.map(d=>({id:d.id,...d.data()}))
     .filter(x=>x.uid===user.uid&&x.profileId===profile&&x.type===type)
     .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)));
@@ -46,9 +46,6 @@ function Pay(){
   if(wallet<amount)return setMsg("Wallet Balance ₹"+wallet+" hai. ₹"+amount+" available nahi hai. Pehle Wallet Recharge karein.");
   setSaving(true);
   try{
-   const accessRef=doc(db,type==="biodata"?"biodataUnlocks":"mobileAccess",user.uid+"_"+profile);
-   const accessSnap=await getDoc(accessRef);
-   if(accessSnap.exists()&&accessSnap.data().status==="approved")return setMsg("Is profile ka access pehle hi approved hai.");
    const lockId=user.uid+"_"+profile+"_"+type;
    const lockRef=doc(db,"pendingPaymentLocks",lockId);
    const lockSnap=await getDoc(lockRef);
