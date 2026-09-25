@@ -1,7 +1,14 @@
-import Link from "next/link";
+"use client";
 
-export const metadata={title:"Terms",description:"Zara Shadi Service terms"};
+import {useEffect,useState} from "react";
+import Link from "next/link";
+import {doc,getDoc} from "firebase/firestore";
+import {db} from "../../lib/firebase";
+
+const fallback="Terms & Conditions yahan admin dashboard se likhe aur update kiye jayenge.";
 
 export default function Terms(){
-  return <main><section className="cardPage siteState"><div className="siteStateIcon">📋</div><h1>Terms & Conditions</h1><p>Zara Shadi Service par users ko registered rishta profiles dekhne aur available services use karne ka access diya jata hai.</p><p>Registration, payment aur access requests mein sahi information dena user ki responsibility hai. Payment approval verification ke baad hota hai.</p><p>Website par profile information ko authorised purpose ke liye use karein. Kisi bhi profile ki personal information ko misuse, copy ya unauthorised sharing na karein.</p><div className="siteStateActions"><Link className="primaryAction" href="/">← Home</Link><Link className="backAction" href="/privacy">Privacy Policy</Link></div></section></main>;
+  const [content,setContent]=useState("");
+  useEffect(()=>{getDoc(doc(db,"settings","legalPages")).then(s=>{if(s.exists())setContent(s.data().terms||"")}).catch(()=>{})},[]);
+  return <main><section className="cardPage siteState"><div className="siteStateIcon">📋</div><h1>Terms & Conditions</h1><div className="pageContent">{content||fallback}</div><div className="siteStateActions"><Link className="primaryAction" href="/">← Home</Link><Link className="backAction" href="/privacy">Privacy Policy</Link></div></section></main>;
 }
