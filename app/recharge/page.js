@@ -40,18 +40,7 @@ function PageBody(){
   return()=>{alive=false;if(timer)clearInterval(timer)};
  },[user,profile,type]);
 
- const redirecting=useRef(false);
  const approved=requests.some(x=>x.status==="approved");
- const safeProfile=encodeURIComponent(profile);
- useEffect(()=>{
-  if(!approved||!profile||redirecting.current)return;
-  redirecting.current=true;
-  const target="/profile/"+encodeURIComponent(profile);
-  // UPI apps return control to the browser; wait briefly before redirecting
-  // so the Next.js page can finish restoring its client state.
-  const timer=window.setTimeout(()=>window.location.assign(target),500);
-  return()=>window.clearTimeout(timer);
- },[approved,profile]);
 
  async function login(){
   try{await signInWithPopup(auth,new GoogleAuthProvider())}
@@ -110,6 +99,8 @@ function PageBody(){
    {user&&<>
     <div className="feeRow"><span><small>Exact Access Fee</small><b>₹{amount}</b></span><strong>UPI</strong></div>
     {pending&&<div className="notice">⏳ <b>Payment Pending</b><br/>Aapki request Admin verify kar rahe hain. Same profile ke liye dobara payment submit na karein.</div>}
+    {approved&&<div className="notice">✅ <b>Payment Approved</b><br/>Profile {profile} ka access approve ho gaya hai.</div>}
+    {approved&&<button type="button" className="primaryAction" onClick={()=>router.push("/profile/"+encodeURIComponent(profile))}>💍 Profile {profile} खोलें →</button>}
     {upiId?<a className="primaryAction payLink" href={link}>📱 ₹{amount} UPI से Pay करें →</a>:<div className="notice">Admin ne UPI ID set nahi ki hai.</div>}
     <div className="paymentForm">
      <label>UTR / Transaction ID
