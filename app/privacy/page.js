@@ -1,7 +1,14 @@
-import Link from "next/link";
+"use client";
 
-export const metadata={title:"Privacy Policy",description:"Zara Shadi Service privacy policy"};
+import {useEffect,useState} from "react";
+import Link from "next/link";
+import {doc,getDoc} from "firebase/firestore";
+import {db} from "../../lib/firebase";
+
+const fallback="Privacy Policy yahan admin dashboard se likhi aur update ki jayegi.";
 
 export default function Privacy(){
-  return <main><section className="cardPage siteState"><div className="siteStateIcon">🔒</div><h1>Privacy Policy</h1><p>Hum users ki profile aur account information ko service chalane ke liye use karte hain. Private profile information ko authorised access ke bina public display nahi kiya jata.</p><p>Payment ke waqt diya gaya UTR/transaction reference payment verification aur request processing ke liye use ho sakta hai. Sensitive payment information ko public profile par display nahi kiya jata.</p><p>Apni personal information sirf wahi submit karein jo service ke liye zaroori ho. Kisi bhi privacy concern ke liye Contact page se message karein.</p><div className="siteStateActions"><Link className="primaryAction" href="/">← Home</Link><Link className="backAction" href="/contact">Contact</Link></div></section></main>;
+  const [content,setContent]=useState("");
+  useEffect(()=>{getDoc(doc(db,"settings","legalPages")).then(s=>{if(s.exists())setContent(s.data().privacy||"")}).catch(()=>{})},[]);
+  return <main><section className="cardPage siteState"><div className="siteStateIcon">🔒</div><h1>Privacy Policy</h1><div className="pageContent">{content||fallback}</div><div className="siteStateActions"><Link className="primaryAction" href="/">← Home</Link><Link className="backAction" href="/contact">Contact</Link></div></section></main>;
 }
