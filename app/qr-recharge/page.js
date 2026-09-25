@@ -12,7 +12,6 @@ function PageBody(){
  const type=q.get("type")==="mobile"?"mobile":"biodata";
  const amount=type==="mobile"?500:100;
  const [user,setUser]=useState(null),[qrUrl,setQrUrl]=useState(""),[utr,setUtr]=useState("");
- const redirecting=useRef(false);
  const [requests,setRequests]=useState([]),[profileData,setProfileData]=useState(null),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
@@ -61,11 +60,6 @@ function PageBody(){
   if(requests.some(x=>x.status==="approved"))return setMsg("✅ Is profile ka access pehle hi approved hai.");
   setSaving(true);
   try{
-   // Access documents are protected for approved users/admins. Do not read them before payment.
-   // The approved/pending status is already tracked through paidAccessRequests below.
-   // Do not read pendingPaymentLocks from the customer side.
-   // The user's paidAccessRequests query already blocks an existing pending request.
-   // This avoids a Rules read failure when the deterministic lock document does not exist yet.
    const lockId=user.uid+"_"+profile+"_"+type;
    const reqRef=doc(collection(db,"paidAccessRequests"));
    const lockRef=doc(db,"pendingPaymentLocks",lockId);
@@ -74,55 +68,33 @@ function PageBody(){
    const claimData={uid:user.uid,utr:clean,kind:"access",profileId:profile,type,amount,requestId:reqRef.id,createdAt:serverTimestamp()};
    const requestData={uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"qr",utr:clean,utrClaimId:claimRef.id,lockId:lockRef.id,createdAt:serverTimestamp()};
 
-   // Write separately so a Rules rejection tells us exactly which document failed.
-   // If a later step fails, remove the earlier temporary documents.
-   try{
-    await setDoc(lockRef,lockData);
-   }catch(e){
-    throw Object.assign(new Error("Payment lock save failed: "+(e?.message||"Permission denied")), {code:e?.code||"permission-denied",stage:"pendingPaymentLocks"});
-   }
-   try{
-    await setDoc(claimRef,claimData);
-   }catch(e){
+   try{await setDoc(lockRef,lockData)}
+   catch(e){throw Object.assign(new Error("Payment lock save failed: "+(e?.message||"Permission denied")),{code:e?.code||"permission-denied",stage:"pendingPaymentLocks"})}
+   try{await setDoc(claimRef,claimData)}
+   catch(e){
     await deleteDoc(lockRef).catch(()=>{});
-    throw Object.assign(new Error("UTR claim save failed: "+(e?.message||"Permission denied")), {code:e?.code||"permission-denied",stage:"paymentUtrClaims"});
+    throw Object.assign(new Error("UTR claim save failed: "+(e?.message||"Permission denied")),{code:e?.code||"permission-denied",stage:"paymentUtrClaims"});
    }
-   try{
-    await setDoc(reqRef,requestData);
-   }catch(e){
+   try{await setDoc(reqRef,requestData)}
+   catch(e){
     await deleteDoc(claimRef).catch(()=>{});
     await deleteDoc(lockRef).catch(()=>{});
-    throw Object.assign(new Error("Payment request save failed: "+(e?.message||"Permission denied")), {code:e?.code||"permission-denied",stage:"paidAccessRequests"});
+    throw Object.assign(new Error("Payment request save failed: "+(e?.message||"Permission denied")),{code:e?.code||"permission-denied",stage:"paidAccessRequests"});
    }
    setUtr("");
    setMsg("⏳ Payment request Admin ko bhej di gayi hai. UTR verify hone ke baad exact Profile "+profile+" ka access approve hoga.");
   }catch(e){
    const code=e?.code||"";
-   if(code==="already-exists"){
-    setMsg("❌ Ye UTR ya payment lock pehle hi use ho chuka hai. Page refresh karke status dekhein.");
-   }else if(code==="permission-denied"){
-    const detail=e?.message||"Permission denied";
-    const stage=e?.stage||"payment request";
-    setMsg("❌ Firebase Permission Denied\
-\
-"+stage+" ko Firebase Rules ne reject kiya. Details: "+detail);
-   }else if(code==="failed-precondition"){
-    setMsg("❌ Firebase configuration/precondition error. Kripya page refresh karke dobara try karein.");
-   }else if(code==="unavailable"){
-    setMsg("❌ Firebase service abhi available nahi hai. Internet check karke dobara try karein.");
-   }else{
-    setMsg("❌ Payment request save nahi hui: "+(e?.message||"Unknown error"));
-   }
+   if(code==="already-exists")setMsg("❌ Ye UTR ya payment lock pehle hi use ho chuka hai. Page refresh karke status dekhein.");
+   else if(code==="permission-denied")setMsg("❌ Firebase Permission Denied — "+(e?.stage||"payment request")+" ko Firebase Rules ne reject kiya. Details: "+(e?.message||"Permission denied"));
+   else if(code==="failed-precondition")setMsg("❌ Firebase configuration/precondition error. Kripya page refresh karke dobara try karein.");
+   else if(code==="unavailable")setMsg("❌ Firebase service abhi available nahi hai. Internet check karke dobara try karein.");
+   else setMsg("❌ Payment request save nahi hui: "+(e?.message||"Unknown error"));
   }finally{setSaving(false)}
  }
 
  const photo=profileData?.photos?.[0]||profileData?.photo||"";
- const approved=!!requests.some(x=>x.status==="approved");
- useEffect(()=>{
-  if(!approved||!profile||redirecting.current)return;
-  redirecting.current=true;
-  window.location.replace("/profile/"+encodeURIComponent(profile));
- },[approved,profile]);
+ const approved=requests.some(x=>x.status==="approved");
  const pending=requests.find(x=>x.status==="pending");
  return <main>
   <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button></div></header>
@@ -136,7 +108,7 @@ function PageBody(){
    {!user&&<><div className="notice">Payment request bhejne ke liye Google Login zaroori hai.</div><button type="button" className="primaryAction" onClick={login}>Google se Login →</button></>}
    {user&&<>
     <div className="feeRow"><span><small>Exact Access Fee</small><b>₹{amount}</b></span><strong>QR</strong></div>
-    {pending&&<div className="notice">⏳ <b>Payment Pending</b><br/>Aapki request Admin verify kar rahe hain. Same profile ke liye dobara payment submit na karein.</div>
+    {pending&&<div className="notice">⏳ <b>Payment Pending</b><br/>Aapki request Admin verify kar rahe hain. Same profile ke liye dobara payment submit na karein.</div>}
     {approved&&<div className="notice">✅ <b>Payment Approved</b><br/>Profile {profile} ka access approve ho gaya hai.</div>}
     {approved&&<button type="button" className="primaryAction" onClick={()=>router.push("/profile/"+encodeURIComponent(profile))}>💍 Profile {profile} खोलें →</button>}
     <div className="qr">{qrUrl?<><img src={qrUrl} alt="UPI QR"/><p><b>QR scan karke exact ₹{amount} pay karein.</b></p></>:<small>Admin ne QR set nahi kiya.</small>}</div>
@@ -144,9 +116,7 @@ function PageBody(){
      <label>UTR / Transaction ID
       <input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder={"₹"+amount+" payment ke baad UTR dalein"} autoComplete="off" inputMode="text"/>
      </label>
-     <button type="button" className="primaryAction" disabled={saving||!!pending} onClick={submit}>
-      {saving?"Sending...":pending?"Request Pending ⏳":"UTR Send करके Access Request करें →"}
-     </button>
+     <button type="button" className="primaryAction" disabled={saving||!!pending} onClick={submit}>{saving?"Sending...":pending?"Request Pending ⏳":"UTR Send करके Access Request करें →"}</button>
     </div>
     {requests.slice(0,5).map(x=><div className="notice" key={x.id}>₹{x.amount} — <b>{x.status}</b>{x.utr&&" — UTR "+x.utr}</div>)}
    </>}
