@@ -101,9 +101,10 @@ function PageBody(){
  }
 
  const photo=profileData?.photos?.[0]||profileData?.photo||"";
- const approved=requests.find(x=>x.status==="approved");
+ const approved=!!requests.some(x=>x.status==="approved");
  useEffect(()=>{
-  if(approved) router.replace("/profile/"+encodeURIComponent(profile));
+  if(!approved||!profile)return;
+  router.replace("/profile/"+encodeURIComponent(profile));
  },[approved,profile,router]);
  const pending=requests.find(x=>x.status==="pending");
  return <main>
