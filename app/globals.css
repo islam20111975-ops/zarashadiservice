@@ -564,3 +564,11 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
   position:relative!important;
   z-index:1!important;
 }
+
+
+/* MAIN HEADER NAV — Islamic Calendar + Profiles */
+.mainNav{display:flex;align-items:center;justify-content:center;gap:8px;flex:1;margin:0 8px}
+.mainNav a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:#3d2858;font-size:12px;font-weight:900;padding:10px 13px;border-radius:13px;background:linear-gradient(135deg,#ffffffd9,#fff7ffcc);border:1px solid #eadcf2;box-shadow:0 5px 14px #7c3aed12;transition:.2s;white-space:nowrap}
+.mainNav a:hover{transform:translateY(-2px);color:#7c2d92;border-color:#c4b5fd;box-shadow:0 8px 18px #7c3aed20}
+@media(max-width:900px){.mainNav{order:3;width:100%;flex-basis:100%;margin:0}.headerInner{flex-wrap:wrap}.headerActions{margin-left:auto}}
+@media(max-width:600px){.mainNav{gap:6px;margin-top:1px}.mainNav a{flex:1;font-size:10px;padding:9px 7px;border-radius:11px}}
