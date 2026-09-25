@@ -506,3 +506,34 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 .profiles .profileId{background:linear-gradient(90deg,#2563eb,#7c3aed,#db2777);-webkit-background-clip:text;background-clip:text;color:transparent!important}
 .cardInfo button,.primaryAction,.paymentIcon,.adminIcon{background:linear-gradient(135deg,#2563eb,#06b6d4 22%,#7c3aed 50%,#db2777 76%,#f97316)!important;box-shadow:0 10px 24px #7c3aed38!important}
 @media(max-width:600px){.brand3d strong{font-size:17px!important;letter-spacing:.7px!important}.brand3d small{font-size:7px!important;letter-spacing:3px!important}}
+
+
+/* HEADER NAME — full multicolor 3D treatment */
+.siteHeader .brand3d strong{
+  background:linear-gradient(90deg,#2563eb 0%,#06b6d4 16%,#16a34a 31%,#facc15 45%,#f97316 59%,#ec4899 75%,#8b5cf6 90%,#2563eb 100%)!important;
+  background-size:200% auto!important;
+  -webkit-background-clip:text!important;
+  background-clip:text!important;
+  -webkit-text-fill-color:transparent!important;
+  color:transparent!important;
+  filter:drop-shadow(0 2px 0 #fff) drop-shadow(0 4px 8px #7c3aed35)!important;
+  text-shadow:none!important;
+}
+.siteHeader .brand3d small{
+  background:linear-gradient(90deg,#06b6d4,#2563eb,#7c3aed,#db2777,#f97316,#facc15,#16a34a)!important;
+  background-size:200% auto!important;
+  -webkit-background-clip:text!important;
+  background-clip:text!important;
+  -webkit-text-fill-color:transparent!important;
+  color:transparent!important;
+  font-weight:1000!important;
+  letter-spacing:5px!important;
+  filter:drop-shadow(0 2px 4px #7c3aed25)!important;
+}
+.siteHeader .brand3d{
+  padding:2px 0!important;
+}
+@media(max-width:600px){
+  .siteHeader .brand3d strong{font-size:17px!important;letter-spacing:.7px!important}
+  .siteHeader .brand3d small{font-size:7px!important;letter-spacing:3px!important}
+}
