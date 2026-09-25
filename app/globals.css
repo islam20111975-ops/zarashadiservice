@@ -489,3 +489,20 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
  .brand3d strong{font-size:17px!important;letter-spacing:.7px!important}
  .brand3d small{font-size:7px!important;letter-spacing:3px!important}
 }
+
+
+/* FINAL MULTICOLOR BRAND — vibrant but coordinated */
+.siteHeader{background:linear-gradient(90deg,#fff7fb 0%,#f5f3ff 38%,#eefaff 68%,#fff9ee 100%)!important;border-bottom:1px solid #eadcf2!important;box-shadow:0 8px 30px #6d28d922!important}
+.logoMarkBrand{background:conic-gradient(from 210deg,#2563eb,#06b6d4,#22c55e,#facc15,#f97316,#ec4899,#8b5cf6,#2563eb)!important;box-shadow:0 6px 0 #4338a8,0 13px 28px #7c3aed45,0 1px 0 #fff inset!important}
+.logoMarkBrand:before{border-color:#ffffffb8!important;background:linear-gradient(135deg,#ffffff20,#ffffff00)!important}
+.logoMarkBrand .logoZ{color:#fff!important;text-shadow:0 2px 0 #1e3a8a,0 4px 8px #0007!important}
+.logoMarkBrand .logoN{color:#fff59d!important;text-shadow:0 2px 0 #7c2d12,0 4px 8px #0007!important}
+.brand3d strong{background:linear-gradient(90deg,#2563eb 0%,#06b6d4 20%,#16a34a 38%,#f59e0b 55%,#f97316 70%,#db2777 84%,#7c3aed 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;filter:drop-shadow(0 2px 0 #fff) drop-shadow(0 4px 7px #7c3aed30)!important}
+.brand3d small{color:#db2777!important;text-shadow:0 2px 5px #db277733!important}
+.headerLogin{background:linear-gradient(135deg,#2563eb,#7c3aed,#db2777)!important;box-shadow:0 8px 20px #7c3aed40!important}
+.heroBadge{color:#db2777!important;background:linear-gradient(90deg,#fff,#f5f3ff,#fff1f7)!important;border-color:#eadcf2!important}
+.choiceTitle>span{background:linear-gradient(135deg,#06b6d4,#7c3aed,#db2777)!important}
+.sectionHead h2{background:linear-gradient(90deg,#2563eb,#7c3aed,#db2777,#f97316);-webkit-background-clip:text;background-clip:text;color:transparent!important}
+.profiles .profileId{background:linear-gradient(90deg,#2563eb,#7c3aed,#db2777);-webkit-background-clip:text;background-clip:text;color:transparent!important}
+.cardInfo button,.primaryAction,.paymentIcon,.adminIcon{background:linear-gradient(135deg,#2563eb,#06b6d4 22%,#7c3aed 50%,#db2777 76%,#f97316)!important;box-shadow:0 10px 24px #7c3aed38!important}
+@media(max-width:600px){.brand3d strong{font-size:17px!important;letter-spacing:.7px!important}.brand3d small{font-size:7px!important;letter-spacing:3px!important}}
