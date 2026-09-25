@@ -49,26 +49,10 @@ function PageBody(){
   try{
    // Access documents are protected for approved users/admins. Do not read them before payment.
    // The approved/pending status is already tracked through paidAccessRequests below.
+   // Do not read pendingPaymentLocks from the customer side.
+   // The user's paidAccessRequests query already blocks an existing pending request.
+   // This avoids a Rules read failure when the deterministic lock document does not exist yet.
    const lockId=user.uid+"_"+profile+"_"+type;
-   let lockSnap;
-   try{ lockSnap=await getDoc(doc(db,"pendingPaymentLocks",lockId)); }
-   catch(e){ throw Object.assign(new Error("Payment lock read failed: "+(e?.message||"Permission denied")), {code:e?.code||"permission-denied",stage:"pendingPaymentLocks read"}); }
-   if(lockSnap.exists()){
-    const oldLock=lockSnap.data()||{};
-    if(oldLock.status==="pending"&&oldLock.requestId){
-     let oldReqSnap;
-     try{ oldReqSnap=await getDoc(doc(db,"paidAccessRequests",oldLock.requestId)); }
-     catch(e){ throw Object.assign(new Error("Old payment request read failed: "+(e?.message||"Permission denied")), {code:e?.code||"permission-denied",stage:"paidAccessRequests read"}); }
-     if(oldReqSnap.exists()&&oldReqSnap.data()?.status==="pending"){
-      return setMsg("⏳ Is profile ka payment request pehle se Admin ke paas Pending hai. Dobara payment submit na karein.");
-     }
-     // Stale lock: its request no longer exists/is no longer pending. Remove it, then create the new request.
-     try{ await deleteDoc(doc(db,"pendingPaymentLocks",lockId)); }
-     catch(e){ throw Object.assign(new Error("Stale payment lock delete failed: "+(e?.message||"Permission denied")), {code:e?.code||"permission-denied",stage:"pendingPaymentLocks delete"}); }
-    } else {
-     return setMsg("⏳ Is profile ki payment request already process ho rahi hai. Page refresh karke status dekhein.");
-    }
-   }
    const reqRef=doc(collection(db,"paidAccessRequests"));
    const lockRef=doc(db,"pendingPaymentLocks",lockId);
    const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());
