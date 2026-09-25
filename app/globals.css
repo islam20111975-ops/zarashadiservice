@@ -405,3 +405,8 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 .profiles .photoWrap img[src=""]{display:none}
 .profiles .photoWrap:has(img[src=""]:only-child)::after{content:"💍";display:flex;align-items:center;justify-content:center;position:absolute;inset:0;font-size:42px;background:#111;color:#fff}
 @media(max-width:600px){.siteState{margin:35px auto;padding:30px 18px}}
+
+/* Final profile detail photo safety: preserve the complete portrait */
+.detailPhoto{display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;background:#111!important}
+.detailPhoto img{width:100%!important;height:auto!important;max-height:570px!important;object-fit:contain!important;object-position:center!important;background:#111!important}
+.profiles .photoWrap.photoMissing:after{content:"💍";display:flex;align-items:center;justify-content:center;position:absolute;inset:0;font-size:42px;background:#111;color:#fff}
