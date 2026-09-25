@@ -66,9 +66,6 @@ function PageBody(){
   if(requests.some(x=>x.status==="approved"))return setMsg("✅ Is profile ka access pehle hi approved hai.");
   setSaving(true);
   try{
-   const accessRef=doc(db,type==="mobile"?"mobileAccess":"biodataUnlocks",user.uid+"_"+profile);
-   const accessSnap=await getDoc(accessRef);
-   if(accessSnap.exists()&&accessSnap.data().status==="approved")return setMsg("✅ Is profile ka access pehle hi approved hai.");
    const lockId=user.uid+"_"+profile+"_"+type;
    const lockRef=doc(db,"pendingPaymentLocks",lockId);
    const lockSnap=await getDoc(lockRef);
