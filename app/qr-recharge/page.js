@@ -16,7 +16,9 @@ function PageBody(){
  const [requests,setRequests]=useState([]),[profileData,setProfileData]=useState(null),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
- useEffect(()=>{\n  getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists())setQrUrl(s.data().qrUrl||"")}).catch(()=>{});\n },[]);
+ useEffect(()=>{
+  getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists())setQrUrl(s.data().qrUrl||"")}).catch(()=>{});
+ },[]);
  useEffect(()=>{
   if(!profile)return;
   getDoc(doc(db,"profiles",profile)).then(s=>setProfileData(s.exists()&&s.data().status!=="deleted"?{id:s.id,...s.data()}:null)).catch(()=>setProfileData(null));
@@ -101,7 +103,9 @@ function PageBody(){
    }else if(code==="permission-denied"){
     const detail=e?.message||"Permission denied";
     const stage=e?.stage||"payment request";
-    setMsg("❌ Firebase Permission Denied\\n\\n"+stage+" ko Firebase Rules ne reject kiya. Details: "+detail);
+    setMsg("❌ Firebase Permission Denied\
+\
+"+stage+" ko Firebase Rules ne reject kiya. Details: "+detail);
    }else if(code==="failed-precondition"){
     setMsg("❌ Firebase configuration/precondition error. Kripya page refresh karke dobara try karein.");
    }else if(code==="unavailable"){
@@ -132,7 +136,9 @@ function PageBody(){
    {!user&&<><div className="notice">Payment request bhejne ke liye Google Login zaroori hai.</div><button type="button" className="primaryAction" onClick={login}>Google se Login →</button></>}
    {user&&<>
     <div className="feeRow"><span><small>Exact Access Fee</small><b>₹{amount}</b></span><strong>QR</strong></div>
-    {pending&&<div className="notice">⏳ <b>Payment Pending</b><br/>Aapki request Admin verify kar rahe hain. Same profile ke liye dobara payment submit na karein.</div>\n    {approved&&<div className="notice">✅ <b>Payment Approved</b><br/>Profile {profile} ka access approve ho gaya hai.</div>}\n    {approved&&<button type="button" className="primaryAction" onClick={()=>router.push("/profile/"+encodeURIComponent(profile))}>💍 Profile {profile} खोलें →</button>}
+    {pending&&<div className="notice">⏳ <b>Payment Pending</b><br/>Aapki request Admin verify kar rahe hain. Same profile ke liye dobara payment submit na karein.</div>
+    {approved&&<div className="notice">✅ <b>Payment Approved</b><br/>Profile {profile} ka access approve ho gaya hai.</div>}
+    {approved&&<button type="button" className="primaryAction" onClick={()=>router.push("/profile/"+encodeURIComponent(profile))}>💍 Profile {profile} खोलें →</button>}
     <div className="qr">{qrUrl?<><img src={qrUrl} alt="UPI QR"/><p><b>QR scan karke exact ₹{amount} pay karein.</b></p></>:<small>Admin ne QR set nahi kiya.</small>}</div>
     <div className="paymentForm">
      <label>UTR / Transaction ID
