@@ -53,11 +53,8 @@ function PageBody(){
   if(requests.some(x=>x.status==="approved"))return setMsg("✅ Is profile ka access pehle hi approved hai.");
   setSaving(true);
   try{
-   const accessRef=doc(db,type==="mobile"?"mobileAccess":"biodataUnlocks",user.uid+"_"+profile);
-   let accessSnap;
-   try{ accessSnap=await getDoc(accessRef); }
-   catch(e){ throw Object.assign(new Error("Access status read failed: "+(e?.message||"Permission denied")), {code:e?.code||"permission-denied",stage:"access status read"}); }
-   if(accessSnap.exists()&&accessSnap.data().status==="approved")return setMsg("✅ Is profile ka access pehle hi approved hai.");
+   // Access documents are protected for approved users/admins. Do not read them before payment.
+   // The approved/pending status is already tracked through paidAccessRequests below.
    const lockId=user.uid+"_"+profile+"_"+type;
    let lockSnap;
    try{ lockSnap=await getDoc(doc(db,"pendingPaymentLocks",lockId)); }
