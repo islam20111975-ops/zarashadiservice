@@ -28,12 +28,6 @@ function PageBody(){
     .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)));
   },e=>setMsg("Payment status load nahi ho saka: "+e.message));
  },[user,profile,type]);
- useEffect(()=>{
-  if(!user||!profile)return;
-  return onSnapshot(doc(db,type==="mobile"?"mobileAccess":"biodataUnlocks",user.uid+"_"+profile),s=>{
-   if(s.exists()&&s.data().status==="approved")router.replace("/profile/"+encodeURIComponent(profile));
-  });
- },[user,profile,type,router]);
 
  async function login(){
   try{await signInWithPopup(auth,new GoogleAuthProvider())}
@@ -123,6 +117,10 @@ function PageBody(){
  }
 
  const photo=profileData?.photos?.[0]||profileData?.photo||"";
+ const approved=requests.find(x=>x.status==="approved");
+ useEffect(()=>{
+  if(approved) router.replace("/profile/"+encodeURIComponent(profile));
+ },[approved,profile,router]);
  const pending=requests.find(x=>x.status==="pending");
  return <main>
   <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA SHADI</strong><small>Service</small></span></button></div></header>
