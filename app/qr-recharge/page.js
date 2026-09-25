@@ -1,6 +1,6 @@
 "use client";
 
-import {Suspense,useEffect,useState} from "react";
+import {Suspense,useEffect,useRef,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
 import {collection,doc,getDoc,onSnapshot,query,where,serverTimestamp,setDoc,deleteDoc} from "firebase/firestore";
@@ -12,6 +12,7 @@ function PageBody(){
  const type=q.get("type")==="mobile"?"mobile":"biodata";
  const amount=type==="mobile"?500:100;
  const [user,setUser]=useState(null),[qrUrl,setQrUrl]=useState(""),[utr,setUtr]=useState("");
+ const redirecting=useRef(false);
  const [requests,setRequests]=useState([]),[profileData,setProfileData]=useState(null),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
@@ -103,9 +104,10 @@ function PageBody(){
  const photo=profileData?.photos?.[0]||profileData?.photo||"";
  const approved=!!requests.some(x=>x.status==="approved");
  useEffect(()=>{
-  if(!approved||!profile)return;
-  router.replace("/profile/"+encodeURIComponent(profile));
- },[approved,profile,router]);
+  if(!approved||!profile||redirecting.current)return;
+  redirecting.current=true;
+  window.location.replace("/profile/"+encodeURIComponent(profile));
+ },[approved,profile]);
  const pending=requests.find(x=>x.status==="pending");
  return <main>
   <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA SHADI</strong><small>Service</small></span></button></div></header>
