@@ -130,7 +130,7 @@ function BiodataAdminPage(){
   if(user.email?.toLowerCase()!==ADMIN)return <main><section className="admin cardPage"><div className="adminIcon">🚫</div><h1>Access Denied</h1><button className="backAction" onClick={()=>auth.signOut()}>Logout</button></section></main>;
 
   return <main><section className="admin dashboardPage">
-    <div className="dashTop"><div><span className="eyebrow">ZARA SHADI SERVICE</span><h1>📋 Biodata Management</h1><p>Har person ka biodata, photo aur description alag record rahega.</p></div><button className="logout" onClick={()=>router.push("/admin")}>← Admin Board</button></div>
+    <div className="dashTop"><div><span className="eyebrow">ZARA NIKAH SERVICE</span><h1>📋 Biodata Management</h1><p>Har person ka biodata, photo aur description alag record rahega.</p></div><button className="logout" onClick={()=>router.push("/admin")}>← Admin Board</button></div>
     {error&&<div className="errorBox">{error}</div>}
     <form className="adminBox" onSubmit={save}>
       <div className="boxTitle"><div><span className="eyebrow">SEPARATE BIODATA</span><h3>{form.id?"✏️ Edit Biodata":"➕ New Biodata"}</h3></div>{form.id&&<button type="button" className="backAction" onClick={resetForm}>+ New</button>}</div>
