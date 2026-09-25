@@ -2,7 +2,7 @@
 import {useEffect,useState} from "react";
 import {useParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {doc,getDoc,onSnapshot} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,query,where} from "firebase/firestore";
 import {auth,db} from "../../../lib/firebase";
 
 const first=(o,keys)=>{for(const k of keys){if(o?.[k]!==undefined&&o?.[k]!==null&&String(o[k]).trim()!=="")return o[k]}return "-";};
@@ -17,7 +17,7 @@ export default function Profile(){
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
  useEffect(()=>{
   if(!id)return;
-  let stopB=null,stopM=null,alive=true;
+  let stopRequests=null,alive=true;
   (async()=>{
    try{
     setLoadError("");
@@ -26,20 +26,25 @@ export default function Profile(){
     if(!alive)return;setP({id:s.id,...s.data()});
     if(!auth.currentUser){setLoading(false);return}
     const uid=auth.currentUser.uid;
-    const loadPrivate=async()=>{const pr=await getDoc(doc(db,"profileBiodataPrivate",id));if(pr.exists()&&alive)setPrivateData(pr.data())};
-    const loadContact=async()=>{const cr=await getDoc(doc(db,"profileContact",id));if(cr.exists()&&alive)setContact(cr.data())};
-    stopB=onSnapshot(doc(db,"biodataUnlocks",uid+"_"+id),async s=>{
-      const ok=s.exists()&&s.data().status==="approved";
-      if(alive){setUnlocked(ok);if(ok)await loadPrivate();else setPrivateData(null)}
-    },e=>alive&&setLoadError(e?.message||"Biodata access check failed."));
-    stopM=onSnapshot(doc(db,"mobileAccess",uid+"_"+id),async s=>{
-      const ok=s.exists()&&s.data().status==="approved";
-      if(alive){setMobile(ok);if(ok)await loadContact();else setContact(null)}
-    },e=>alive&&setLoadError(e?.message||"Mobile access check failed."));
+    const loadPrivate=async()=>{try{const pr=await getDoc(doc(db,"profileBiodataPrivate",id));if(pr.exists()&&alive)setPrivateData(pr.data())}catch(e){if(alive)setLoadError(e?.message||"Biodata load nahi ho saka.")}};
+    const loadContact=async()=>{try{const cr=await getDoc(doc(db,"profileContact",id));if(cr.exists()&&alive)setContact(cr.data())}catch(e){if(alive)setLoadError(e?.message||"Mobile number load nahi ho saka.")}};
+    // Use the user's paidAccessRequests status as the realtime source of truth.
+    // The protected biodataUnlocks/mobileAccess documents are still used by Rules
+    // to authorize the private reads, but the client does not subscribe to them.
+    stopRequests=onSnapshot(query(collection(db,"paidAccessRequests"),where("uid","==",uid)),async snap=>{
+      const matches=snap.docs.map(d=>d.data()).filter(x=>x.profileId===id);
+      const biodataOk=matches.some(x=>x.type==="biodata"&&x.status==="approved");
+      const mobileOk=matches.some(x=>x.type==="mobile"&&x.status==="approved");
+      if(!alive)return;
+      setUnlocked(biodataOk);
+      setMobile(mobileOk);
+      if(biodataOk)await loadPrivate(); else setPrivateData(null);
+      if(mobileOk)await loadContact(); else setContact(null);
+    },e=>alive&&setLoadError(e?.message||"Access status load nahi ho saka."));
    }catch(e){if(alive)setLoadError(e?.message||"Profile load nahi ho saka.");}
    finally{if(alive)setLoading(false)}
   })();
-  return()=>{alive=false;if(stopB)stopB();if(stopM)stopM()};
+  return()=>{alive=false;if(stopRequests)stopRequests()};
  },[id,user]);
 
  async function login(){setLoginError("");try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}}
