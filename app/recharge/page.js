@@ -1,9 +1,9 @@
 "use client";
 
-import {Suspense,useEffect,useState} from "react";
+import {Suspense,useEffect,useRef,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {collection,doc,getDoc,onSnapshot,query,where,serverTimestamp,setDoc,deleteDoc} from "firebase/firestore";
+import {collection,doc,getDoc,getDocs,query,where,serverTimestamp,setDoc,deleteDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 function PageBody(){
@@ -22,16 +22,31 @@ function PageBody(){
  },[profile]);
  useEffect(()=>{
   if(!user)return;
-  return onSnapshot(query(collection(db,"paidAccessRequests"),where("uid","==",user.uid)),s=>{
-   setRequests(s.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.profileId===profile&&x.type===type).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)));
-  },e=>setMsg("Payment status load nahi ho saka: "+e.message));
+  let alive=true;
+  let timer=null;
+  const loadRequests=async()=>{
+   try{
+    const snap=await getDocs(query(collection(db,"paidAccessRequests"),where("uid","==",user.uid)));
+    const rows=snap.docs.map(d=>({id:d.id,...d.data()}))
+     .filter(x=>x.profileId===profile&&x.type===type)
+     .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    if(alive)setRequests(rows);
+   }catch(e){
+    if(alive)setMsg("Payment status load nahi ho saka: "+(e?.message||"Unknown error"));
+   }
+  };
+  loadRequests();
+  timer=setInterval(loadRequests,3000);
+  return()=>{alive=false;if(timer)clearInterval(timer)};
  },[user,profile,type]);
+
+ const redirecting=useRef(false);
+ const approved=requests.some(x=>x.status==="approved");
  useEffect(()=>{
-  if(!user||!profile)return;
-  return onSnapshot(doc(db,type==="mobile"?"mobileAccess":"biodataUnlocks",user.uid+"_"+profile),s=>{
-   if(s.exists()&&s.data().status==="approved")router.replace("/profile/"+encodeURIComponent(profile));
-  });
- },[user,profile,type,router]);
+  if(!approved||!profile||redirecting.current)return;
+  redirecting.current=true;
+  window.location.replace("/profile/"+encodeURIComponent(profile));
+ },[approved,profile]);
 
  async function login(){
   try{await signInWithPopup(auth,new GoogleAuthProvider())}
