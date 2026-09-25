@@ -42,6 +42,16 @@ function PageBody(){
   return()=>{alive=false;if(timer)clearInterval(timer)};
  },[user,profile,type]);
 
+ const approved=requests.some(x=>x.status==="approved");
+ const pending=requests.find(x=>x.status==="pending");
+
+ useEffect(()=>{
+  if(approved){
+   setMsg("");
+   setUtr("");
+  }
+ },[approved]);
+
  async function login(){
   try{await signInWithPopup(auth,new GoogleAuthProvider())}
   catch(e){setMsg("❌ Google Login failed: "+(e?.message||"Please try again."))}
@@ -94,8 +104,6 @@ function PageBody(){
  }
 
  const photo=profileData?.photos?.[0]||profileData?.photo||"";
- const approved=requests.some(x=>x.status==="approved");
- const pending=requests.find(x=>x.status==="pending");
  return <main>
   <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button></div></header>
   <section className="cardPage payment" style={{maxWidth:760,margin:"25px auto"}}>
@@ -106,11 +114,13 @@ function PageBody(){
     <p className="paymentLead">Profile <b>{profile}</b> ke liye exact ₹{amount} payment hai.</p>
    </div>
    {!user&&<><div className="notice">Payment request bhejne ke liye Google Login zaroori hai.</div><button type="button" className="primaryAction" onClick={login}>Google se Login →</button></>}
-   {user&&<>
+   {user&&approved&&<>
+    <div className="notice">✅ <b>Payment Approved</b><br/>Profile {profile} ka access approve ho gaya hai.</div>
+    <button type="button" className="primaryAction" onClick={()=>router.push("/profile/"+encodeURIComponent(profile))}>💍 Profile {profile} खोलें →</button>
+   </>}
+   {user&&!approved&&<>
     <div className="feeRow"><span><small>Exact Access Fee</small><b>₹{amount}</b></span><strong>QR</strong></div>
     {pending&&<div className="notice">⏳ <b>Payment Pending</b><br/>Aapki request Admin verify kar rahe hain. Same profile ke liye dobara payment submit na karein.</div>}
-    {approved&&<div className="notice">✅ <b>Payment Approved</b><br/>Profile {profile} ka access approve ho gaya hai.</div>}
-    {approved&&<button type="button" className="primaryAction" onClick={()=>router.push("/profile/"+encodeURIComponent(profile))}>💍 Profile {profile} खोलें →</button>}
     <div className="qr">{qrUrl?<><img src={qrUrl} alt="UPI QR"/><p><b>QR scan karke exact ₹{amount} pay karein.</b></p></>:<small>Admin ne QR set nahi kiya.</small>}</div>
     <div className="paymentForm">
      <label>UTR / Transaction ID
