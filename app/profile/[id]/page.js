@@ -2,7 +2,7 @@
 import {useEffect,useState} from "react";
 import {useParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {collection,doc,getDoc,onSnapshot,query,where} from "firebase/firestore";
+import {collection,doc,getDoc,getDocs,query,where} from "firebase/firestore";
 import {auth,db} from "../../../lib/firebase";
 
 const first=(o,keys)=>{for(const k of keys){if(o?.[k]!==undefined&&o?.[k]!==null&&String(o[k]).trim()!=="")return o[k]}return "-";};
@@ -17,36 +17,60 @@ export default function Profile(){
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
  useEffect(()=>{
   if(!id)return;
-  let stopRequests=null,alive=true;
-  (async()=>{
+  let alive=true;
+  const loadProfile=async()=>{
    try{
     setLoadError("");
     const s=await getDoc(doc(db,"profiles",id));
     if(!s.exists()||s.data().status==="deleted"){if(alive){setLoading(false);setP(null)}return}
-    if(!alive)return;setP({id:s.id,...s.data()});
-    if(!auth.currentUser){setLoading(false);return}
-    const uid=auth.currentUser.uid;
-    const loadPrivate=async()=>{try{const pr=await getDoc(doc(db,"profileBiodataPrivate",id));if(pr.exists()&&alive)setPrivateData(pr.data())}catch(e){if(alive)setLoadError(e?.message||"Biodata load nahi ho saka.")}};
-    const loadContact=async()=>{try{const cr=await getDoc(doc(db,"profileContact",id));if(cr.exists()&&alive)setContact(cr.data())}catch(e){if(alive)setLoadError(e?.message||"Mobile number load nahi ho saka.")}};
-    // Use the user's paidAccessRequests status as the realtime source of truth.
-    // The protected biodataUnlocks/mobileAccess documents are still used by Rules
-    // to authorize the private reads, but the client does not subscribe to them.
-    stopRequests=onSnapshot(query(collection(db,"paidAccessRequests"),where("uid","==",uid)),snap=>{
-      const matches=snap.docs.map(d=>d.data()).filter(x=>x.profileId===id);
-      const biodataOk=matches.some(x=>x.type==="biodata"&&x.status==="approved");
-      const mobileOk=matches.some(x=>x.type==="mobile"&&x.status==="approved");
-      if(!alive)return;
-      setUnlocked(biodataOk);
-      setMobile(mobileOk);
-      if(biodataOk)loadPrivate(); else setPrivateData(null);
-      if(mobileOk)loadContact(); else setContact(null);
-    },e=>alive&&setLoadError(e?.message||"Access status load nahi ho saka."));
-   }catch(e){if(alive)setLoadError(e?.message||"Profile load nahi ho saka.");}
-   finally{if(alive)setLoading(false)}
-  })();
-  return()=>{alive=false;if(stopRequests)stopRequests()};
- },[id,user]);
+    if(!alive)return;
+    setP({id:s.id,...s.data()});
+   }catch(e){
+    if(alive)setLoadError(e?.message||"Profile load nahi ho saka.");
+   }finally{
+    if(alive)setLoading(false);
+   }
+  };
+  loadProfile();
+  return()=>{alive=false};
+ },[id]);
 
+ useEffect(()=>{
+  if(!id||!user){
+   setUnlocked(false);setMobile(false);setPrivateData(null);setContact(null);
+   return;
+  }
+  let alive=true;
+  let timer=null;
+  const loadAccess=async()=>{
+   try{
+    const snap=await getDocs(query(collection(db,"paidAccessRequests"),where("uid","==",user.uid)));
+    const matches=snap.docs.map(d=>d.data()).filter(x=>x.profileId===id);
+    const biodataOk=matches.some(x=>x.type==="biodata"&&x.status==="approved");
+    const mobileOk=matches.some(x=>x.type==="mobile"&&x.status==="approved");
+    if(!alive)return;
+    setUnlocked(biodataOk);
+    setMobile(mobileOk);
+    if(biodataOk){
+      try{
+       const pr=await getDoc(doc(db,"profileBiodataPrivate",id));
+       if(alive&&pr.exists())setPrivateData(pr.data());
+      }catch(e){if(alive)setLoadError(e?.message||"Biodata load nahi ho saka.")}
+    }else setPrivateData(null);
+    if(mobileOk){
+      try{
+       const cr=await getDoc(doc(db,"profileContact",id));
+       if(alive&&cr.exists())setContact(cr.data());
+      }catch(e){if(alive)setLoadError(e?.message||"Mobile number load nahi ho saka.")}
+    }else setContact(null);
+   }catch(e){
+    if(alive)setLoadError(e?.message||"Access status load nahi ho saka.");
+   }
+  };
+  loadAccess();
+  timer=setInterval(loadAccess,3000);
+  return()=>{alive=false;if(timer)clearInterval(timer)};
+ },[id,user]);
  async function login(){setLoginError("");try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}}
  const photos=Array.isArray(p?.photos)&&p.photos.length?p.photos:(p?.photo?[p.photo]:[]);
  const d=privateData||{};
