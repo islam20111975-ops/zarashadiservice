@@ -42,6 +42,7 @@ function PageBody(){
 
  const redirecting=useRef(false);
  const approved=requests.some(x=>x.status==="approved");
+ const safeProfile=encodeURIComponent(profile);
  useEffect(()=>{
   if(!approved||!profile||redirecting.current)return;
   redirecting.current=true;
