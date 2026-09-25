@@ -54,19 +54,26 @@ function PageBody(){
   setSaving(true);
   try{
    const accessRef=doc(db,type==="mobile"?"mobileAccess":"biodataUnlocks",user.uid+"_"+profile);
-   const accessSnap=await getDoc(accessRef);
+   let accessSnap;
+   try{ accessSnap=await getDoc(accessRef); }
+   catch(e){ throw Object.assign(new Error("Access status read failed: "+(e?.message||"Permission denied")), {code:e?.code||"permission-denied",stage:"access status read"}); }
    if(accessSnap.exists()&&accessSnap.data().status==="approved")return setMsg("✅ Is profile ka access pehle hi approved hai.");
    const lockId=user.uid+"_"+profile+"_"+type;
-   const lockSnap=await getDoc(doc(db,"pendingPaymentLocks",lockId));
+   let lockSnap;
+   try{ lockSnap=await getDoc(doc(db,"pendingPaymentLocks",lockId)); }
+   catch(e){ throw Object.assign(new Error("Payment lock read failed: "+(e?.message||"Permission denied")), {code:e?.code||"permission-denied",stage:"pendingPaymentLocks read"}); }
    if(lockSnap.exists()){
     const oldLock=lockSnap.data()||{};
     if(oldLock.status==="pending"&&oldLock.requestId){
-     const oldReqSnap=await getDoc(doc(db,"paidAccessRequests",oldLock.requestId));
+     let oldReqSnap;
+     try{ oldReqSnap=await getDoc(doc(db,"paidAccessRequests",oldLock.requestId)); }
+     catch(e){ throw Object.assign(new Error("Old payment request read failed: "+(e?.message||"Permission denied")), {code:e?.code||"permission-denied",stage:"paidAccessRequests read"}); }
      if(oldReqSnap.exists()&&oldReqSnap.data()?.status==="pending"){
       return setMsg("⏳ Is profile ka payment request pehle se Admin ke paas Pending hai. Dobara payment submit na karein.");
      }
      // Stale lock: its request no longer exists/is no longer pending. Remove it, then create the new request.
-     await deleteDoc(doc(db,"pendingPaymentLocks",lockId));
+     try{ await deleteDoc(doc(db,"pendingPaymentLocks",lockId)); }
+     catch(e){ throw Object.assign(new Error("Stale payment lock delete failed: "+(e?.message||"Permission denied")), {code:e?.code||"permission-denied",stage:"pendingPaymentLocks delete"}); }
     } else {
      return setMsg("⏳ Is profile ki payment request already process ho rahi hai. Page refresh karke status dekhein.");
     }
