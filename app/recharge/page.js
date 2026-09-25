@@ -45,7 +45,11 @@ function PageBody(){
  useEffect(()=>{
   if(!approved||!profile||redirecting.current)return;
   redirecting.current=true;
-  window.location.replace("/profile/"+encodeURIComponent(profile));
+  const target="/profile/"+encodeURIComponent(profile);
+  // UPI apps return control to the browser; wait briefly before redirecting
+  // so the Next.js page can finish restoring its client state.
+  const timer=window.setTimeout(()=>window.location.assign(target),500);
+  return()=>window.clearTimeout(timer);
  },[approved,profile]);
 
  async function login(){
