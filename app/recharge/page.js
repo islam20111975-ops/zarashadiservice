@@ -1,6 +1,6 @@
 "use client";
 
-import {Suspense,useEffect,useRef,useState} from "react";
+import {Suspense,useEffect,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
 import {collection,doc,getDoc,getDocs,query,where,serverTimestamp,setDoc,deleteDoc} from "firebase/firestore";
@@ -15,7 +15,7 @@ function PageBody(){
  const [requests,setRequests]=useState([]),[profileData,setProfileData]=useState(null),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
- useEffect(()=>getDoc(doc(db,"settings","payment")).then(s=>s.exists()&&setUpiId((s.data().upiId||"").trim())).catch(()=>{}),[]);
+ useEffect(()=>{\n  getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists())setUpiId((s.data().upiId||"").trim())}).catch(()=>{});\n },[]);
  useEffect(()=>{
   if(!profile)return;
   getDoc(doc(db,"profiles",profile)).then(s=>setProfileData(s.exists()&&s.data().status!=="deleted"?{id:s.id,...s.data()}:null)).catch(()=>setProfileData(null));
