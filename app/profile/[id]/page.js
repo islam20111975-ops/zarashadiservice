@@ -12,7 +12,7 @@ const Section=({title,children})=><div className="biodataSection"><h3>{title}</h
 export default function Profile(){
  const {id}=useParams(),router=useRouter();
  const [p,setP]=useState(null),[privateData,setPrivateData]=useState(null),[contact,setContact]=useState(null),[user,setUser]=useState(null);
- const [loading,setLoading]=useState(true),[unlocked,setUnlocked]=useState(false),[mobile,setMobile]=useState(false),[lightbox,setLightbox]=useState(false),[zoom,setZoom]=useState(1),[loadError,setLoadError]=useState(""),[loginError,setLoginError]=useState("");
+ const [loading,setLoading]=useState(true),[unlocked,setUnlocked]=useState(false),[mobile,setMobile]=useState(false),[lightbox,setLightbox]=useState(false),[loadError,setLoadError]=useState(""),[loginError,setLoginError]=useState("");
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
  useEffect(()=>{
@@ -89,7 +89,7 @@ export default function Profile(){
 
   <section className="detail cardPage">
    <div className="detailTop"><button className="miniBack" onClick={()=>router.push("/")}>← Profiles</button><span className="detailBadge">✓ Verified</span></div>
-   <div className="detailPhoto" onClick={()=>{setZoom(1);setLightbox(true)}}>{photos[0]?<img src={photos[0]} alt="Marriage profile"/>:<div className="notFound">Photo not found</div>}</div>
+   <div className="detailPhoto" onClick={()=>setLightbox(true)}>{photos[0]?<img src={photos[0]} alt="Marriage profile"/>:<div className="notFound">Photo not found</div>}</div>
 
    <div className="detailBody">
     <span className="profileId">{id}</span>
@@ -165,6 +165,6 @@ export default function Profile(){
    </div>
   </section>
 
-  {lightbox&&<div className="photoLightbox" onClick={()=>setLightbox(false)}><div className="galleryCard" onClick={e=>e.stopPropagation()}><button className="galleryClose" onClick={()=>setLightbox(false)}>✕ Close</button><div className="zoomControls"><button type="button" onClick={()=>setZoom(z=>Math.max(.7,Number((z-.2).toFixed(1))))}>−</button><span>{Math.round(zoom*100)}%</span><button type="button" onClick={()=>setZoom(z=>Math.min(3,Number((z+.2).toFixed(1))))}>+</button><button type="button" onClick={()=>setZoom(1)}>↺</button></div><div className="galleryScroll">{photos.map((s,i)=><div className="galleryPhoto" key={i}><img src={s} alt={"Photo "+(i+1)} style={{transform:"scale("+zoom+")",transformOrigin:"center center"}}/></div>)}<div className="lightboxPayment"><b>Profile: {id}</b><span>ऊपर/नीचे swipe करके photos देखें</span></div></div></div></div>}
+  {lightbox&&<div className="photoLightbox" onClick={()=>setLightbox(false)}><div className="galleryCard" onClick={e=>e.stopPropagation()}><button aria-label="Close" className="galleryClose" onClick={()=>setLightbox(false)}>✕</button><div className="galleryScroll">{photos.map((s,i)=><div className="galleryPhoto" key={i}><img src={s} alt={"Photo "+(i+1)}/></div>)}<div className="lightboxPayment"><b>Profile: {id}</b><span>ऊपर/नीचे swipe करके photos देखें</span></div></div></div></div>}
  </main>;
 }
