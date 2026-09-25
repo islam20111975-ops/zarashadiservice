@@ -16,6 +16,7 @@ export default function Admin(){
   const [social,setSocial]=useState({whatsapp:"",facebook:"",instagram:""}),[upi,setUpi]=useState(""),[qrFile,setQrFile]=useState(null),[qrPreview,setQrPreview]=useState("");
   const [wallFile,setWallFile]=useState(null),[wallPreview,setWallPreview]=useState("");
   const [saving,setSaving]=useState(false),[requestFilter,setRequestFilter]=useState("pending"),[requestSearch,setRequestSearch]=useState("");
+  const [pages,setPages]=useState({about:"",contact:"",privacy:"",terms:""});
 
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
   useEffect(()=>{
@@ -30,6 +31,7 @@ export default function Admin(){
     getDoc(doc(db,"settings","social")).then(s=>s.exists()&&setSocial({...{whatsapp:"",facebook:"",instagram:""},...s.data()})).catch(()=>{});
     getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists()){setUpi(s.data().upiId||"");setQrPreview(s.data().qrUrl||"")}}).catch(e=>setError("Payment settings load error: "+e.message));
     getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallPreview(s.data().wallpaper||"")}).catch(e=>setError("Appearance settings load error: "+e.message));
+    getDoc(doc(db,"settings","legalPages")).then(s=>{if(s.exists())setPages(p=>({...p,about:s.data().about||"",contact:s.data().contact||"",privacy:s.data().privacy||"",terms:s.data().terms||""}))}).catch(e=>setError("Website pages load error: "+e.message));
     return()=>unsubs.forEach(x=>x());
   },[user]);
 
@@ -195,6 +197,12 @@ export default function Admin(){
 
   async function saveSocial(e){e.preventDefault();try{await setDoc(doc(db,"settings","social"),{...social,updatedAt:serverTimestamp()},{merge:true});alert("Social links save ho gaye.")}catch(e){setError(e.message)}}
 
+  async function savePages(e){
+    e.preventDefault();setError("");
+    try{await setDoc(doc(db,"settings","legalPages"),{...pages,updatedAt:serverTimestamp()},{merge:true});alert("Website pages save ho gaye.");}
+    catch(e){setError(e.message)}
+  }
+
   async function saveAppearance(e){
     e.preventDefault();setError("");
     try{
@@ -249,6 +257,6 @@ export default function Admin(){
 
     {tab==="transactions"&&<div className="adminList"><div className="listHead"><h3>🧾 All Wallet / Payment Transactions</h3><span>{transactions.length}</span></div>{transactions.map(x=><div className="adminRow" key={x.id}><span><b>{x.type} • ₹{x.amount}</b><small>UID: {x.uid}</small><small>Profile: {x.profileId||"-"} • UTR: {x.utr||"-"}</small><small>{x.createdAt?.toDate?.()?.toLocaleString?.()||""}</small></span></div>)}</div>}
 
-    {tab==="settings"&&<><form className="adminBox" onSubmit={savePayment}><h3>💳 UPI Payment Settings</h3><input className="adminInput" placeholder="UPI ID" value={upi} onChange={e=>setUpi(e.target.value)}/><label className="uploadBox">QR Image<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setQrFile(f);setQrPreview(URL.createObjectURL(f))}}}/></label>{qrPreview&&<div className="uploadPreview"><img src={qrPreview} alt="QR"/></div>}<button className="primaryAction">💾 Payment Save →</button></form><form className="adminBox" onSubmit={saveAppearance}><h3>🖼️ Website Appearance</h3><label className="uploadBox">Wallpaper / Background<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setWallFile(f);setWallPreview(URL.createObjectURL(f))}}}/><small>Image automatically compress hogi.</small></label>{wallPreview&&<div className="uploadPreview"><img src={wallPreview} alt="Website wallpaper"/></div>}<button className="primaryAction">💾 Appearance Save →</button></form><form className="adminBox" onSubmit={saveSocial}><h3>📲 Social Links</h3><input className="adminInput" placeholder="WhatsApp" value={social.whatsapp} onChange={e=>setSocial({...social,whatsapp:e.target.value})}/><input className="adminInput" placeholder="Facebook" value={social.facebook} onChange={e=>setSocial({...social,facebook:e.target.value})}/><input className="adminInput" placeholder="Instagram" value={social.instagram} onChange={e=>setSocial({...social,instagram:e.target.value})}/><button className="primaryAction">💾 Social Save →</button></form></>}
+    {tab==="settings"&&<><form className="adminBox" onSubmit={savePages}><h3>📄 Website Pages</h3><p>About, Contact, Privacy Policy aur Terms & Conditions ka text yahin se likhein/update karein.</p><label>About<textarea className="adminInput pageEditor" rows="7" value={pages.about} onChange={e=>setPages({...pages,about:e.target.value})}/></label><label>Contact<textarea className="adminInput pageEditor" rows="7" value={pages.contact} onChange={e=>setPages({...pages,contact:e.target.value})}/></label><label>Privacy Policy<textarea className="adminInput pageEditor" rows="9" value={pages.privacy} onChange={e=>setPages({...pages,privacy:e.target.value})}/></label><label>Terms & Conditions<textarea className="adminInput pageEditor" rows="9" value={pages.terms} onChange={e=>setPages({...pages,terms:e.target.value})}/></label><button className="primaryAction">💾 Website Pages Save →</button></form><form className="adminBox" onSubmit={savePayment}><h3>💳 UPI Payment Settings</h3><input className="adminInput" placeholder="UPI ID" value={upi} onChange={e=>setUpi(e.target.value)}/><label className="uploadBox">QR Image<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setQrFile(f);setQrPreview(URL.createObjectURL(f))}}}/></label>{qrPreview&&<div className="uploadPreview"><img src={qrPreview} alt="QR"/></div>}<button className="primaryAction">💾 Payment Save →</button></form><form className="adminBox" onSubmit={saveAppearance}><h3>🖼️ Website Appearance</h3><label className="uploadBox">Wallpaper / Background<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setWallFile(f);setWallPreview(URL.createObjectURL(f))}}}/><small>Image automatically compress hogi.</small></label>{wallPreview&&<div className="uploadPreview"><img src={wallPreview} alt="Website wallpaper"/></div>}<button className="primaryAction">💾 Appearance Save →</button></form><form className="adminBox" onSubmit={saveSocial}><h3>📲 Social Links</h3><input className="adminInput" placeholder="WhatsApp" value={social.whatsapp} onChange={e=>setSocial({...social,whatsapp:e.target.value})}/><input className="adminInput" placeholder="Facebook" value={social.facebook} onChange={e=>setSocial({...social,facebook:e.target.value})}/><input className="adminInput" placeholder="Instagram" value={social.instagram} onChange={e=>setSocial({...social,instagram:e.target.value})}/><button className="primaryAction">💾 Social Save →</button></form></>}
   </section></main>;
 }
