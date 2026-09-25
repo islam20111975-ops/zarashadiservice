@@ -1,6 +1,6 @@
 "use client";
 
-import {Suspense,useEffect,useState} from "react";
+import {Suspense,useEffect,useRef,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
 import {collection,doc,getDoc,getDocs,query,where,serverTimestamp,setDoc,deleteDoc} from "firebase/firestore";
@@ -13,6 +13,7 @@ function PageBody(){
  const amount=type==="mobile"?500:100;
  const [user,setUser]=useState(null),[qrUrl,setQrUrl]=useState(""),[utr,setUtr]=useState("");
  const [requests,setRequests]=useState([]),[profileData,setProfileData]=useState(null),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
+ const redirected=useRef(false);
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
  useEffect(()=>{
@@ -46,11 +47,13 @@ function PageBody(){
  const pending=requests.find(x=>x.status==="pending");
 
  useEffect(()=>{
-  if(approved){
-   setMsg("");
-   setUtr("");
-  }
- },[approved]);
+  if(!approved||!profile||redirected.current)return;
+  redirected.current=true;
+  const timer=window.setTimeout(()=>{
+   router.replace("/profile/"+encodeURIComponent(profile));
+  },700);
+  return()=>window.clearTimeout(timer);
+ },[approved,profile,router]);
 
  async function login(){
   try{await signInWithPopup(auth,new GoogleAuthProvider())}
@@ -114,10 +117,7 @@ function PageBody(){
     <p className="paymentLead">Profile <b>{profile}</b> ke liye exact ₹{amount} payment hai.</p>
    </div>
    {!user&&<><div className="notice">Payment request bhejne ke liye Google Login zaroori hai.</div><button type="button" className="primaryAction" onClick={login}>Google se Login →</button></>}
-   {user&&approved&&<>
-    <div className="notice">✅ <b>Payment Approved</b><br/>Profile {profile} ka access approve ho gaya hai.</div>
-    <button type="button" className="primaryAction" onClick={()=>router.push("/profile/"+encodeURIComponent(profile))}>💍 Profile {profile} खोलें →</button>
-   </>}
+   {user&&approved&&<div className="notice">✅ <b>Payment Approved</b><br/>Profile {profile} ka access approve ho gaya hai.<br/><small>Biodata page khola ja raha hai…</small></div>}
    {user&&!approved&&<>
     <div className="feeRow"><span><small>Exact Access Fee</small><b>₹{amount}</b></span><strong>QR</strong></div>
     {pending&&<div className="notice">⏳ <b>Payment Pending</b><br/>Aapki request Admin verify kar rahe hain. Same profile ke liye dobara payment submit na karein.</div>}
@@ -131,7 +131,7 @@ function PageBody(){
     {requests.slice(0,5).map(x=><div className="notice" key={x.id}>₹{x.amount} — <b>{x.status}</b>{x.utr&&" — UTR "+x.utr}</div>)}
    </>}
    {msg&&<div className="messageBox" role="status">{msg}</div>}
-   <button type="button" className="backAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type))}>← Payment Options पर जाएँ</button>
+   {!approved&&<button type="button" className="backAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type))}>← Payment Options पर जाएँ</button>}
   </section>
  </main>;
 }
