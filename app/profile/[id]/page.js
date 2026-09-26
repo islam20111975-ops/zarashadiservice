@@ -8,7 +8,7 @@ import {auth,db} from "../../../lib/firebase";
 const val=(v)=>v===undefined||v===null?"":String(v).trim();
 const hasBiodata=(d)=>Object.keys(d||{}).some(k=>k!=="profileId"&&k!=="updatedAt"&&val(d[k])!=="");
 const Row=({label,value})=>{const v=val(value);return v?<div className="biodataRow"><span>{label}</span><b>{v}</b></div>:null};
-const Section=({title,children})=>{const items=Children.toArray(children);return items.length?<div className="biodataSection"><h3>{title}</h3>{items}</div>:null};
+const Section=({title,children})=>{const items=Children.toArray(children).filter(x=>x?.props&&val(x.props.value)!=="");return items.length?<div className="biodataSection"><h3>{title}</h3>{items}</div>:null};
 
 export default function Profile(){
  const {id}=useParams(),router=useRouter();
