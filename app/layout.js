@@ -6,7 +6,9 @@ export const metadata={
  applicationName:"Zara Nikah Service",
  keywords:["Zara Nikah Service","Nikah Service","Marriage Profiles","Rishta Service"],
  openGraph:{title:"Zara Nikah Service",description:"Aapka Rishta, Hamari Zimmedari",type:"website",url:"https://zarashadiservice.vercel.app/"},
- twitter:{card:"summary",title:"Zara Nikah Service",description:"Aapka Rishta, Hamari Zimmedari"}
+ twitter:{card:"summary",title:"Zara Nikah Service",description:"Aapka Rishta, Hamari Zimmedari"},
+ icons:{icon:"/zara-icon.svg",apple:"/zara-icon.svg"},
+ manifest:"/manifest.webmanifest"
 };
 
-export default function RootLayout({children}){return <html lang="hi"><body>{children}</body></html>}
+export default function RootLayout({children}){return <html lang="hi"><body>{children}<script dangerouslySetInnerHTML={{__html:`if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))}`}} /></body></html>}
