@@ -914,3 +914,19 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 @media(max-width:600px){
   .installAppBtn{padding:8px 10px;font-size:12px}
 }
+
+/* Always-visible app install CTA */
+.headerActions .installAppBtn{
+  display:inline-flex!important;
+  align-items:center;
+  justify-content:center;
+  visibility:visible!important;
+  opacity:1!important;
+  position:relative;
+  z-index:20;
+}
+@media(max-width:700px){
+  .headerActions{gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .headerActions .secureChip{display:none}
+  .headerActions .installAppBtn{font-size:12px;padding:9px 11px}
+}
