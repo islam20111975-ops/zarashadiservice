@@ -117,10 +117,10 @@ export default function Admin(){
         const expectedReqAmount=req.type==="biodata"?100:500;
         if(Number(req.amount)!==expectedReqAmount)throw new Error("Access request amount mismatch hai.");
         if(req.profileId!==x.profileId || req.type!==x.type)throw new Error("Access request data mismatch hai.");
-        if(!["wallet","upi","qr"].includes(req.paymentMethod))throw new Error("Payment method valid nahi hai.");
+        if(!["wallet","upi","qr","upi_id_or_qr"].includes(req.paymentMethod))throw new Error("Payment method valid nahi hai.");
         if(req.paymentMethod==="wallet" && req.utr!=="")throw new Error("Wallet request me UTR nahi hona chahiye.");
         if(req.paymentMethod==="wallet" && req.utrClaimId)throw new Error("Wallet request me UTR claim nahi hona chahiye.");
-        if(req.paymentMethod!=="wallet" && (!req.utr || !["upi","qr"].includes(req.paymentMethod) || !req.utrClaimId))throw new Error("UPI/QR request incomplete hai.");
+        if(req.paymentMethod!=="wallet" && (!req.utr || !["upi","qr","upi_id_or_qr"].includes(req.paymentMethod) || !req.utrClaimId))throw new Error("UPI/QR request incomplete hai.");
         if(req.paymentMethod!=="wallet"){
           const claimSnap=await t.get(doc(db,"paymentUtrClaims",req.utrClaimId));
           if(!claimSnap.exists())throw new Error("Access UTR claim nahi mila.");
