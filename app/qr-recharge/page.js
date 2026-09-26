@@ -99,6 +99,7 @@ function PageBody(){
 
  async function submit(){
   setClickedButton("submit");
+  window.setTimeout(()=>setClickedButton(""),700);
   setMsg("");
   if(!user)return setMsg("⚠️ Pehle Google se Login karein.");
   if(!profile)return setMsg("❌ Profile ID missing hai.");
@@ -153,7 +154,7 @@ function PageBody(){
    else if(code==="failed-precondition")setMsg("❌ Firebase configuration/precondition error. Kripya page refresh karke dobara try karein.");
    else if(code==="unavailable")setMsg("❌ Firebase service abhi available nahi hai. Internet check karke dobara try karein.");
    else setMsg("❌ Payment request save nahi hui: "+(e?.message||"Unknown error"));
-  }finally{setSaving(false)}
+  }finally{setSaving(false);setClickedButton("");}
  }
 
  const photo=profileData?.photos?.[0]||profileData?.photo||"";
@@ -161,7 +162,7 @@ function PageBody(){
 
  return <main>
   <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button></div></header>
-  <section className="cardPage payment" style={{maxWidth:760,margin:"25px auto"}}>
+  <section className="cardPage payment paymentPremium" style={{maxWidth:760,margin:"25px auto"}}>
    <div style={{textAlign:"center"}}>
     <div className="paymentIcon">₹</div><span className="eyebrow">UPI ID + QR PAYMENT</span>
     <h1>₹{amount} {type==="mobile"?"Mobile Number":"Biodata"} Access</h1>
