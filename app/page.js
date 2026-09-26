@@ -3,7 +3,7 @@
 import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {collection,doc,getDoc,onSnapshot,query,where} from "firebase/firestore";
+import {collection,doc,getDoc,getDocs,onSnapshot,query,where} from "firebase/firestore";
 import {auth,db} from "../lib/firebase";
 
 export default function Home(){
@@ -24,7 +24,13 @@ export default function Home(){
     async function loadSlider(){
       try{
         const s=await getDoc(doc(db,"settings","homeSlider"));
-        const ids=s.exists()&&Array.isArray(s.data().profileIds)?s.data().profileIds:[];
+        let ids=s.exists()&&Array.isArray(s.data().profileIds)?s.data().profileIds:[];
+        // Fallback: if the slider settings document is empty/unavailable, build the
+        // slideshow directly from the lightweight thumbnail collection.
+        if(!ids.length){
+          const snap=await getDocs(collection(db,"homeSliderImages"));
+          ids=snap.docs.map(d=>d.id).filter(Boolean).sort((a,b)=>a.localeCompare(b));
+        }
         if(cancelled||!ids.length)return;
         setSliderIds(ids);
         const first=await getDoc(doc(db,"homeSliderImages",ids[0]));
