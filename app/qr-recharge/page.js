@@ -99,16 +99,16 @@ function PageBody(){
 
  async function submit(){
   setClickedButton("submit");
-  setMsg("");
-  if(!user)return setMsg("⚠️ Pehle Google se Login karein.");
-  if(!profile)return setMsg("❌ Profile ID missing hai.");
-  if(!profileData)return setMsg("❌ Ye profile available nahi hai.");
-  if(!qrUrl&&!upiId)return setMsg("❌ Admin ne UPI ID ya QR payment set nahi kiya hai.");
-  const clean=utr.trim().replace(/\\s+/g,"").toUpperCase();
-  if(!clean)return setMsg("⚠️ Payment karne ke baad UTR / Transaction ID yahan zaroor bharein.");
-  if(!/^[A-Z0-9]{6,40}$/.test(clean))return setMsg("⚠️ Sahi UTR / Transaction ID bhariye (6–40 letters/numbers).");
-  if(requests.some(x=>x.status==="pending"))return setMsg("⏳ Is profile ka payment request already Pending hai. Admin verification ka wait karein.");
-  if(requests.some(x=>x.status==="approved"))return setMsg("✅ Is profile ka access pehle hi approved hai.");
+  setMsg("⏳ UTR Send ho raha hai…");
+  if(!user){setClickedButton("");return setMsg("⚠️ Pehle Google se Login karein.");}
+  if(!profile){setClickedButton("");return setMsg("❌ Profile ID missing hai.");}
+  if(!profileData){setClickedButton("");return setMsg("❌ Ye profile available nahi hai.");}
+  if(!qrUrl&&!upiId){setClickedButton("");return setMsg("❌ Admin ne UPI ID ya QR payment set nahi kiya hai.");}
+  const clean=utr.trim().replace(/\s+/g,"").toUpperCase();
+  if(!clean){setClickedButton("");return setMsg("⚠️ Payment karne ke baad UTR / Transaction ID yahan zaroor bharein.");}
+  if(!/^[A-Z0-9]{6,40}$/.test(clean)){setClickedButton("");return setMsg("⚠️ Sahi UTR / Transaction ID bhariye (6–40 letters/numbers).");}
+  if(requests.some(x=>x.status==="pending")){setClickedButton("");return setMsg("⏳ Is profile ka payment request already Pending hai. Admin verification ka wait karein.");}
+  if(requests.some(x=>x.status==="approved")){setClickedButton("");return setMsg("✅ Is profile ka access pehle hi approved hai.");}
   setSaving(true);
   try{
    const lockId=user.uid+"_"+profile+"_"+type;
