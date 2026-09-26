@@ -122,10 +122,16 @@ export default function Admin(){
         if(req.paymentMethod==="wallet" && req.utrClaimId)throw new Error("Wallet request me UTR claim nahi hona chahiye.");
         if(req.paymentMethod!=="wallet" && (!req.utr || !["upi","qr","upi_id_or_qr"].includes(req.paymentMethod) || !req.utrClaimId))throw new Error("UPI/QR request incomplete hai.");
         if(req.paymentMethod!=="wallet"){
-          const claimSnap=await t.get(doc(db,"paymentUtrClaims",req.utrClaimId));
-          if(!claimSnap.exists())throw new Error("Access UTR claim nahi mila.");
-          const claim=claimSnap.data();
-          if(claim.uid!==req.uid || claim.kind!=="access" || claim.profileId!==req.profileId || claim.type!==req.type || Number(claim.amount)!==expectedReqAmount || claim.requestId!==x.id || claim.utr!==req.utr)throw new Error("Access UTR claim mismatch hai.");
+          // New requests keep the UTR directly on paidAccessRequests.
+          // Legacy requests may still have a paymentUtrClaims document; verify it
+          // when present, otherwise the admin verifies the submitted UTR manually.
+          if(req.utrClaimId){
+            const claimSnap=await t.get(doc(db,"paymentUtrClaims",req.utrClaimId));
+            if(claimSnap.exists()){
+              const claim=claimSnap.data();
+              if(claim.uid!==req.uid || claim.kind!=="access" || claim.profileId!==req.profileId || claim.type!==req.type || Number(claim.amount)!==expectedReqAmount || claim.requestId!==x.id || claim.utr!==req.utr)throw new Error("Access UTR claim mismatch hai.");
+            }
+          }
         }
 
         const profileSnap=await t.get(doc(db,"profiles",req.profileId));
