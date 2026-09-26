@@ -858,3 +858,22 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
   .biodataForm .photoPreviewGrid{grid-template-columns:repeat(3,1fr)!important}
   .biodataForm .photoPreviewGrid img{height:82px!important}
 }
+
+/* HOME AUTO PROFILE SLIDER */
+.homeAutoSlider{position:relative;max-width:390px;margin:0 auto 22px}
+.homeSlide{position:relative;width:100%;height:300px;padding:0;border:0;border-radius:30px;overflow:hidden;cursor:pointer;background:#fff;box-shadow:0 24px 45px #35105b25,0 7px 0 #ddd6fe;display:block}
+.homeSlide img{width:100%;height:100%;display:block;object-fit:cover}
+.slideShade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,#160b2dcc 100%);pointer-events:none}
+.slideId{position:absolute;left:17px;bottom:16px;color:#fff;font-size:16px;font-weight:1000;letter-spacing:.5px;text-shadow:0 2px 7px #000}
+.slideVerified{position:absolute;right:14px;top:14px;padding:7px 10px;border-radius:99px;background:#ffffffed;color:#15803d;font-size:10px;font-weight:1000;box-shadow:0 5px 15px #0003}
+.slideDots{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);display:flex;gap:5px;max-width:80%;overflow:hidden}
+.slideDots span{width:6px;height:6px;border-radius:50%;background:#ffffff88;flex:0 0 auto;transition:.2s}
+.slideDots span.active{width:18px;border-radius:99px;background:#fff}
+.homeSlideEmpty{height:300px;border-radius:30px;background:linear-gradient(145deg,#fff,#f5efff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-size:55px;color:#7c3aed;box-shadow:0 24px 45px #35105b18}
+.homeSlideEmpty span{font-size:15px;font-weight:900}
+.homeSlide:active{transform:scale(.985)}
+@media(max-width:600px){
+  .homeAutoSlider{max-width:330px;margin-bottom:20px}
+  .homeSlide,.homeSlideEmpty{height:255px;border-radius:25px}
+  .slideId{font-size:14px;left:14px;bottom:14px}
+}
