@@ -2,7 +2,7 @@
 import {useEffect,useState} from "react";
 import {useParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {collection,doc,getDoc,getDocs,query,where} from "firebase/firestore";
+import {collection,doc,getDoc,getDocs,query,where,onSnapshot} from "firebase/firestore";
 import {auth,db} from "../../../lib/firebase";
 
 const first=(o,keys)=>{
@@ -69,7 +69,7 @@ export default function Profile(){
     if(biodataOk){
       try{
        const pr=await getDoc(doc(db,"profileBiodataPrivate",id));
-       if(alive&&pr.exists())setPrivateData(pr.data());
+       if(alive){if(pr.exists())setPrivateData(pr.data());else setLoadError("Admin Biodata record nahi mila. Admin Biodata Management mein is profile ko Save karein.");}
       }catch(e){if(alive)setLoadError(e?.message||"Biodata load nahi ho saka.")}
     }else setPrivateData(null);
     if(mobileOk){
