@@ -133,7 +133,7 @@ function BiodataAdminPage(){
     <div className="dashTop"><div><span className="eyebrow">ZARA NIKAH SERVICE</span><h1>📋 Biodata Management</h1><p>Har person ka biodata, photo aur description alag record rahega.</p></div><button className="logout" onClick={()=>router.push("/admin")}>← Admin Board</button></div>
     {error&&<div className="errorBox">{error}</div>}
     <form className="adminBox" onSubmit={save}>
-      <div className="boxTitle"><div><span className="eyebrow">SEPARATE BIODATA</span><h3>{form.id?"✏️ Edit Biodata":"➕ New Biodata"}</h3></div>{form.id&&<button type="button" className="backAction" onClick={resetForm}>+ New</button>}</div>
+      <div className="boxTitle"><div><span className="eyebrow">SEPARATE BIODATA</span><h3>{form.id?"✏️ Edit Biodata":"➕ New Biodata"}</h3></div><div style={{display:"flex",gap:8,alignItems:"center"}}>{form.id&&<button type="button" className="backAction" style={{width:"auto",marginTop:0}} onClick={resetForm}>+ New</button>}<button type="submit" className="primaryAction" style={{width:"auto",marginTop:0,whiteSpace:"nowrap"}} disabled={saving}>{saving?"Saving...":"💾 Save Biodata"}</button></div></div>
       <div className="formGrid">
         <input className="adminInput" placeholder="Profile ID (unique)" value={form.id} disabled={!!params.get("edit")} onChange={e=>setForm({...form,id:e.target.value})}/>
         <select className="adminInput" value={form.gender} onChange={e=>setForm({...form,gender:e.target.value})}><option value="female">Female</option><option value="male">Male</option></select>
@@ -191,7 +191,7 @@ function BiodataAdminPage(){
       <textarea className="adminInput" rows="3" placeholder="Other Important Information" value={form.otherInfo} onChange={e=>setForm({...form,otherInfo:e.target.value})}/>
       <label className="uploadBox">📷 1–5 Photos<input type="file" accept="image/*" multiple onChange={chooseFiles}/><small>Photos compress hokar Firestore mein save hongi.</small></label>
       {preview.length>0&&<div className="photoPreviewGrid">{preview.map((s,i)=><img key={i} src={s} alt={"Preview "+(i+1)}/>)}</div>}
-      <button className="primaryAction" disabled={saving}>{saving?"Saving...":"💾 Biodata Save करें →"}</button>
+      <div className="messageBox">💾 ऊपर <b>Save Biodata</b> button दबाकर इस biodata को save/update करें.</div>
     </form>
 
     <div className="adminList">
