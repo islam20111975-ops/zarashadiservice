@@ -214,8 +214,9 @@ service cloud.firestore {
         && ((request.resource.data.type == "biodata" && request.resource.data.amount == 100)
           || (request.resource.data.type == "mobile" && request.resource.data.amount == 500))
         && request.resource.data.status == "pending"
-        && request.resource.data.lockId is string
-        && request.resource.data.lockId == accessLockId(request.auth.uid, request.resource.data.profileId, request.resource.data.type)
+        && (!request.resource.data.keys().hasAny(["lockId"])
+          || (request.resource.data.lockId is string
+              && request.resource.data.lockId == accessLockId(request.auth.uid, request.resource.data.profileId, request.resource.data.type)))
         && (request.resource.data.paymentMethod == "wallet" || request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
         && request.resource.data.utr is string
         && (
@@ -225,7 +226,7 @@ service cloud.firestore {
           ||
           (request.resource.data.paymentMethod != "wallet"
             && validUtr(request.resource.data.utr)
-            && request.resource.data.utrClaimId is string)
+            && (!request.resource.data.keys().hasAny(["utrClaimId"]) || request.resource.data.utrClaimId is string))
         );
 
       allow update, delete: if isAdmin();
