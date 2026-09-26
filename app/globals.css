@@ -812,7 +812,15 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
   box-shadow:0 2px 6px rgba(0,0,0,.18)!important;
 }
 .paymentPremium .primaryAction.clickFeedback{
-  transform:translateY(2px)!important;
-  filter:brightness(.94) saturate(1.1)!important;
-  box-shadow:0 3px 9px rgba(22,101,52,.25)!important;
+  transform:translateY(3px) scale(.985)!important;
+  filter:brightness(.90) saturate(1.15)!important;
+  box-shadow:0 3px 9px rgba(22,101,52,.25),inset 0 2px 6px rgba(0,0,0,.12)!important;
+  transition:transform .08s ease,filter .08s ease,box-shadow .08s ease!important;
+}
+.primaryAction:active,.backAction:active,.headerLogin:active,.miniBack:active{
+  transform:translateY(2px) scale(.985);
+  filter:brightness(.92);
+}
+.paymentPremium .primaryAction.clickFeedback{
+  border-color:#86efac!important;
 }
