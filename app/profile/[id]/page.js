@@ -21,7 +21,8 @@ const first=(o,keys)=>{
  }
  return "-";
 };
-const Row=({label,value})=><div className="biodataRow"><span>{label}</span><b>{value}</b></div>;
+const val=(v)=>v===undefined||v===null?"":String(v).trim();
+const Row=({label,value})=>{const v=val(value);return v?<div className="biodataRow"><span>{label}</span><b>{v}</b></div>:null};
 const Section=({title,children})=><div className="biodataSection"><h3>{title}</h3>{children}</div>;
 
 export default function Profile(){
@@ -67,10 +68,18 @@ export default function Profile(){
     setUnlocked(biodataOk);
     setMobile(mobileOk);
     if(biodataOk){
-      try{
-       const pr=await getDoc(doc(db,"profileBiodataPrivate",id));
-       if(alive){if(pr.exists())setPrivateData(pr.data());else setLoadError("Admin Biodata record nahi mila. Admin Biodata Management mein is profile ko Save karein.");}
-      }catch(e){if(alive)setLoadError(e?.message||"Biodata load nahi ho saka.")}
+      const privateRef=doc(db,"profileBiodataPrivate",id);
+      const unsubscribe=onSnapshot(privateRef,
+       snap=>{if(!alive)return;if(snap.exists()){setPrivateData(snap.data());setLoadError("");}else{setPrivateData({});setLoadError("");}},
+       e=>{if(alive)setLoadError(e?.message||"Biodata load nahi ho saka.")}
+      );
+      if(mobileOk){
+       try{
+        const cr=await getDoc(doc(db,"profileContact",id));
+        if(alive&&cr.exists())setContact(cr.data());
+       }catch(e){if(alive)setLoadError(e?.message||"Mobile number load nahi ho saka.")}
+      }else setContact(null);
+      return unsubscribe;
     }else setPrivateData(null);
     if(mobileOk){
       try{
@@ -89,10 +98,8 @@ export default function Profile(){
  async function login(){setLoginError("");try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}}
  const photos=Array.isArray(p?.photos)&&p.photos.length?p.photos:(p?.photo?[p.photo]:[]);
  const d=privateData||{};
- const name=first(d,["name","fullName","candidateName"]);
- const description=first(d,["description","about","bio","details"]);
- const family=first(d,["familyDetails","family","familyBackground"]);
- const expectations=first(d,["expectations","partnerExpectations","marriageExpectations"]);
+ const name=first(d,["name"]);
+
  if(loading)return <main><section className="cardPage"><div className="notFound">Loading...</div></section></main>;
  if(!p)return <main><section className="cardPage"><div className="notFound">{loadError||"Profile not found"}</div></section></main>;
 
@@ -108,66 +115,65 @@ export default function Profile(){
 
    <div className="detailBody">
     <span className="profileId">{id}</span>
-    <h1>{unlocked?name:"Rishta ki Jankari"}</h1>
+    <h1>{unlocked?(name||"Biodata"):"Rishta ki Jankari"}</h1>
 
     {!unlocked?<><p className="detailLead">Complete biodata dekhne ke liye ₹100 payment required hai.</p><div className="notice">इस रिश्ते की पूरी जानकारी के लिए ₹100 भुगतान करें</div><button className="primaryAction" onClick={()=>user?router.push("/payment?profile="+encodeURIComponent(id)+"&type=biodata"):login()}>₹100 Biodata Unlock करें →</button></>:
     <div className="biodataBox">
       <div className="biodataTitle">💍 शादी के लिए पूरा Biodata</div>
 
       <Section title="👤 व्यक्तिगत जानकारी">
-       <Row label="नाम" value={name}/>
-       <Row label="उम्र" value={first(d,["age","years","dobAge"])}/>
-       <Row label="लिंग" value={first(d,["gender","sex"])}/>
-       <Row label="वैवाहिक स्थिति" value={first(d,["maritalStatus","marital_status","status"])}/>
-       <Row label="कद" value={first(d,["height","heightCm","heightFeet"])}/>
-       <Row label="जन्म तिथि" value={first(d,["dob","dateOfBirth","birthDate"])}/>
-       <Row label="जन्म स्थान" value={first(d,["birthPlace","placeOfBirth"])}/>
+       <Row label="नाम" value={d.name}/>
+       <Row label="उम्र" value={d.age}/>
+       <Row label="लिंग" value={d.gender}/>
+       <Row label="वैवाहिक स्थिति" value={d.maritalStatus}/>
+       <Row label="कद" value={d.height}/>
+       <Row label="जन्म तिथि" value={d.dob}/>
+       <Row label="जन्म स्थान" value={d.birthPlace}/>
       </Section>
 
       <Section title="🎓 शिक्षा और काम">
-       <Row label="शिक्षा" value={first(d,["education","qualification","degree"])}/>
-       <Row label="पेशा / व्यवसाय" value={first(d,["occupation","profession","job","business"])}/>
-       <Row label="कंपनी / संस्थान" value={first(d,["company","organization","workplace","institution"])}/>
-       <Row label="आमदनी" value={first(d,["income","salary","monthlyIncome","annualIncome"])}/>
+       <Row label="शिक्षा" value={d.education}/>
+       <Row label="पेशा / व्यवसाय" value={d.occupation}/>
+       <Row label="कंपनी / संस्थान" value={d.company}/>
+       <Row label="आमदनी" value={d.income}/>
       </Section>
 
       <Section title="📍 पता और निवास">
-       <Row label="पूरा पता" value={first(d,["address","fullAddress","residentialAddress"])}/>
-       <Row label="शहर" value={first(d,["city","town"])}/>
-       <Row label="जिला" value={first(d,["district"])}/>
-       <Row label="राज्य" value={first(d,["state"])}/>
-       <Row label="मूल निवास" value={first(d,["nativePlace","hometown","village"])}/>
+       <Row label="पूरा पता" value={d.address}/>
+       <Row label="शहर" value={d.city}/>
+       <Row label="जिला" value={d.district}/>
+       <Row label="राज्य" value={d.state}/>
+       <Row label="मूल निवास" value={d.nativePlace}/>
       </Section>
 
       <Section title="☪️ धार्मिक / सामाजिक जानकारी">
-       <Row label="धार्मिक जानकारी" value={first(d,["religion","faith","maslak"])}/>
-       <Row label="बिरादरी / जाति" value={first(d,["caste","community","biradari"])}/>
-       <Row label="भाषा" value={first(d,["language","languages","motherTongue"])}/>
+       <Row label="धार्मिक जानकारी" value={d.religion}/>
+       <Row label="बिरादरी / जाति" value={d.caste}/>
+       <Row label="भाषा" value={d.language}/>
       </Section>
 
       <Section title="👨‍👩‍👧‍👦 परिवार की जानकारी">
-       <Row label="पिता" value={first(d,["fatherName","father"])}/>
-       <Row label="माता" value={first(d,["motherName","mother"])}/>
-       <Row label="भाई" value={first(d,["brothers","brother"])}/>
-       <Row label="बहन" value={first(d,["sisters","sister"])}/>
-       {family!=="-"&&<div className="descriptionBox"><b>परिवार का विवरण:</b><p>{family}</p></div>}
+       <Row label="पिता" value={d.fatherName}/>
+       <Row label="माता" value={d.motherName}/>
+       <Row label="भाई" value={d.brothers}/>
+       <Row label="बहन" value={d.sisters}/>
+       <Row label="परिवार का विवरण" value={d.familyDetails}/>
       </Section>
 
       <Section title="📝 अपने बारे में">
-       {description!=="-"?<div className="descriptionBox"><p>{description}</p></div>:<Row label="विवरण" value="-"/>}
+       <Row label="विवरण" value={d.description}/>
       </Section>
 
       <Section title="💍 शादी की अपेक्षाएँ">
-       {expectations!=="-"?<div className="descriptionBox"><p>{expectations}</p></div>:<>
-        <Row label="अपेक्षित उम्र" value={first(d,["preferredAge","partnerAge","expectedAge"])}/>
-        <Row label="अपेक्षित शिक्षा" value={first(d,["preferredEducation","partnerEducation","expectedEducation"])}/>
-        <Row label="अपेक्षित शहर / स्थान" value={first(d,["preferredLocation","partnerLocation","expectedLocation"])}/>
-        <Row label="अन्य अपेक्षाएँ" value={first(d,["otherExpectations","partnerDetails","marriagePreference"])}/>
-       </>}
+       <Row label="अपेक्षित उम्र" value={d.preferredAge}/>
+       <Row label="अपेक्षित शिक्षा" value={d.preferredEducation}/>
+       <Row label="अपेक्षित शहर / स्थान" value={d.preferredLocation}/>
+       <Row label="अन्य अपेक्षाएँ" value={d.otherExpectations}/>
+       <Row label="सामान्य अपेक्षाएँ" value={d.expectations}/>
       </Section>
 
       <Section title="ℹ️ अन्य महत्वपूर्ण जानकारी">
-       <Row label="अन्य जानकारी" value={first(d,["otherInfo","additionalInfo","additionalDetails","notes"])}/>
+       <Row label="अन्य जानकारी" value={d.otherInfo}/>
       </Section>
 
       <div className="notice">{mobile?"📱 Mobile Number: "+first(contact,["phone","mobile","mobileNumber"]):"📱 Mobile Number देखने के लिए ₹500 भुगतान करें"}</div>
