@@ -26,7 +26,11 @@ export default function Admin(){
       const q=collection(db,path);
       unsubs.push(onSnapshot(q,s=>{const rows=s.docs.map(d=>({id:d.id,...d.data()})); if(ordered) rows.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0)); setter(rows)},e=>setError(path+" load error: "+e.message)));
     };
-    watch("profiles",setProfiles);watch("users",setUsers);
+    watch("profiles",rows=>{
+      setProfiles(rows);
+      const profileIds=rows.filter(p=>p.status!=="deleted"&&((Array.isArray(p.photos)&&p.photos[0])||p.photo)).sort((x,y)=>x.id.localeCompare(y.id)).map(p=>p.id);
+      setDoc(doc(db,"settings","homeSlider"),{profileIds,updatedAt:serverTimestamp()},{merge:true}).catch(()=>{});
+    });watch("users",setUsers);
     watch("walletRechargeRequests",setRecharges,true);watch("paidAccessRequests",setRequests,true);watch("walletTransactions",setTransactions,true);
     getDoc(doc(db,"settings","social")).then(s=>s.exists()&&setSocial({...{whatsapp:"",facebook:"",instagram:""},...s.data()})).catch(()=>{});
     getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists()){setUpi(s.data().upiId||"");setQrPreview(s.data().qrUrl||"")}}).catch(e=>setError("Payment settings load error: "+e.message));
