@@ -24,17 +24,11 @@ export default function Home(){
     async function loadSlider(){
       try{
         const s=await getDoc(doc(db,"settings","homeSlider"));
-        let ids=s.exists()&&Array.isArray(s.data().profileIds)?s.data().profileIds:[];
-        if(!ids.length){
-          const snap=await new Promise((resolve,reject)=>{
-            const unsub=onSnapshot(collection(db,"profiles"),x=>{unsub();resolve(x)},reject);
-          });
-          ids=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted"&&((Array.isArray(p.photos)&&p.photos[0])||p.photo)).sort((a,b)=>a.id.localeCompare(b.id)).map(p=>p.id);
-        }
+        const ids=s.exists()&&Array.isArray(s.data().profileIds)?s.data().profileIds:[];
         if(cancelled||!ids.length)return;
         setSliderIds(ids);
-        const first=await getDoc(doc(db,"profiles",ids[0]));
-        if(!cancelled&&first.exists()&&first.data().status!=="deleted")setAllProfiles([{id:first.id,...first.data()}]);
+        const first=await getDoc(doc(db,"homeSliderImages",ids[0]));
+        if(!cancelled&&first.exists()&&first.data().image)setAllProfiles([{id:ids[0],image:first.data().image}]);
       }catch(e){if(!cancelled)setLoginError(e?.message||"Slider image load nahi ho saki.")}
     }
     loadSlider();
@@ -46,8 +40,8 @@ export default function Home(){
     indexes.forEach(idx=>{
       const id=sliderIds[idx];
       if(!id||allProfiles.some(p=>p.id===id))return;
-      getDoc(doc(db,"profiles",id)).then(s=>{
-        if(s.exists()&&s.data().status!=="deleted")setAllProfiles(prev=>prev.some(p=>p.id===id)?prev:[...prev,{id:s.id,...s.data()}]);
+      getDoc(doc(db,"homeSliderImages",id)).then(s=>{
+        if(s.exists()&&s.data().image)setAllProfiles(prev=>prev.some(p=>p.id===id)?prev:[...prev,{id,image:s.data().image}]);
       }).catch(()=>{});
     });
   },[sliderIds,slideIndex,allProfiles]);
@@ -77,10 +71,10 @@ export default function Home(){
         <div className="heroContent">
           <div className="homeAutoSlider" aria-label="Nikah profiles automatic slideshow">
             {sliderIds.length && currentProfile ? <button className="homeSlide" onClick={()=>router.push("/profile/"+currentProfile.id)} aria-label={"Profile "+currentProfile.id+" dekhein"}>
-              <img key={currentProfile.id} src={(Array.isArray(currentProfile.photos)&&currentProfile.photos[0])||currentProfile.photo||""} alt={"Marriage profile "+currentProfile.id} loading="eager" decoding="async" fetchPriority="high"/>
+              <img key={currentProfile.id} src={currentProfile.image||""} alt={"Marriage profile "+currentProfile.id} loading="eager" decoding="async" fetchPriority="high"/>
               <span className="slideShade"></span><span className="slideId">💍 Profile {currentProfile.id}</span><span className="slideVerified">✓ Verified</span>
             </button> : <div className="homeSlideEmpty">💍<span>{sliderIds.length?"Image loading...":"Nikah Profiles"}</span></div>}
-            {sliderIds.length>1&&<div className="slideDots">{sliderIds.map((p,i)=><span key={p.id} className={i===slideIndex?"active":""}></span>)}</div>}
+            {sliderIds.length>1&&<div className="slideDots">{sliderIds.map((p,i)=><span key={p} className={i===slideIndex?"active":""}></span>)}</div>}
           </div>
         </div>
         <div className="gender genderPremium">
