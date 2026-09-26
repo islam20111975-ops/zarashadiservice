@@ -3,7 +3,7 @@
 import {Suspense,useEffect,useRef,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {collection,doc,getDoc,getDocs,query,where,serverTimestamp,setDoc,deleteDoc} from "firebase/firestore";
+import {collection,doc,getDoc,getDocs,query,where,serverTimestamp,setDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 function PageBody(){
@@ -113,23 +113,11 @@ function PageBody(){
   try{
    const lockId=user.uid+"_"+profile+"_"+type;
    const reqRef=doc(collection(db,"paidAccessRequests"));
-   const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());
-
-   // The lock is represented by the deterministic lockId on the request.
-   // Do not require a separate client-side lock write; this avoids a permissions
-   // failure before the actual UTR payment request is saved.
-   const claimData={uid:user.uid,utr:clean,kind:"access",profileId:profile,type,amount,requestId:reqRef.id,createdAt:serverTimestamp()};
-   const requestData={uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"upi",utr:clean,utrClaimId:claimRef.id,lockId,createdAt:serverTimestamp()};
-
-   try{await setDoc(claimRef,claimData)}
-   catch(e){
-    throw Object.assign(new Error("UTR claim save failed: "+(e?.message||"Permission denied")),{code:e?.code||"permission-denied",stage:"paymentUtrClaims"});
-   }
-   try{await setDoc(reqRef,requestData)}
-   catch(e){
-    await deleteDoc(claimRef).catch(()=>{});
-    throw Object.assign(new Error("Payment request save failed: "+(e?.message||"Permission denied")),{code:e?.code||"permission-denied",stage:"paidAccessRequests"});
-   }
+   // UTR is stored directly on the payment request. Admin verifies the UTR
+   // manually before approval; this avoids a second client-side Firestore write
+   // that could block the request even when the payment request itself is valid.
+   const requestData={uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"upi",utr:clean,lockId,createdAt:serverTimestamp()};
+   await setDoc(reqRef,requestData);
    setUtr("");
    setMsg("✅ UTR Send ho gaya. Payment request Admin ko bhej di gayi hai. UTR verify hone ke baad exact Profile "+profile+" ka access approve hoga.");
    setRequests(prev=>[{id:reqRef.id,...requestData},...prev]);
@@ -142,7 +130,7 @@ function PageBody(){
    else setMsg("❌ UTR Send nahi hua: "+(e?.message||"Unknown error"));
   }finally{
    setSaving(false);
-   window.setTimeout(()=>setClickedButton(""),900);
+   window.setTimeout(()=>setClickedButton(""),1600);
   }
  }
  const photo=profileData?.photos?.[0]||profileData?.photo||"";
@@ -169,7 +157,7 @@ function PageBody(){
      <label>UTR / Transaction ID
       <input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder={"₹"+amount+" payment ke baad UTR dalein"} autoComplete="off" inputMode="text"/>
      </label>
-     <button type="button" className={"primaryAction"+(clickedButton==="submit"?" clickFeedback":"")} disabled={saving||!!pending} onClick={submit}>{saving?"✓ Sending...":pending?"Request Pending ⏳":clickedButton==="submit"?"✓ Clicked":"UTR Send करके Access Request करें →"}</button>
+     <button type="button" className={"primaryAction"+(clickedButton==="submit"?" clickFeedback":"")} disabled={saving||!!pending} onClick={submit}>{saving?"✓ Sending…":pending?"Request Pending ⏳":clickedButton==="submit"?"✓ Clicked — Sending…":"UTR Send करके Access Request करें →"}</button>
     </div>
     {requests.slice(0,5).map(x=><div className="notice" key={x.id}>₹{x.amount} — <b>{x.status}</b>{x.utr&&" — UTR "+x.utr}</div>)}
    </>}
