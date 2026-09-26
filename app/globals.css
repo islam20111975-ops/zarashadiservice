@@ -303,6 +303,7 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 /* Payment QR must never overlap the UTR form/button */
 .payment .qr{position:relative;overflow:hidden;box-sizing:border-box;padding:8px;}
 .payment .qr img{display:block;width:auto!important;max-width:100%!important;height:auto!important;max-height:220px!important;object-fit:contain;position:relative;z-index:1;}
+ .payment .qr button.primaryAction{position:relative!important;z-index:10!important;pointer-events:auto!important;touch-action:manipulation!important;cursor:pointer!important;}
 .payment .qr p{position:relative;z-index:2;margin:6px 0 0;line-height:1.35;}
 .paymentForm{position:relative;z-index:5;}
 .paymentForm .primaryAction{position:relative;z-index:6;pointer-events:auto;}
@@ -322,7 +323,7 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
   justify-content:center!important;
   position:relative!important;
   z-index:1!important;
-  pointer-events:none!important;
+  pointer-events:auto!important;
 }
 .payment .qr img{
   display:block!important;
