@@ -61,22 +61,35 @@ function PageBody(){
  async function downloadQr(){
   if(!qrUrl)return setMsg("❌ QR Code available nahi hai.");
   const fileName="Zara-Nikah-UPI-QR-"+amount+".png";
+  let objectUrl="";
   try{
-   // Admin QR is normally stored as a data URL, so save it directly without
-   // depending on cross-origin fetch/download support on mobile browsers.
+   // Convert the QR to a Blob first. This is more reliable on desktop Chrome
+   // than asking the browser to download a large data: URL directly.
+   let blob;
    if(qrUrl.startsWith("data:")){
-    const a=document.createElement("a"); a.href=qrUrl; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
-    setMsg("✅ QR Code save/download ke liye ready hai.");
-    return;
+    const res=await fetch(qrUrl);
+    blob=await res.blob();
+   }else{
+    const res=await fetch(qrUrl,{mode:"cors"});
+    if(!res.ok)throw new Error("QR download failed");
+    blob=await res.blob();
    }
-   const res=await fetch(qrUrl,{mode:"cors"}); if(!res.ok)throw new Error("QR download failed");
-   const blob=await res.blob(); const url=URL.createObjectURL(blob);
-   const a=document.createElement("a"); a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
-   setTimeout(()=>URL.revokeObjectURL(url),1500); setMsg("✅ QR Code save/download ke liye ready hai.");
+   if(!blob||!blob.size)throw new Error("Empty QR image");
+   objectUrl=URL.createObjectURL(new Blob([blob],{type:"image/png"}));
+   const a=document.createElement("a");
+   a.href=objectUrl;
+   a.download=fileName;
+   a.style.display="none";
+   document.body.appendChild(a);
+   a.click();
+   a.remove();
+   setMsg("✅ QR Code download start ho gaya. PC ke Downloads folder me check karein.");
+   setTimeout(()=>{if(objectUrl)URL.revokeObjectURL(objectUrl)},5000);
   }catch(e){
-   // Last-resort mobile fallback: open the QR itself so the user can long-press/save it.
+   if(objectUrl)URL.revokeObjectURL(objectUrl);
+   // Fallback: open the QR so the user can save it manually.
    try{window.open(qrUrl,"_blank","noopener,noreferrer");}catch(_e){}
-   setMsg("⚠️ Direct download browser ne block kiya. QR image khol di gayi hai—long-press karke Save Image karein.");
+   setMsg("⚠️ Browser ne direct download block kiya. QR image khol di gayi hai—right-click karke Save image as… karein.");
   }
  }
 
