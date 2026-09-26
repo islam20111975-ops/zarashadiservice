@@ -152,7 +152,7 @@ function PageBody(){
  }
 
  const photo=profileData?.photos?.[0]||profileData?.photo||"";
- if(user&&approved)return <main><section className="cardPage payment" style={{maxWidth:760,margin:"25px auto"}}><div className="notice">✅ <b>Payment Approved</b><br/>Profile {profile} ka access approve ho gaya hai.<br/><small>Biodata page khola ja raha hai…</small></div></section></main>;
+ if(user&&approved)return <main><section className="cardPage payment paymentPremium" style={{maxWidth:760,margin:"25px auto"}}><div className="notice">✅ <b>Payment Approved</b><br/>Profile {profile} ka access approve ho gaya hai.<br/><small>Biodata page khola ja raha hai…</small></div></section></main>;
 
  return <main>
   <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button></div></header>
