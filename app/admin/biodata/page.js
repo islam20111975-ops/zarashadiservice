@@ -108,6 +108,10 @@ function BiodataAdminPage(){
       const batch=writeBatch(db);
       batch.set(ref,{profileId:id,gender:form.gender,photos,photo:photos[0],status:"active",updatedAt:serverTimestamp()},{merge:true});
       batch.set(doc(db,"homeSliderImages",id),{profileId:id,image:sliderImage,status:"active",updatedAt:serverTimestamp()},{merge:true});
+      const sliderSettings=await getDoc(doc(db,"settings","homeSlider"));
+      const currentSliderIds=sliderSettings.exists()&&Array.isArray(sliderSettings.data().profileIds)?sliderSettings.data().profileIds:[];
+      const nextSliderIds=[...new Set([...currentSliderIds,id])];
+      batch.set(doc(db,"settings","homeSlider"),{profileIds:nextSliderIds,updatedAt:serverTimestamp()},{merge:true});
       batch.set(doc(db,"profileBiodataPrivate",id),{
         profileId:id,gender:form.gender,name:form.name.trim(),address:form.address.trim(),age:Number(form.age),income:form.income.trim(),
         maritalStatus:form.maritalStatus.trim(),height:form.height.trim(),dob:form.dob.trim(),birthPlace:form.birthPlace.trim(),
