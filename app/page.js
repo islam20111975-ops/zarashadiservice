@@ -20,22 +20,25 @@ export default function Home(){
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
   useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
   useEffect(()=>{
-    const q=query(collection(db,"profiles"));
-    return onSnapshot(q,s=>setAllProfiles(s.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted" && ((Array.isArray(p.photos)&&p.photos[0])||p.photo))));
+    getDoc(doc(db,"settings","homeSlider")).then(async s=>{
+      const ids=s.exists()&&Array.isArray(s.data().profileIds)?s.data().profileIds:[];
+      if(!ids.length)return;
+      const first=await getDoc(doc(db,"profiles",ids[0]));
+      if(first.exists()&&first.data().status!=="deleted")setAllProfiles([{id:first.id,...first.data()}]);
+    }).catch(()=>{});
   },[]);
   useEffect(()=>{
-    if(!allProfiles.length){setSlideIndex(0);return}
-    setSlideIndex(i=>i>=allProfiles.length?0:i);
-    // Sirf current + next image preload karein; saari heavy images ek saath load nahi hongi.
-    const preload=(p)=>{
-      const src=(Array.isArray(p?.photos)&&p.photos[0])||p?.photo||"";
-      if(src){const img=new Image();img.decoding="async";img.src=src;}
-    };
-    preload(allProfiles[slideIndex]);
-    if(allProfiles.length>1)preload(allProfiles[(slideIndex+1)%allProfiles.length]);
-    const timer=setInterval(()=>setSlideIndex(i=>(i+1)%allProfiles.length),3500);
-    return()=>clearInterval(timer);
+    if(!allProfiles.length)return;
+    const nextIndex=(slideIndex+1)%allProfiles.length;
+    const p=allProfiles[nextIndex];
+    const src=(Array.isArray(p?.photos)&&p.photos[0])||p?.photo||"";
+    if(src){const img=new Image();img.decoding="async";img.src=src;}
   },[allProfiles,slideIndex]);
+  useEffect(()=>{
+    if(allProfiles.length<1)return;
+    const timer=setInterval(()=>setSlideIndex(i=>(i+1)%allProfiles.length),1000);
+    return()=>clearInterval(timer);
+  },[allProfiles.length]);
   useEffect(()=>{
     if(!r){setData([]);return}
     setLoading(true);
