@@ -23,20 +23,19 @@ export default function Home(){
     let cancelled=false;
     async function loadSlider(){
       try{
-        const s=await getDoc(doc(db,"settings","homeSlider"));
-        let ids=s.exists()&&Array.isArray(s.data().profileIds)?s.data().profileIds:[];
-        // Fallback: if the slider settings document is empty/unavailable, build the
-        // slideshow directly from the lightweight thumbnail collection.
-        if(!ids.length){
-          const snap=await getDocs(collection(db,"homeSliderImages"));
-          ids=snap.docs.map(d=>d.id).filter(Boolean).sort((a,b)=>a.localeCompare(b));
-        }
-        if(cancelled||!ids.length)return;
+        // Use the public profiles collection as the reliable fallback/source.
+        // It already allows public reads, so the Home slider does not depend on
+        // whether the separate thumbnail/settings rules have been published yet.
+        const snap=await getDocs(collection(db,"profiles"));
+        const rows=snap.docs
+          .map(d=>({id:d.id,...d.data()}))
+          .filter(p=>p.status!=="deleted" && ((Array.isArray(p.photos)&&p.photos[0])||p.photo))
+          .sort((a,b)=>a.id.localeCompare(b.id));
+        if(cancelled||!rows.length)return;
+        const ids=rows.map(p=>p.id);
         setSliderIds(ids);
-        const first=await getDoc(doc(db,"homeSliderImages",ids[0]));
-        if(!cancelled&&first.exists()&&first.data().image)setAllProfiles([{id:ids[0],image:first.data().image}]);
+        setAllProfiles(rows.map(p=>({id:p.id,image:(Array.isArray(p.photos)&&p.photos[0])||p.photo})));
       }catch(e){
-        // Slider failure must never block the public Home page.
         if(!cancelled){setSliderIds([]);setAllProfiles([]);}
       }
     }
