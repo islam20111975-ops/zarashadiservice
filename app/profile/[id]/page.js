@@ -5,23 +5,8 @@ import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/au
 import {collection,doc,getDoc,getDocs,query,where,onSnapshot} from "firebase/firestore";
 import {auth,db} from "../../../lib/firebase";
 
-const first=(o,keys)=>{
- for(const k of keys){
-  const v=o?.[k];
-  if(v===undefined||v===null)continue;
-  if(typeof v==="string"||typeof v==="number"||typeof v==="boolean"){
-   if(String(v).trim()!=="")return String(v);
-  }else if(Array.isArray(v)){
-   const text=v.map(x=>typeof x==="object"&&x!==null?JSON.stringify(x):String(x)).join(", ");
-   if(text.trim())return text;
-  }else if(typeof v==="object"){
-   const text=Object.entries(v).map(([key,val])=>key+": "+(typeof val==="object"?JSON.stringify(val):String(val))).join(", ");
-   if(text.trim())return text;
-  }
- }
- return "-";
-};
 const val=(v)=>v===undefined||v===null?"":String(v).trim();
+const hasBiodata=(d)=>Object.keys(d||{}).some(k=>k!=="profileId"&&k!=="updatedAt"&&val(d[k])!=="");
 const Row=({label,value})=>{const v=val(value);return v?<div className="biodataRow"><span>{label}</span><b>{v}</b></div>:null};
 const Section=({title,children})=>{const items=Children.toArray(children);return items.length?<div className="biodataSection"><h3>{title}</h3>{items}</div>:null};
 
@@ -41,11 +26,8 @@ export default function Profile(){
     if(!s.exists()||s.data().status==="deleted"){if(alive){setLoading(false);setP(null)}return}
     if(!alive)return;
     setP({id:s.id,...s.data()});
-   }catch(e){
-    if(alive)setLoadError(e?.message||"Profile load nahi ho saka.");
-   }finally{
-    if(alive)setLoading(false);
-   }
+   }catch(e){if(alive)setLoadError(e?.message||"Profile load nahi ho saka.");}
+   finally{if(alive)setLoading(false);}
   };
   loadProfile();
   return()=>{alive=false};
@@ -58,6 +40,8 @@ export default function Profile(){
   }
   let alive=true;
   let timer=null;
+  let privateUnsubscribe=null;
+
   const loadAccess=async()=>{
    try{
     const snap=await getDocs(query(collection(db,"paidAccessRequests"),where("uid","==",user.uid)));
@@ -65,40 +49,50 @@ export default function Profile(){
     const biodataOk=matches.some(x=>x.type==="biodata"&&x.status==="approved");
     const mobileOk=matches.some(x=>x.type==="mobile"&&x.status==="approved");
     if(!alive)return;
+
     setUnlocked(biodataOk);
     setMobile(mobileOk);
+
+    if(privateUnsubscribe){privateUnsubscribe();privateUnsubscribe=null;}
+
     if(biodataOk){
       const privateRef=doc(db,"profileBiodataPrivate",id);
-      const unsubscribe=onSnapshot(privateRef,
-       snap=>{if(!alive)return;if(snap.exists()){setPrivateData(snap.data());setLoadError("");}else{setPrivateData({});setLoadError("");}},
+      privateUnsubscribe=onSnapshot(privateRef,
+       snap=>{
+        if(!alive)return;
+        if(snap.exists()){
+         const data=snap.data()||{};
+         setPrivateData(data);
+         setLoadError("");
+        }else{
+         setPrivateData({});
+         setLoadError("");
+        }
+       },
        e=>{if(alive)setLoadError(e?.message||"Biodata load nahi ho saka.")}
       );
-      if(mobileOk){
-       try{
-        const cr=await getDoc(doc(db,"profileContact",id));
-        if(alive&&cr.exists())setContact(cr.data());
-       }catch(e){if(alive)setLoadError(e?.message||"Mobile number load nahi ho saka.")}
-      }else setContact(null);
-      return unsubscribe;
-    }else setPrivateData(null);
+    }else{
+      setPrivateData(null);
+    }
+
     if(mobileOk){
-      try{
-       const cr=await getDoc(doc(db,"profileContact",id));
-       if(alive&&cr.exists())setContact(cr.data());
-      }catch(e){if(alive)setLoadError(e?.message||"Mobile number load nahi ho saka.")}
+     try{
+      const cr=await getDoc(doc(db,"profileContact",id));
+      if(alive&&cr.exists())setContact(cr.data());
+     }catch(e){if(alive)setLoadError(e?.message||"Mobile number load nahi ho saka.")}
     }else setContact(null);
-   }catch(e){
-    if(alive)setLoadError(e?.message||"Access status load nahi ho saka.");
-   }
+   }catch(e){if(alive)setLoadError(e?.message||"Access status load nahi ho saka.");}
   };
+
   loadAccess();
   timer=setInterval(loadAccess,3000);
-  return()=>{alive=false;if(timer)clearInterval(timer)};
+  return()=>{alive=false;if(timer)clearInterval(timer);if(privateUnsubscribe)privateUnsubscribe();};
  },[id,user]);
+
  async function login(){setLoginError("");try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}}
  const photos=Array.isArray(p?.photos)&&p.photos.length?p.photos:(p?.photo?[p.photo]:[]);
  const d=privateData||{};
- const name=first(d,["name"]);
+ const biodataAvailable=hasBiodata(d);
 
  if(loading)return <main><section className="cardPage"><div className="notFound">Loading...</div></section></main>;
  if(!p)return <main><section className="cardPage"><div className="notFound">{loadError||"Profile not found"}</div></section></main>;
@@ -115,11 +109,11 @@ export default function Profile(){
 
    <div className="detailBody">
     <span className="profileId">{id}</span>
-    <h1>{unlocked?(name||"Biodata"):"Rishta ki Jankari"}</h1>
+    <h1>{unlocked&&biodataAvailable?(d.name||"Biodata"):"Rishta ki Jankari"}</h1>
 
     {!unlocked?<><p className="detailLead">Complete biodata dekhne ke liye ₹100 payment required hai.</p><div className="notice">इस रिश्ते की पूरी जानकारी के लिए ₹100 भुगतान करें</div><button className="primaryAction" onClick={()=>user?router.push("/payment?profile="+encodeURIComponent(id)+"&type=biodata"):login()}>₹100 Biodata Unlock करें →</button></>:
     <div className="biodataBox">
-      <div className="biodataTitle">💍 शादी के लिए पूरा Biodata</div>
+      {biodataAvailable&&<div className="biodataTitle">💍 शादी के लिए पूरा Biodata</div>}
 
       <Section title="👤 व्यक्तिगत जानकारी">
        <Row label="नाम" value={d.name}/>
@@ -176,8 +170,8 @@ export default function Profile(){
        <Row label="अन्य जानकारी" value={d.otherInfo}/>
       </Section>
 
-      <div className="notice">{mobile?"📱 Mobile Number: "+first(contact,["phone","mobile","mobileNumber"]):"📱 Mobile Number देखने के लिए ₹500 भुगतान करें"}</div>
-      {!mobile&&<button className="primaryAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(id)+"&type=mobile")}>₹500 Mobile Number Access →</button>}
+      {mobile&&<div className="notice">📱 Mobile Number: {val(contact?.phone||contact?.mobile||contact?.mobileNumber)}</div>}
+      {!mobile&&<><div className="notice">📱 Mobile Number देखने के लिए ₹500 भुगतान करें</div><button className="primaryAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(id)+"&type=mobile")}>₹500 Mobile Number Access →</button></>}
     </div>}
 
     {!user&&<><p className="small">Payment/access ke liye Google login zaroori hai.</p>{loginError&&<div className="errorBox">{loginError}</div>}</>}
