@@ -877,3 +877,24 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
   .homeSlide,.homeSlideEmpty{height:255px;border-radius:25px}
   .slideId{font-size:14px;left:14px;bottom:14px}
 }
+
+
+/* Clear CTA text on gender cards */
+.genderPremium .genderCard small{
+  display:block;
+  margin-top:6px;
+  font-size:13px;
+  line-height:1.35;
+  font-weight:900;
+  color:#4c1d95;
+  background:#f3e8ff;
+  border:1px solid #c4b5fd;
+  padding:6px 9px;
+  border-radius:10px;
+}
+@media(max-width:600px){
+  .genderPremium .genderCard small{
+    font-size:12px;
+    padding:6px 8px;
+  }
+}
