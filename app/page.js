@@ -9,7 +9,7 @@ import {auth,db} from "../lib/firebase";
 export default function Home(){
   const [r,setR]=useState(null);
   const [data,setData]=useState([]);
-  const [allProfiles,setAllProfiles]=useState([]);
+  const [allProfiles,setAllProfiles]=useState([]),[sliderIds,setSliderIds]=useState([]);
   const [slideIndex,setSlideIndex]=useState(0);
   const [loading,setLoading]=useState(false);
   const [wallpaper,setWallpaper]=useState("");
@@ -23,22 +23,26 @@ export default function Home(){
     getDoc(doc(db,"settings","homeSlider")).then(async s=>{
       const ids=s.exists()&&Array.isArray(s.data().profileIds)?s.data().profileIds:[];
       if(!ids.length)return;
+      setSliderIds(ids);
       const first=await getDoc(doc(db,"profiles",ids[0]));
       if(first.exists()&&first.data().status!=="deleted")setAllProfiles([{id:first.id,...first.data()}]);
     }).catch(()=>{});
   },[]);
   useEffect(()=>{
-    if(!allProfiles.length)return;
-    const nextIndex=(slideIndex+1)%allProfiles.length;
-    const p=allProfiles[nextIndex];
-    const src=(Array.isArray(p?.photos)&&p.photos[0])||p?.photo||"";
-    if(src){const img=new Image();img.decoding="async";img.src=src;}
-  },[allProfiles,slideIndex]);
+    if(!sliderIds.length)return;
+    const next=(slideIndex+1)%sliderIds.length;
+    if(allProfiles.some(p=>p.id===sliderIds[next]))return;
+    getDoc(doc(db,"profiles",sliderIds[next])).then(s=>{
+      if(s.exists()&&s.data().status!=="deleted"){
+        setAllProfiles(prev=>[...prev.filter(p=>p.id!==s.id),{id:s.id,...s.data()}]);
+      }
+    }).catch(()=>{});
+  },[sliderIds,slideIndex,allProfiles]);
   useEffect(()=>{
-    if(allProfiles.length<1)return;
-    const timer=setInterval(()=>setSlideIndex(i=>(i+1)%allProfiles.length),1000);
+    if(sliderIds.length<2)return;
+    const timer=setInterval(()=>setSlideIndex(i=>(i+1)%sliderIds.length),1000);
     return()=>clearInterval(timer);
-  },[allProfiles.length]);
+  },[sliderIds.length]);
   useEffect(()=>{
     if(!r){setData([]);return}
     setLoading(true);
@@ -58,11 +62,11 @@ export default function Home(){
         <div className="heroGlow one"></div><div className="heroGlow two"></div>
         <div className="heroContent">
           <div className="homeAutoSlider" aria-label="Nikah profiles automatic slideshow">
-            {allProfiles.length ? <button className="homeSlide" onClick={()=>router.push("/profile/"+allProfiles[slideIndex].id)} aria-label={"Profile "+allProfiles[slideIndex].id+" dekhein"}>
-              <img key={allProfiles[slideIndex].id} src={(Array.isArray(allProfiles[slideIndex].photos)&&allProfiles[slideIndex].photos[0])||allProfiles[slideIndex].photo||""} alt={"Marriage profile "+allProfiles[slideIndex].id} loading="eager" decoding="async" fetchPriority="high"/>
+            {sliderIds.length && allProfiles.length ? <button className="homeSlide" onClick={()=>router.push("/profile/"+allProfiles.find(p=>p.id===sliderIds[slideIndex])?.id)} aria-label={"Profile "+allProfiles[slideIndex].id+" dekhein"}>
+              <img key={sliderIds[slideIndex]} src={(Array.isArray(allProfiles.find(p=>p.id===sliderIds[slideIndex])?.photos)&&allProfiles.find(p=>p.id===sliderIds[slideIndex])?.photos[0])||allProfiles[slideIndex].photo||""} alt={"Marriage profile "+allProfiles[slideIndex].id} loading="eager" decoding="async" fetchPriority="high"/>
               <span className="slideShade"></span><span className="slideId">💍 Profile {allProfiles[slideIndex].id}</span><span className="slideVerified">✓ Verified</span>
             </button> : <div className="homeSlideEmpty">💍<span>Nikah Profiles</span></div>}
-            {allProfiles.length>1&&<div className="slideDots">{allProfiles.map((p,i)=><span key={p.id} className={i===slideIndex?"active":""}></span>)}</div>}
+            {sliderIds.length>1&&<div className="slideDots">{sliderIds.map((p,i)=><span key={p.id} className={i===slideIndex?"active":""}></span>)}</div>}
           </div>
         </div>
         <div className="gender genderPremium">
