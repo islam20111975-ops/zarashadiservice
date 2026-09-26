@@ -26,14 +26,16 @@ export default function Home(){
   useEffect(()=>{
     if(!allProfiles.length){setSlideIndex(0);return}
     setSlideIndex(i=>i>=allProfiles.length?0:i);
-    // Slider images ko pehle se browser cache me load kar do, taaki slide change par wait na ho.
-    allProfiles.forEach(p=>{
-      const src=(Array.isArray(p.photos)&&p.photos[0])||p.photo||"";
+    // Sirf current + next image preload karein; saari heavy images ek saath load nahi hongi.
+    const preload=(p)=>{
+      const src=(Array.isArray(p?.photos)&&p.photos[0])||p?.photo||"";
       if(src){const img=new Image();img.decoding="async";img.src=src;}
-    });
+    };
+    preload(allProfiles[slideIndex]);
+    if(allProfiles.length>1)preload(allProfiles[(slideIndex+1)%allProfiles.length]);
     const timer=setInterval(()=>setSlideIndex(i=>(i+1)%allProfiles.length),3500);
     return()=>clearInterval(timer);
-  },[allProfiles]);
+  },[allProfiles,slideIndex]);
   useEffect(()=>{
     if(!r){setData([]);return}
     setLoading(true);
@@ -54,7 +56,7 @@ export default function Home(){
         <div className="heroContent">
           <div className="homeAutoSlider" aria-label="Nikah profiles automatic slideshow">
             {allProfiles.length ? <button className="homeSlide" onClick={()=>router.push("/profile/"+allProfiles[slideIndex].id)} aria-label={"Profile "+allProfiles[slideIndex].id+" dekhein"}>
-              <img src={(Array.isArray(allProfiles[slideIndex].photos)&&allProfiles[slideIndex].photos[0])||allProfiles[slideIndex].photo||""} alt={"Marriage profile "+allProfiles[slideIndex].id} loading="eager" decoding="async" fetchPriority="high"/>
+              <img key={allProfiles[slideIndex].id} src={(Array.isArray(allProfiles[slideIndex].photos)&&allProfiles[slideIndex].photos[0])||allProfiles[slideIndex].photo||""} alt={"Marriage profile "+allProfiles[slideIndex].id} loading="eager" decoding="async" fetchPriority="high"/>
               <span className="slideShade"></span><span className="slideId">💍 Profile {allProfiles[slideIndex].id}</span><span className="slideVerified">✓ Verified</span>
             </button> : <div className="homeSlideEmpty">💍<span>Nikah Profiles</span></div>}
             {allProfiles.length>1&&<div className="slideDots">{allProfiles.map((p,i)=><span key={p.id} className={i===slideIndex?"active":""}></span>)}</div>}
