@@ -20,23 +20,36 @@ export default function Home(){
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
   useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
   useEffect(()=>{
-    getDoc(doc(db,"settings","homeSlider")).then(async s=>{
-      const ids=s.exists()&&Array.isArray(s.data().profileIds)?s.data().profileIds:[];
-      if(!ids.length)return;
-      setSliderIds(ids);
-      const first=await getDoc(doc(db,"profiles",ids[0]));
-      if(first.exists()&&first.data().status!=="deleted")setAllProfiles([{id:first.id,...first.data()}]);
-    }).catch(()=>{});
+    let cancelled=false;
+    async function loadSlider(){
+      try{
+        const s=await getDoc(doc(db,"settings","homeSlider"));
+        let ids=s.exists()&&Array.isArray(s.data().profileIds)?s.data().profileIds:[];
+        if(!ids.length){
+          const snap=await new Promise((resolve,reject)=>{
+            const unsub=onSnapshot(collection(db,"profiles"),x=>{unsub();resolve(x)},reject);
+          });
+          ids=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted"&&((Array.isArray(p.photos)&&p.photos[0])||p.photo)).sort((a,b)=>a.id.localeCompare(b.id)).map(p=>p.id);
+        }
+        if(cancelled||!ids.length)return;
+        setSliderIds(ids);
+        const first=await getDoc(doc(db,"profiles",ids[0]));
+        if(!cancelled&&first.exists()&&first.data().status!=="deleted")setAllProfiles([{id:first.id,...first.data()}]);
+      }catch(e){if(!cancelled)setLoginError(e?.message||"Slider image load nahi ho saki.")}
+    }
+    loadSlider();
+    return()=>{cancelled=true};
   },[]);
   useEffect(()=>{
     if(!sliderIds.length)return;
-    const next=(slideIndex+1)%sliderIds.length;
-    if(allProfiles.some(p=>p.id===sliderIds[next]))return;
-    getDoc(doc(db,"profiles",sliderIds[next])).then(s=>{
-      if(s.exists()&&s.data().status!=="deleted"){
-        setAllProfiles(prev=>[...prev.filter(p=>p.id!==s.id),{id:s.id,...s.data()}]);
-      }
-    }).catch(()=>{});
+    const indexes=[slideIndex,(slideIndex+1)%sliderIds.length];
+    indexes.forEach(idx=>{
+      const id=sliderIds[idx];
+      if(!id||allProfiles.some(p=>p.id===id))return;
+      getDoc(doc(db,"profiles",id)).then(s=>{
+        if(s.exists()&&s.data().status!=="deleted")setAllProfiles(prev=>prev.some(p=>p.id===id)?prev:[...prev,{id:s.id,...s.data()}]);
+      }).catch(()=>{});
+    });
   },[sliderIds,slideIndex,allProfiles]);
   useEffect(()=>{
     if(sliderIds.length<2)return;
