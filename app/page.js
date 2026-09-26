@@ -51,6 +51,7 @@ export default function Home(){
   },[r]);
 
   const shown=data;
+  const currentProfile=sliderIds.length?allProfiles.find(p=>p.id===sliderIds[slideIndex]):null;
   return (
     <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"url("+wallpaper+")","--site-wallpaper":"url("+wallpaper+")"}:undefined}>
       <header className="siteHeader"><div className="headerInner">
@@ -62,10 +63,10 @@ export default function Home(){
         <div className="heroGlow one"></div><div className="heroGlow two"></div>
         <div className="heroContent">
           <div className="homeAutoSlider" aria-label="Nikah profiles automatic slideshow">
-            {sliderIds.length && allProfiles.length ? <button className="homeSlide" onClick={()=>router.push("/profile/"+allProfiles.find(p=>p.id===sliderIds[slideIndex])?.id)} aria-label={"Profile "+allProfiles[slideIndex].id+" dekhein"}>
-              <img key={sliderIds[slideIndex]} src={(Array.isArray(allProfiles.find(p=>p.id===sliderIds[slideIndex])?.photos)&&allProfiles.find(p=>p.id===sliderIds[slideIndex])?.photos[0])||allProfiles[slideIndex].photo||""} alt={"Marriage profile "+allProfiles[slideIndex].id} loading="eager" decoding="async" fetchPriority="high"/>
-              <span className="slideShade"></span><span className="slideId">💍 Profile {allProfiles[slideIndex].id}</span><span className="slideVerified">✓ Verified</span>
-            </button> : <div className="homeSlideEmpty">💍<span>Nikah Profiles</span></div>}
+            {sliderIds.length && currentProfile ? <button className="homeSlide" onClick={()=>router.push("/profile/"+currentProfile.id)} aria-label={"Profile "+currentProfile.id+" dekhein"}>
+              <img key={currentProfile.id} src={(Array.isArray(currentProfile.photos)&&currentProfile.photos[0])||currentProfile.photo||""} alt={"Marriage profile "+currentProfile.id} loading="eager" decoding="async" fetchPriority="high"/>
+              <span className="slideShade"></span><span className="slideId">💍 Profile {currentProfile.id}</span><span className="slideVerified">✓ Verified</span>
+            </button> : <div className="homeSlideEmpty">💍<span>{sliderIds.length?"Image loading...":"Nikah Profiles"}</span></div>}
             {sliderIds.length>1&&<div className="slideDots">{sliderIds.map((p,i)=><span key={p.id} className={i===slideIndex?"active":""}></span>)}</div>}
           </div>
         </div>
