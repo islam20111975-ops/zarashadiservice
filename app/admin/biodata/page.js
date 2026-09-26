@@ -169,7 +169,7 @@ function BiodataAdminPage(){
   return <main><section className="admin dashboardPage">
     <div className="dashTop"><div><span className="eyebrow">ZARA NIKAH SERVICE</span><h1>📋 Biodata Management</h1><p>Har person ka biodata, photo aur description alag record rahega.</p></div><button className="logout" onClick={()=>router.push("/admin")}>← Admin Board</button></div>
     {error&&<div className="errorBox">{error}</div>}
-    <form className="adminBox" onSubmit={save}>
+    <form className="adminBox biodataForm" onSubmit={save}>
       <div className="boxTitle"><div><span className="eyebrow">SEPARATE BIODATA</span><h3>{form.id?"✏️ Edit Biodata":"➕ New Biodata"}</h3></div><div style={{display:"flex",gap:8,alignItems:"center"}}>{form.id&&<button type="button" className="backAction" style={{width:"auto",marginTop:0}} onClick={resetForm}>+ New</button>}<button type="submit" className="primaryAction" style={{width:"auto",marginTop:0,whiteSpace:"nowrap"}} disabled={saving}>{saving?"Saving...":"💾 Save Biodata"}</button></div></div>
       <div className="formGrid">
         <input className="adminInput" placeholder="Profile ID (unique)" value={form.id} disabled={!!params.get("edit")} onChange={e=>setForm({...form,id:e.target.value})}/>
