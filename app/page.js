@@ -9,6 +9,8 @@ import {auth,db} from "../lib/firebase";
 export default function Home(){
   const [r,setR]=useState(null);
   const [data,setData]=useState([]);
+  const [allProfiles,setAllProfiles]=useState([]);
+  const [slideIndex,setSlideIndex]=useState(0);
   const [loading,setLoading]=useState(false);
   const [wallpaper,setWallpaper]=useState("");
   const [social,setSocial]=useState({whatsapp:"",facebook:"",instagram:""});
