@@ -3,7 +3,7 @@
 import {Suspense,useEffect,useRef,useState} from "react";
 import {useSearchParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
-import {collection,doc,getDoc,getDocs,query,where,serverTimestamp,setDoc} from "firebase/firestore";
+import {collection,doc,getDoc,getDocs,query,where,serverTimestamp,setDoc,deleteDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 function PageBody(){
@@ -113,11 +113,34 @@ function PageBody(){
   try{
    const lockId=user.uid+"_"+profile+"_"+type;
    const reqRef=doc(collection(db,"paidAccessRequests"));
-   // UTR is stored directly on the payment request. Admin verifies the UTR
-   // manually before approval; this avoids a second client-side Firestore write
-   // that could block the request even when the payment request itself is valid.
-   const requestData={uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"upi",utr:clean,lockId,createdAt:serverTimestamp()};
-   await setDoc(reqRef,requestData);
+   const claimId=clean.toLowerCase();
+   const claimRef=doc(db,"paymentUtrClaims",claimId);
+   const lockRef=doc(db,"pendingPaymentLocks",lockId);
+
+   await setDoc(lockRef,{
+    uid:user.uid,profileId:profile,type,kind:"access",amount,
+    status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()
+   });
+
+   await setDoc(claimRef,{
+    uid:user.uid,profileId:profile,type,kind:"access",amount,
+    utr:clean,requestId:reqRef.id,createdAt:serverTimestamp()
+   });
+
+   const requestData={
+    uid:user.uid,profileId:profile,type,amount,status:"pending",
+    paymentMethod:"upi",utr:clean,utrClaimId:claimId,lockId,
+    createdAt:serverTimestamp()
+   };
+
+   try{
+    await setDoc(reqRef,requestData);
+   }catch(e){
+    try{await deleteDoc(claimRef)}catch(_e){}
+    try{await deleteDoc(lockRef)}catch(_e){}
+    throw e;
+   }
+
    setUtr("");
    setMsg("✅ UTR Send ho gaya. Payment request Admin ko bhej di gayi hai. UTR verify hone ke baad exact Profile "+profile+" ka access approve hoga.");
    setRequests(prev=>[{id:reqRef.id,...requestData},...prev]);
