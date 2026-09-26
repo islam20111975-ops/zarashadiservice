@@ -36,7 +36,7 @@ function BiodataAdminPage(){
   const router=useRouter(),params=useSearchParams();
   const [user,setUser]=useState(undefined),[profiles,setProfiles]=useState([]),[form,setForm]=useState(empty);
   const [files,setFiles]=useState([]),[preview,setPreview]=useState([]),[search,setSearch]=useState("");
-  const [saving,setSaving]=useState(false),[error,setError]=useState("");
+  const [saving,setSaving]=useState(false),[error,setError]=useState(""),[adminView,setAdminView]=useState(null),[viewLoading,setViewLoading]=useState(false);
 
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
   useEffect(()=>{
@@ -106,6 +106,18 @@ function BiodataAdminPage(){
       alert(editing?"Biodata update ho gaya.":"Naya Biodata save ho gaya.");
       resetForm();
     }catch(e){setError("Biodata save nahi hua: "+e.message)}finally{setSaving(false)}
+  }
+
+  async function viewAdmin(p){
+    setViewLoading(true);setError("");
+    try{
+      const [s,cs]=await Promise.all([
+        getDoc(doc(db,"profileBiodataPrivate",p.id)),
+        getDoc(doc(db,"profileContact",p.id))
+      ]);
+      setAdminView({id:p.id,profile:p, biodata:s.exists()?s.data():{}, contact:cs.exists()?cs.data():{}});
+    }catch(e){setError("Biodata view nahi hua: "+e.message)}
+    finally{setViewLoading(false)}
   }
 
   async function edit(p){
@@ -201,10 +213,32 @@ function BiodataAdminPage(){
         const photos=p.photos?.length?p.photos:[p.photo].filter(Boolean);
         return <div className="userAdminCard" key={p.id}>
           <div className="rowProfile">{photos[0]?<img src={photos[0]} alt=""/>:<div className="rowPlaceholder">📷</div>}<div><b>{p.id}</b><small>{p.gender==="female"?"Female":"Male"}</small><small>{p.status==="deleted"?"⚠️ Hidden":"✓ Active"}</small></div></div>
-          <div className="cardButtons"><button onClick={()=>edit(p)}>✏️ Edit</button>{p.status==="deleted"?<button onClick={async()=>{try{await setDoc(doc(db,"profiles",p.id),{status:"active",updatedAt:serverTimestamp()},{merge:true});alert("Biodata restore ho gaya.");}catch(e){setError(e.message)}}}>↩️ Restore</button>:<button onClick={()=>remove(p)}>🗑 Hide</button>}<button onClick={()=>router.push("/profile/"+encodeURIComponent(p.id))}>👁 View</button></div>
+          <div className="cardButtons"><button onClick={()=>edit(p)}>✏️ Edit</button>{p.status==="deleted"?<button onClick={async()=>{try{await setDoc(doc(db,"profiles",p.id),{status:"active",updatedAt:serverTimestamp()},{merge:true});alert("Biodata restore ho gaya.");}catch(e){setError(e.message)}}}>↩️ Restore</button>:<button onClick={()=>remove(p)}>🗑 Hide</button>}<button onClick={()=>viewAdmin(p)}>👁 View</button></div>
         </div>
       })}
     </div>
+
+    {adminView&&<div onClick={()=>setAdminView(null)} style={{position:"fixed",inset:0,zIndex:1000,background:"rgba(20,12,35,.68)",padding:"18px",overflowY:"auto"}}>
+      <div onClick={e=>e.stopPropagation()} style={{maxWidth:760,margin:"20px auto",background:"#fff",borderRadius:24,padding:22,boxShadow:"0 25px 80px rgba(0,0,0,.3)",textAlign:"left"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,borderBottom:"1px solid #eee",paddingBottom:14}}>
+          <div><span className="eyebrow">ADMIN VIEW</span><h2 style={{margin:"5px 0"}}>📋 Complete Biodata — {adminView.id}</h2></div>
+          <button className="backAction" style={{width:"auto",margin:0}} onClick={()=>setAdminView(null)}>✕ Close</button>
+        </div>
+        <div style={{marginTop:16,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:10}}>
+          {(adminView.profile.photos||[adminView.profile.photo].filter(Boolean)).map((src,i)=><img key={i} src={src} alt="" style={{width:"100%",height:190,objectFit:"cover",borderRadius:16}}/>)}
+        </div>
+        <div style={{marginTop:18}}>
+          <h3>📱 Contact</h3>
+          <div className="adminBox" style={{margin:0,padding:15}}>Mobile: <b>{adminView.contact.phone||adminView.biodata.phone||"Not entered"}</b></div>
+          <h3 style={{marginTop:22}}>📋 Biodata Details</h3>
+          <div style={{display:"grid",gap:9}}>
+            {Object.entries(adminView.biodata).filter(([k,v])=>!["profileId","gender","updatedAt","phone"].includes(k)&&v!==""&&v!==null&&v!==undefined).map(([k,v])=><div key={k} style={{padding:"11px 13px",background:"#faf9fc",border:"1px solid #eee",borderRadius:12}}><small style={{display:"block",color:"#76687e",fontWeight:800}}>{k}</small><b style={{display:"block",marginTop:3,whiteSpace:"pre-wrap"}}>{String(v)}</b></div>)}
+          </div>
+        </div>
+      </div>
+    </div>}
+
+    {viewLoading&&<div className="messageBox">Loading complete biodata...</div>}
   </section></main>;
 }
 
