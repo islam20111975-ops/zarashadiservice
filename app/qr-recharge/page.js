@@ -99,13 +99,12 @@ function PageBody(){
 
  async function submit(){
   setClickedButton("submit");
-  window.setTimeout(()=>setClickedButton(""),700);
   setMsg("");
   if(!user)return setMsg("⚠️ Pehle Google se Login karein.");
   if(!profile)return setMsg("❌ Profile ID missing hai.");
   if(!profileData)return setMsg("❌ Ye profile available nahi hai.");
   if(!qrUrl&&!upiId)return setMsg("❌ Admin ne UPI ID ya QR payment set nahi kiya hai.");
-  const clean=utr.trim().replace(/\s+/g,"").toUpperCase();
+  const clean=utr.trim().replace(/\\s+/g,"").toUpperCase();
   if(!clean)return setMsg("⚠️ Payment karne ke baad UTR / Transaction ID yahan zaroor bharein.");
   if(!/^[A-Z0-9]{6,40}$/.test(clean))return setMsg("⚠️ Sahi UTR / Transaction ID bhariye (6–40 letters/numbers).");
   if(requests.some(x=>x.status==="pending"))return setMsg("⏳ Is profile ka payment request already Pending hai. Admin verification ka wait karein.");
@@ -114,49 +113,38 @@ function PageBody(){
   try{
    const lockId=user.uid+"_"+profile+"_"+type;
    const reqRef=doc(collection(db,"paidAccessRequests"));
-   const lockRef=doc(db,"pendingPaymentLocks",lockId);
    const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());
 
-   const existingLock=await getDoc(lockRef);
-   if(existingLock.exists()){
-    const oldLock=existingLock.data()||{};
-    if(oldLock.status==="pending"&&oldLock.requestId){
-     const oldReqSnap=await getDoc(doc(db,"paidAccessRequests",oldLock.requestId));
-     if(oldReqSnap.exists()&&oldReqSnap.data()?.status==="pending")
-      return setMsg("⏳ Is profile ka payment request pehle se Admin ke paas Pending hai. Dobara payment submit na karein.");
-    }
-    await deleteDoc(lockRef).catch(()=>{});
-   }
-
-   const lockData={uid:user.uid,profileId:profile,type,kind:"access",amount,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()};
+   // The lock is represented by the deterministic lockId on the request.
+   // Do not require a separate client-side lock write; this avoids a permissions
+   // failure before the actual UTR payment request is saved.
    const claimData={uid:user.uid,utr:clean,kind:"access",profileId:profile,type,amount,requestId:reqRef.id,createdAt:serverTimestamp()};
-   const requestData={uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"upi",utr:clean,utrClaimId:claimRef.id,lockId:lockRef.id,createdAt:serverTimestamp()};
+   const requestData={uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"upi",utr:clean,utrClaimId:claimRef.id,lockId,createdAt:serverTimestamp()};
 
-   try{await setDoc(lockRef,lockData)}
-   catch(e){throw Object.assign(new Error("Payment lock save failed: "+(e?.message||"Permission denied")),{code:e?.code||"permission-denied",stage:"pendingPaymentLocks"})}
    try{await setDoc(claimRef,claimData)}
    catch(e){
-    await deleteDoc(lockRef).catch(()=>{});
     throw Object.assign(new Error("UTR claim save failed: "+(e?.message||"Permission denied")),{code:e?.code||"permission-denied",stage:"paymentUtrClaims"});
    }
    try{await setDoc(reqRef,requestData)}
    catch(e){
     await deleteDoc(claimRef).catch(()=>{});
-    await deleteDoc(lockRef).catch(()=>{});
     throw Object.assign(new Error("Payment request save failed: "+(e?.message||"Permission denied")),{code:e?.code||"permission-denied",stage:"paidAccessRequests"});
    }
    setUtr("");
-   setMsg("⏳ Payment request Admin ko bhej di gayi hai. UTR verify hone ke baad exact Profile "+profile+" ka access approve hoga.");
+   setMsg("✅ UTR Send ho gaya. Payment request Admin ko bhej di gayi hai. UTR verify hone ke baad exact Profile "+profile+" ka access approve hoga.");
+   setRequests(prev=>[{id:reqRef.id,...requestData},...prev]);
   }catch(e){
    const code=e?.code||"";
-   if(code==="already-exists")setMsg("❌ Ye UTR ya payment lock pehle hi use ho chuka hai. Page refresh karke status dekhein.");
+   if(code==="already-exists")setMsg("❌ Ye UTR pehle hi use ho chuka hai. Page refresh karke status dekhein.");
    else if(code==="permission-denied")setMsg("❌ Firebase Permission Denied — "+(e?.stage||"payment request")+" ko Firebase Rules ne reject kiya. Details: "+(e?.message||"Permission denied"));
    else if(code==="failed-precondition")setMsg("❌ Firebase configuration/precondition error. Kripya page refresh karke dobara try karein.");
    else if(code==="unavailable")setMsg("❌ Firebase service abhi available nahi hai. Internet check karke dobara try karein.");
-   else setMsg("❌ Payment request save nahi hui: "+(e?.message||"Unknown error"));
-  }finally{setSaving(false);setClickedButton("");}
+   else setMsg("❌ UTR Send nahi hua: "+(e?.message||"Unknown error"));
+  }finally{
+   setSaving(false);
+   window.setTimeout(()=>setClickedButton(""),900);
+  }
  }
-
  const photo=profileData?.photos?.[0]||profileData?.photo||"";
  if(user&&approved)return <main><section className="cardPage payment paymentPremium" style={{maxWidth:760,margin:"25px auto"}}><div className="notice">✅ <b>Payment Approved</b><br/>Profile {profile} ka access approve ho gaya hai.<br/><small>Biodata page khola ja raha hai…</small></div></section></main>;
 
