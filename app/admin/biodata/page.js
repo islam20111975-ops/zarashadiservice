@@ -108,6 +108,17 @@ function BiodataAdminPage(){
     }catch(e){setError("Biodata save nahi hua: "+e.message)}finally{setSaving(false)}
   }
 
+  const fieldLabels={
+    name:"Full Name",address:"Full Address",age:"Age",income:"Income",maritalStatus:"Marital Status",height:"Height",
+    dob:"Date of Birth",birthPlace:"Birth Place",education:"Education",occupation:"Occupation / Business",
+    company:"Company / Institution",city:"City",district:"District",state:"State",nativePlace:"Native Place / Hometown",
+    religion:"Religion / Maslak",caste:"Biradari / Community",language:"Language / Mother Tongue",
+    fatherName:"Father Name",motherName:"Mother Name",brothers:"Brothers",sisters:"Sisters",familyDetails:"Family Details",
+    description:"About / Biodata Description",expectations:"Marriage / Partner Expectations",preferredAge:"Preferred Age",
+    preferredEducation:"Preferred Education",preferredLocation:"Preferred Location",otherExpectations:"Other Expectations",
+    otherInfo:"Other Important Information"
+  };
+
   async function viewAdmin(p){
     setViewLoading(true);setError("");
     try{
@@ -115,7 +126,7 @@ function BiodataAdminPage(){
         getDoc(doc(db,"profileBiodataPrivate",p.id)),
         getDoc(doc(db,"profileContact",p.id))
       ]);
-      setAdminView({id:p.id,profile:p, biodata:s.exists()?s.data():{}, contact:cs.exists()?cs.data():{}});
+      setAdminView({id:p.id,profile:p,biodata:s.exists()?s.data():{},contact:cs.exists()?cs.data():{}});
     }catch(e){setError("Biodata view nahi hua: "+e.message)}
     finally{setViewLoading(false)}
   }
@@ -232,7 +243,12 @@ function BiodataAdminPage(){
           <div className="adminBox" style={{margin:0,padding:15}}>Mobile: <b>{adminView.contact.phone||adminView.biodata.phone||"Not entered"}</b></div>
           <h3 style={{marginTop:22}}>📋 Biodata Details</h3>
           <div style={{display:"grid",gap:9}}>
-            {Object.entries(adminView.biodata).filter(([k,v])=>!["profileId","gender","updatedAt","phone"].includes(k)&&v!==""&&v!==null&&v!==undefined).map(([k,v])=><div key={k} style={{padding:"11px 13px",background:"#faf9fc",border:"1px solid #eee",borderRadius:12}}><small style={{display:"block",color:"#76687e",fontWeight:800}}>{k}</small><b style={{display:"block",marginTop:3,whiteSpace:"pre-wrap"}}>{String(v)}</b></div>)}
+            {Object.entries({...adminView.biodata,gender:adminView.biodata.gender||adminView.profile.gender})
+              .filter(([k,v])=>!["profileId","updatedAt","phone"].includes(k)&&v!==""&&v!==null&&v!==undefined)
+              .map(([k,v])=><div key={k} style={{padding:"11px 13px",background:"#faf9fc",border:"1px solid #eee",borderRadius:12}}>
+                <small style={{display:"block",color:"#76687e",fontWeight:800}}>{fieldLabels[k]||"Gender"}</small>
+                <b style={{display:"block",marginTop:3,whiteSpace:"pre-wrap"}}>{k==="gender"?(v==="female"?"Female":"Male"):String(v)}</b>
+              </div>)}
           </div>
         </div>
       </div>
