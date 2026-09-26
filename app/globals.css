@@ -1010,3 +1010,5 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
     font-size:12px!important;
   }
 }
+
+/* Vercel redeploy trigger */
