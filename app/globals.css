@@ -882,19 +882,25 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 /* Clear CTA text on gender cards */
 .genderPremium .genderCard small{
   display:block;
-  margin-top:6px;
-  font-size:13px;
-  line-height:1.35;
-  font-weight:900;
+  margin-top:8px;
+  font-size:17px;
+  line-height:1.3;
+  font-weight:1000;
   color:#4c1d95;
   background:#f3e8ff;
-  border:1px solid #c4b5fd;
-  padding:6px 9px;
-  border-radius:10px;
+  border:2px solid #a78bfa;
+  padding:8px 10px;
+  border-radius:11px;
+  max-width:260px;
+}
+.genderPremium .genderCard small::after{
+  content:"\A";
+  white-space:pre;
 }
 @media(max-width:600px){
   .genderPremium .genderCard small{
-    font-size:12px;
-    padding:6px 8px;
+    font-size:15px;
+    padding:8px 9px;
+    max-width:230px;
   }
 }
