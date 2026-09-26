@@ -32,6 +32,24 @@ function imageToDataUrl(file,maxSide=700,maxChars=140000){
   });
 }
 
+function dataUrlToSlider(dataUrl,maxSide=320,maxChars=45000){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const scale=Math.min(1,maxSide/Math.max(img.naturalWidth,img.naturalHeight));
+      const w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale));
+      const c=document.createElement("canvas");c.width=w;c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      let q=.7,data=c.toDataURL("image/jpeg",q);
+      while(data.length>maxChars&&q>.25){q-=.06;data=c.toDataURL("image/jpeg",q)}
+      if(data.length>maxChars)reject(new Error("Slider image bahut badi hai."));
+      else resolve(data);
+    };
+    img.onerror=()=>reject(new Error("Slider image read nahi hui."));
+    img.src=dataUrl;
+  });
+}
+
 function BiodataAdminPage(){
   const router=useRouter(),params=useSearchParams();
   const [user,setUser]=useState(undefined),[profiles,setProfiles]=useState([]),[form,setForm]=useState(empty);
@@ -86,8 +104,10 @@ function BiodataAdminPage(){
       if(files.length)photos=await Promise.all(files.map(f=>imageToDataUrl(f)));
       else if(editing)photos=old.data().photos||[old.data().photo].filter(Boolean);
       if(!photos.length)return setError("Kam se kam 1 photo zaroori hai.");
+      const sliderImage=await dataUrlToSlider(photos[0]);
       const batch=writeBatch(db);
       batch.set(ref,{profileId:id,gender:form.gender,photos,photo:photos[0],status:"active",updatedAt:serverTimestamp()},{merge:true});
+      batch.set(doc(db,"homeSliderImages",id),{profileId:id,image:sliderImage,status:"active",updatedAt:serverTimestamp()},{merge:true});
       batch.set(doc(db,"profileBiodataPrivate",id),{
         profileId:id,gender:form.gender,name:form.name.trim(),address:form.address.trim(),age:Number(form.age),income:form.income.trim(),
         maritalStatus:form.maritalStatus.trim(),height:form.height.trim(),dob:form.dob.trim(),birthPlace:form.birthPlace.trim(),
@@ -153,7 +173,8 @@ function BiodataAdminPage(){
       await Promise.all([
         deleteDoc(doc(db,"profiles",p.id)),
         deleteDoc(doc(db,"profileBiodataPrivate",p.id)),
-        deleteDoc(doc(db,"profileContact",p.id))
+        deleteDoc(doc(db,"profileContact",p.id)),
+        deleteDoc(doc(db,"homeSliderImages",p.id))
       ]);
       if(params.get("edit")===p.id)resetForm();
       if(adminView?.id===p.id)setAdminView(null);
