@@ -60,12 +60,24 @@ function PageBody(){
 
  async function downloadQr(){
   if(!qrUrl)return setMsg("❌ QR Code available nahi hai.");
+  const fileName="Zara-Nikah-UPI-QR-"+amount+".png";
   try{
-   const res=await fetch(qrUrl); if(!res.ok)throw new Error("QR download failed");
+   // Admin QR is normally stored as a data URL, so save it directly without
+   // depending on cross-origin fetch/download support on mobile browsers.
+   if(qrUrl.startsWith("data:")){
+    const a=document.createElement("a"); a.href=qrUrl; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
+    setMsg("✅ QR Code save/download ke liye ready hai.");
+    return;
+   }
+   const res=await fetch(qrUrl,{mode:"cors"}); if(!res.ok)throw new Error("QR download failed");
    const blob=await res.blob(); const url=URL.createObjectURL(blob);
-   const a=document.createElement("a"); a.href=url; a.download="Zara-Nikah-UPI-QR-"+amount+".png"; document.body.appendChild(a); a.click(); a.remove();
-   setTimeout(()=>URL.revokeObjectURL(url),1000); setMsg("✅ QR Code save ho gaya.");
-  }catch(e){setMsg("⚠️ QR direct download nahi ho saka. QR par long-press/right-click karke Save Image karein.");}
+   const a=document.createElement("a"); a.href=url; a.download=fileName; document.body.appendChild(a); a.click(); a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),1500); setMsg("✅ QR Code save/download ke liye ready hai.");
+  }catch(e){
+   // Last-resort mobile fallback: open the QR itself so the user can long-press/save it.
+   try{window.open(qrUrl,"_blank","noopener,noreferrer");}catch(_e){}
+   setMsg("⚠️ Direct download browser ne block kiya. QR image khol di gayi hai—long-press karke Save Image karein.");
+  }
  }
 
  async function submit(){
