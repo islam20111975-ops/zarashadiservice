@@ -75,9 +75,21 @@ function PageBody(){
    const reqRef=doc(collection(db,"paidAccessRequests"));
    const lockRef=doc(db,"pendingPaymentLocks",lockId);
    const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());
+
+   const existingLock=await getDoc(lockRef);
+   if(existingLock.exists()){
+    const oldLock=existingLock.data()||{};
+    if(oldLock.status==="pending"&&oldLock.requestId){
+     const oldReqSnap=await getDoc(doc(db,"paidAccessRequests",oldLock.requestId));
+     if(oldReqSnap.exists()&&oldReqSnap.data()?.status==="pending")
+      return setMsg("⏳ Is profile ka payment request pehle se Admin ke paas Pending hai. Dobara payment submit na karein.");
+    }
+    await deleteDoc(lockRef).catch(()=>{});
+   }
+
    const lockData={uid:user.uid,profileId:profile,type,kind:"access",amount,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()};
    const claimData={uid:user.uid,utr:clean,kind:"access",profileId:profile,type,amount,requestId:reqRef.id,createdAt:serverTimestamp()};
-   const requestData={uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"upi_id_or_qr",utr:clean,utrClaimId:claimRef.id,lockId:lockRef.id,createdAt:serverTimestamp()};
+   const requestData={uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"upi",utr:clean,utrClaimId:claimRef.id,lockId:lockRef.id,createdAt:serverTimestamp()};
 
    try{await setDoc(lockRef,lockData)}
    catch(e){throw Object.assign(new Error("Payment lock save failed: "+(e?.message||"Permission denied")),{code:e?.code||"permission-denied",stage:"pendingPaymentLocks"})}
