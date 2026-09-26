@@ -667,3 +667,133 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 .galleryClose{position:absolute!important;top:10px!important;right:10px!important;z-index:10!important;width:34px!important;height:34px!important;padding:0!important;margin:0!important;border:0!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important;background:rgba(0,0,0,.72)!important;color:#fff!important;font-size:18px!important;font-weight:900!important;line-height:1!important;cursor:pointer!important;box-shadow:0 5px 14px rgba(0,0,0,.28)!important}
 .galleryClose:hover{transform:scale(1.06)!important;background:rgba(0,0,0,.86)!important}
 .zoomControls{display:none!important}
+
+
+/* FINAL UPI + QR PAYMENT PAGE POLISH */
+.payment.paymentPremium{
+  max-width:720px!important;
+  margin:22px auto 50px!important;
+  padding:28px 30px 24px!important;
+  background:linear-gradient(180deg,#ffffff 0%,#fcfbff 100%)!important;
+  border:1px solid #e8e0f1!important;
+  border-radius:30px!important;
+  box-shadow:0 24px 65px #35105b16!important;
+}
+.paymentPremium h1{
+  margin:6px 0 4px!important;
+  font-size:30px!important;
+  line-height:1.2!important;
+  color:#2f2150!important;
+}
+.paymentPremium .eyebrow{
+  margin-top:2px!important;
+  font-size:11px!important;
+  letter-spacing:1.8px!important;
+  font-weight:900!important;
+}
+.paymentPremium .paymentLead{
+  margin:8px 0 14px!important;
+  font-size:13px!important;
+}
+.paymentPremium .notice{
+  margin:12px 0!important;
+  padding:13px 15px!important;
+  border-radius:15px!important;
+  background:linear-gradient(135deg,#fff9ed,#fff7fb)!important;
+  border:1px solid #f0dfbd!important;
+  color:#5b4b35!important;
+  font-size:12px!important;
+  font-weight:600!important;
+  line-height:1.55!important;
+  text-align:left;
+}
+.paymentPremium .notice b{font-weight:900!important;color:#4b315e!important}
+.paymentPremium .feeRow{
+  margin:14px 0!important;
+  padding:13px 15px!important;
+  background:linear-gradient(135deg,#f7f3ff,#fff9ef)!important;
+  border:1px solid #e8def3!important;
+}
+.paymentPremium .paymentMethodCard{
+  margin:12px 0!important;
+  padding:16px!important;
+  border:1px solid #e8e0f1!important;
+  border-radius:18px!important;
+  background:#fff!important;
+  box-shadow:0 8px 22px #35105b0b!important;
+}
+.paymentPremium .qr{
+  width:100%!important;
+  max-width:330px!important;
+  min-height:0!important;
+  height:auto!important;
+  margin:14px auto 8px!important;
+  padding:14px!important;
+  background:linear-gradient(145deg,#fff,#faf8ff)!important;
+  border:1px solid #e6dcef!important;
+  border-radius:20px!important;
+  box-shadow:0 10px 25px #35105b10!important;
+  gap:5px!important;
+  font-size:14px!important;
+}
+.paymentPremium .qr img{
+  width:auto!important;
+  max-width:100%!important;
+  height:auto!important;
+  max-height:190px!important;
+  margin:2px auto!important;
+}
+.paymentPremium .qr p{
+  margin:5px 0!important;
+  font-size:12px!important;
+  text-align:center!important;
+  color:#51445f!important;
+}
+.paymentPremium .qr p small{
+  display:inline!important;
+  padding:0!important;
+  font-size:10px!important;
+  color:#7c7185!important;
+}
+.paymentPremium .qr .primaryAction{
+  width:100%!important;
+  max-width:270px!important;
+  margin:8px auto 0!important;
+  padding:12px 14px!important;
+  font-size:13px!important;
+}
+.paymentPremium .paymentForm{
+  margin-top:15px!important;
+  padding:15px!important;
+  border:1px solid #e7e0ee!important;
+  border-radius:18px!important;
+  background:#faf9fd!important;
+}
+.paymentPremium .adminInput{
+  margin:7px 0 11px!important;
+  background:#fff!important;
+}
+.paymentPremium .messageBox{
+  margin:12px 0!important;
+  border:1px solid #ccebd7!important;
+  background:#f0fdf4!important;
+}
+.paymentPremium .backAction{
+  margin-top:14px!important;
+  background:#f4f1f7!important;
+}
+@media(max-width:600px){
+  .payment.paymentPremium{
+    margin:12px 8px 28px!important;
+    padding:20px 13px 17px!important;
+    border-radius:24px!important;
+  }
+  .paymentPremium h1{font-size:24px!important}
+  .paymentPremium .paymentLead{font-size:12px!important}
+  .paymentPremium .paymentIcon{width:58px!important;height:58px!important;border-radius:18px!important;font-size:25px!important;margin-bottom:12px!important}
+  .paymentPremium .notice{padding:11px 12px!important;font-size:11px!important}
+  .paymentPremium .feeRow{padding:11px 12px!important}
+  .paymentPremium .qr{max-width:290px!important;padding:11px!important}
+  .paymentPremium .qr img{max-height:175px!important}
+  .paymentPremium .paymentForm{padding:12px!important}
+}
