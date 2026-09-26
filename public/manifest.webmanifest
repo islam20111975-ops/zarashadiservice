@@ -1,0 +1,13 @@
+{
+  "name":"Zara Nikah Service",
+  "short_name":"Zara Nikah",
+  "description":"Aapka Rishta, Hamari Zimmedari",
+  "start_url":"/",
+  "display":"standalone",
+  "background_color":"#ffffff",
+  "theme_color":"#7c3aed",
+  "lang":"hi",
+  "icons":[
+    {"src":"/zara-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
