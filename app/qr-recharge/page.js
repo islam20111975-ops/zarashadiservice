@@ -122,10 +122,15 @@ function PageBody(){
     status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()
    });
 
-   await setDoc(claimRef,{
-    uid:user.uid,profileId:profile,type,kind:"access",amount,
-    utr:clean,requestId:reqRef.id,createdAt:serverTimestamp()
-   });
+   try{
+    await setDoc(claimRef,{
+     uid:user.uid,profileId:profile,type,kind:"access",amount,
+     utr:clean,requestId:reqRef.id,createdAt:serverTimestamp()
+    });
+   }catch(e){
+    try{await deleteDoc(lockRef)}catch(_e){}
+    throw e;
+   }
 
    const requestData={
     uid:user.uid,profileId:profile,type,amount,status:"pending",
