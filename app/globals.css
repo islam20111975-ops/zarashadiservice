@@ -824,3 +824,37 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 .paymentPremium .primaryAction.clickFeedback{
   border-color:#86efac!important;
 }
+
+
+/* COMPACT ADMIN BIODATA FORM */
+.biodataForm{
+  max-width:980px!important;
+  margin:18px auto!important;
+  padding:20px!important;
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:4px 14px!important;
+  align-items:start!important;
+}
+.biodataForm .boxTitle,
+.biodataForm .uploadBox,
+.biodataForm .photoPreviewGrid,
+.biodataForm .messageBox{grid-column:1 / -1!important}
+.biodataForm .boxTitle{margin-bottom:6px!important}
+.biodataForm .adminInput{margin:5px 0 8px!important;padding:11px 12px!important;border-radius:11px!important}
+.biodataForm textarea.adminInput{min-height:70px!important}
+.biodataForm .formGrid{margin:0!important;gap:10px!important}
+.biodataForm .uploadBox{padding:13px!important;margin:7px 0 10px!important}
+.biodataForm .photoPreviewGrid{display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:8px!important}
+.biodataForm .photoPreviewGrid img{width:100%!important;height:90px!important;object-fit:cover!important;border-radius:12px!important}
+.biodataForm .messageBox{margin:8px 0 0!important;padding:10px 12px!important}
+@media(max-width:900px){
+  .biodataForm{grid-template-columns:1fr!important;max-width:760px!important}
+  .biodataForm .formGrid{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:600px){
+  .biodataForm{margin:12px 0!important;padding:14px!important;gap:2px!important}
+  .biodataForm .formGrid{grid-template-columns:1fr!important;gap:2px!important}
+  .biodataForm .photoPreviewGrid{grid-template-columns:repeat(3,1fr)!important}
+  .biodataForm .photoPreviewGrid img{height:82px!important}
+}
