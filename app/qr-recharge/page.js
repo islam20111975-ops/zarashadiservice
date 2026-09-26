@@ -77,7 +77,7 @@ function PageBody(){
    const claimRef=doc(db,"paymentUtrClaims",clean.toLowerCase());
    const lockData={uid:user.uid,profileId:profile,type,kind:"access",amount,status:"pending",requestId:reqRef.id,createdAt:serverTimestamp()};
    const claimData={uid:user.uid,utr:clean,kind:"access",profileId:profile,type,amount,requestId:reqRef.id,createdAt:serverTimestamp()};
-   const requestData={uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"qr",utr:clean,utrClaimId:claimRef.id,lockId:lockRef.id,createdAt:serverTimestamp()};
+   const requestData={uid:user.uid,profileId:profile,type,amount,status:"pending",paymentMethod:"upi_id_or_qr",utr:clean,utrClaimId:claimRef.id,lockId:lockRef.id,createdAt:serverTimestamp()};
 
    try{await setDoc(lockRef,lockData)}
    catch(e){throw Object.assign(new Error("Payment lock save failed: "+(e?.message||"Permission denied")),{code:e?.code||"permission-denied",stage:"pendingPaymentLocks"})}
@@ -111,7 +111,7 @@ function PageBody(){
   <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button></div></header>
   <section className="cardPage payment" style={{maxWidth:760,margin:"25px auto"}}>
    <div style={{textAlign:"center"}}>
-    <div className="paymentIcon">₹</div><span className="eyebrow">DIRECT QR PAYMENT</span>
+    <div className="paymentIcon">₹</div><span className="eyebrow">UPI ID + QR PAYMENT</span>
     <h1>₹{amount} {type==="mobile"?"Mobile Number":"Biodata"} Access</h1>
     {photo&&<img src={photo} alt="" className="paymentProfilePhoto"/>}
     <p className="paymentLead">Profile <b>{profile}</b> ke liye exact ₹{amount} payment hai.</p>
@@ -128,7 +128,7 @@ function PageBody(){
     {qrUrl&&<div className="qr">
       <p><b>2️⃣ QR Code se Payment</b></p>
       <img src={qrUrl} alt="UPI QR"/>
-      <p><b>QR scan karke exact ₹{amount} pay karein.</b></p>
+      <p><b>QR scan karke exact ₹{amount} pay karein.</b><br/><small>QR ko phone me save karke baad me bhi scan kar sakte hain.</small></p>
       <a href={qrUrl} download={"Zara-Nikah-UPI-QR-"+amount+".png"} className="primaryAction" style={{display:"inline-block",textDecoration:"none",marginTop:8}}>⬇️ QR Download करें</a>
     </div>}
     {!upiId&&!qrUrl&&<div className="notice">Admin ne UPI ID aur QR payment set nahi kiya hai.</div>}
