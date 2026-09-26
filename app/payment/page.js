@@ -96,7 +96,6 @@ function Pay(){
      <div className="feeRow"><span><small>Access Fee</small><b>₹{amount}</b></span><strong>3 Payment Options</strong></div>
      <div className="paymentOptions">
       <button type="button" className="primaryAction paymentOption" onClick={()=>router.push("/qr-recharge?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type))}>📱 UPI ID / QR से ₹{amount} करें →</button>
-      <button type="button" className="primaryAction paymentOption" onClick={()=>router.push("/qr-recharge?profile="+encodeURIComponent(profile)+"&type="+encodeURIComponent(type))}>🔳 QR से ₹{amount} करें →</button>
      </div>
      <div className="walletPanel"><div className="walletTop"><span>💰 Wallet Balance</span><b>₹{wallet}</b></div><small>Wallet se ₹{amount} pay karke access request bhejein.</small></div>
      <button type="button" className="primaryAction walletButton" onClick={payFromWallet} disabled={saving||!p||wallet<amount}>
