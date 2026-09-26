@@ -147,6 +147,20 @@ function BiodataAdminPage(){
     }catch(e){setError(e.message)}
   }
 
+  async function permanentlyDelete(p){
+    if(!confirm("⚠️ Profile "+p.id+" ko PERMANENTLY DELETE karein? Biodata, photo aur mobile record delete ho jayega. Payment/access history delete nahi hogi."))return;
+    try{
+      await Promise.all([
+        deleteDoc(doc(db,"profiles",p.id)),
+        deleteDoc(doc(db,"profileBiodataPrivate",p.id)),
+        deleteDoc(doc(db,"profileContact",p.id))
+      ]);
+      if(params.get("edit")===p.id)resetForm();
+      if(adminView?.id===p.id)setAdminView(null);
+      alert("Profile "+p.id+" permanently delete ho gaya.");
+    }catch(e){setError("Profile delete nahi hua: "+e.message)}
+  }
+
   const filtered=profiles.filter(p=>(p.id+" "+p.gender+" "+(p.name||"")).toLowerCase().includes(search.toLowerCase())).sort((a,b)=>a.id.localeCompare(b.id));
   if(user===undefined)return <main><section className="admin cardPage"><h1>Loading...</h1></section></main>;
   if(!user)return <main><section className="admin cardPage"><div className="adminIcon">🔐</div><h1>Admin Login</h1><p>Google se Admin login karein.</p><button className="primaryAction" onClick={login}>Google Login →</button>{error&&<div className="errorBox">{error}</div>}</section></main>;
@@ -224,7 +238,7 @@ function BiodataAdminPage(){
         const photos=p.photos?.length?p.photos:[p.photo].filter(Boolean);
         return <div className="userAdminCard" key={p.id}>
           <div className="rowProfile">{photos[0]?<img src={photos[0]} alt=""/>:<div className="rowPlaceholder">📷</div>}<div><b>{p.id}</b><small>{p.gender==="female"?"Female":"Male"}</small><small>{p.status==="deleted"?"⚠️ Hidden":"✓ Active"}</small></div></div>
-          <div className="cardButtons"><button onClick={()=>edit(p)}>✏️ Edit</button>{p.status==="deleted"?<button onClick={async()=>{try{await setDoc(doc(db,"profiles",p.id),{status:"active",updatedAt:serverTimestamp()},{merge:true});alert("Biodata restore ho gaya.");}catch(e){setError(e.message)}}}>↩️ Restore</button>:<button onClick={()=>remove(p)}>🗑 Hide</button>}<button onClick={()=>viewAdmin(p)}>👁 View</button></div>
+          <div className="cardButtons"><button onClick={()=>edit(p)}>✏️ Edit</button>{p.status==="deleted"?<button onClick={async()=>{try{await setDoc(doc(db,"profiles",p.id),{status:"active",updatedAt:serverTimestamp()},{merge:true});alert("Biodata restore ho gaya.");}catch(e){setError(e.message)}}}>↩️ Restore</button>:<button onClick={()=>remove(p)}>🗑 Hide</button>}<button onClick={()=>viewAdmin(p)}>👁 View</button><button onClick={()=>permanentlyDelete(p)} style={{color:"#b42318",borderColor:"#f3b5b0"}}>❌ Delete</button></div>
         </div>
       })}
     </div>
