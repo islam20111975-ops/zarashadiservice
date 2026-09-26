@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useState} from "react";
+import {useEffect,useState,Children} from "react";
 import {useParams,useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
 import {collection,doc,getDoc,getDocs,query,where,onSnapshot} from "firebase/firestore";
@@ -23,7 +23,7 @@ const first=(o,keys)=>{
 };
 const val=(v)=>v===undefined||v===null?"":String(v).trim();
 const Row=({label,value})=>{const v=val(value);return v?<div className="biodataRow"><span>{label}</span><b>{v}</b></div>:null};
-const Section=({title,children})=><div className="biodataSection"><h3>{title}</h3>{children}</div>;
+const Section=({title,children})=>{const items=Children.toArray(children);return items.length?<div className="biodataSection"><h3>{title}</h3>{items}</div>:null};
 
 export default function Profile(){
  const {id}=useParams(),router=useRouter();
