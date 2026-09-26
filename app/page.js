@@ -20,6 +20,16 @@ export default function Home(){
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
   useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
   useEffect(()=>{
+    const q=query(collection(db,"profiles"));
+    return onSnapshot(q,s=>setAllProfiles(s.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted" && ((Array.isArray(p.photos)&&p.photos[0])||p.photo))));
+  },[]);
+  useEffect(()=>{
+    if(!allProfiles.length){setSlideIndex(0);return}
+    setSlideIndex(i=>i>=allProfiles.length?0:i);
+    const timer=setInterval(()=>setSlideIndex(i=>(i+1)%allProfiles.length),3500);
+    return()=>clearInterval(timer);
+  },[allProfiles.length]);
+  useEffect(()=>{
     if(!r){setData([]);return}
     setLoading(true);
     const q=query(collection(db,"profiles"),where("gender","==",r));
@@ -37,8 +47,13 @@ export default function Home(){
       <section className="heroHome" id="profiles">
         <div className="heroGlow one"></div><div className="heroGlow two"></div>
         <div className="heroContent">
-          <div className="heroBadge">✨ A TRUSTED NIKAH SERVICE</div>
-          <div className="heroFeatures"><span>✓ Verified Profiles</span><span>✓ Privacy First</span><span>✓ Simple Registration</span></div>
+          <div className="homeAutoSlider" aria-label="Nikah profiles automatic slideshow">
+            {allProfiles.length ? <button className="homeSlide" onClick={()=>router.push("/profile/"+allProfiles[slideIndex].id)} aria-label={"Profile "+allProfiles[slideIndex].id+" dekhein"}>
+              <img src={(Array.isArray(allProfiles[slideIndex].photos)&&allProfiles[slideIndex].photos[0])||allProfiles[slideIndex].photo||""} alt={"Marriage profile "+allProfiles[slideIndex].id}/>
+              <span className="slideShade"></span><span className="slideId">💍 Profile {allProfiles[slideIndex].id}</span><span className="slideVerified">✓ Verified</span>
+            </button> : <div className="homeSlideEmpty">💍<span>Nikah Profiles</span></div>}
+            {allProfiles.length>1&&<div className="slideDots">{allProfiles.map((p,i)=><span key={p.id} className={i===slideIndex?"active":""}></span>)}</div>}
+          </div>
         </div>
         <div className="gender genderPremium">
           <button className={r==="male"?"genderCard premiumCard maleCard active":"genderCard premiumCard maleCard"} onClick={()=>setR("male")}><div className="cardIcon">👨</div><div><b>Male Rishte</b><small>Male profiles dekhein</small></div><span className="arrow">→</span></button>
