@@ -35,7 +35,10 @@ export default function Home(){
         setSliderIds(ids);
         const first=await getDoc(doc(db,"homeSliderImages",ids[0]));
         if(!cancelled&&first.exists()&&first.data().image)setAllProfiles([{id:ids[0],image:first.data().image}]);
-      }catch(e){if(!cancelled)setLoginError(e?.message||"Slider image load nahi ho saki.")}
+      }catch(e){
+        // Slider failure must never block the public Home page.
+        if(!cancelled){setSliderIds([]);setAllProfiles([]);}
+      }
     }
     loadSlider();
     return()=>{cancelled=true};
