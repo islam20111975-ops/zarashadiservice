@@ -11,13 +11,13 @@ function PageBody(){
  const profile=q.get("profile")||"";
  const type=q.get("type")==="mobile"?"mobile":"biodata";
  const amount=type==="mobile"?500:100;
- const [user,setUser]=useState(null),[qrUrl,setQrUrl]=useState(""),[utr,setUtr]=useState("");
+ const [user,setUser]=useState(null),[qrUrl,setQrUrl]=useState(""),[upiId,setUpiId]=useState(""),[utr,setUtr]=useState("");
  const [requests,setRequests]=useState([]),[profileData,setProfileData]=useState(null),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
  const redirected=useRef(false);
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
  useEffect(()=>{
-  getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists())setQrUrl(s.data().qrUrl||"")}).catch(()=>{});
+  getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists()){setQrUrl(s.data().qrUrl||"");setUpiId((s.data().upiId||"").trim())}}).catch(()=>{});
  },[]);
  useEffect(()=>{
   if(!profile)return;
@@ -63,7 +63,7 @@ function PageBody(){
   if(!user)return setMsg("⚠️ Pehle Google se Login karein.");
   if(!profile)return setMsg("❌ Profile ID missing hai.");
   if(!profileData)return setMsg("❌ Ye profile available nahi hai.");
-  if(!qrUrl)return setMsg("❌ Admin ne QR payment set nahi kiya hai.");
+  if(!qrUrl&&!upiId)return setMsg("❌ Admin ne UPI ID ya QR payment set nahi kiya hai.");
   const clean=utr.trim().replace(/\s+/g,"").toUpperCase();
   if(!clean)return setMsg("⚠️ Payment karne ke baad UTR / Transaction ID yahan zaroor bharein.");
   if(!/^[A-Z0-9]{6,40}$/.test(clean))return setMsg("⚠️ Sahi UTR / Transaction ID bhariye (6–40 letters/numbers).");
@@ -118,9 +118,20 @@ function PageBody(){
    </div>
    {!user&&<><div className="notice">Payment request bhejne ke liye Google Login zaroori hai.</div><button type="button" className="primaryAction" onClick={login}>Google se Login →</button></>}
    {user&&!approved&&<>
-    <div className="feeRow"><span><small>Exact Access Fee</small><b>₹{amount}</b></span><strong>QR</strong></div>
+    <div className="feeRow"><span><small>Exact Access Fee</small><b>₹{amount}</b></span><strong>UPI</strong></div>
     {pending&&<div className="notice">⏳ <b>Payment Pending</b><br/>Aapki request Admin verify kar rahe hain. Same profile ke liye dobara payment submit na karein.</div>}
-    <div className="qr">{qrUrl?<><img src={qrUrl} alt="UPI QR"/><p><b>QR scan karke exact ₹{amount} pay karein.</b></p></>:<small>Admin ne QR set nahi kiya.</small>}</div>
+    {upiId&&<div className="notice" style={{textAlign:"center"}}>
+      <b>1️⃣ UPI ID se Payment</b><br/>
+      <div style={{margin:"10px 0",fontSize:18,fontWeight:700,wordBreak:"break-all"}}>{upiId}</div>
+      <button type="button" className="primaryAction" onClick={async()=>{try{await navigator.clipboard.writeText(upiId);setMsg("✅ UPI ID copy ho gayi. Ab apne UPI app me paste karke exact ₹"+amount+" payment karein.")}catch(e){setMsg("⚠️ UPI ID copy nahi ho saki. UPI ID ko manually copy karein.")}}}>📋 UPI ID Copy करें</button>
+    </div>}
+    {qrUrl&&<div className="qr">
+      <p><b>2️⃣ QR Code se Payment</b></p>
+      <img src={qrUrl} alt="UPI QR"/>
+      <p><b>QR scan karke exact ₹{amount} pay karein.</b></p>
+      <a href={qrUrl} download={"Zara-Nikah-UPI-QR-"+amount+".png"} className="primaryAction" style={{display:"inline-block",textDecoration:"none",marginTop:8}}>⬇️ QR Download करें</a>
+    </div>}
+    {!upiId&&!qrUrl&&<div className="notice">Admin ne UPI ID aur QR payment set nahi kiya hai.</div>}
     <div className="paymentForm">
      <label>UTR / Transaction ID
       <input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder={"₹"+amount+" payment ke baad UTR dalein"} autoComplete="off" inputMode="text"/>
