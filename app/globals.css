@@ -862,7 +862,7 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 /* HOME AUTO PROFILE SLIDER */
 .homeAutoSlider{position:relative;max-width:390px;margin:0 auto 22px}
 .homeSlide{position:relative;width:100%;height:300px;padding:0;border:0;border-radius:30px;overflow:hidden;cursor:pointer;background:#fff;box-shadow:0 24px 45px #35105b25,0 7px 0 #ddd6fe;display:block}
-.homeSlide img{width:100%;height:100%;display:block;object-fit:cover}
+.homeSlide img{width:100%;height:100%;display:block;object-fit:contain;background:#f7f4ff}
 .slideShade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,#160b2dcc 100%);pointer-events:none}
 .slideId{position:absolute;left:17px;bottom:16px;color:#fff;font-size:16px;font-weight:1000;letter-spacing:.5px;text-shadow:0 2px 7px #000}
 .slideVerified{position:absolute;right:14px;top:14px;padding:7px 10px;border-radius:99px;background:#ffffffed;color:#15803d;font-size:10px;font-weight:1000;box-shadow:0 5px 15px #0003}
