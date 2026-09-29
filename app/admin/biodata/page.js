@@ -119,9 +119,9 @@ function BiodataAdminPage(){
       return;
     }
 
-    const phone=String(form.phone??"").replace(/\\D/g,"").slice(0,10);
+    const phone=String(form.phone??"").replace(/\D/g,"").slice(0,10);
     const ageText=String(form.age??"").trim();
-    if(ageText && (!/^\\d+$/.test(ageText)||Number(ageText)<18||Number(ageText)>100)){
+    if(ageText && (!/^\d+$/.test(ageText)||Number(ageText)<18||Number(ageText)>100)){
       setError("Age 18–100 ke beech hona chahiye, ya Age blank chhodein.");
       return;
     }
