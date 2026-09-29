@@ -112,15 +112,17 @@ function BiodataAdminPage(){
     setSaving(true);
     let stage="starting";
     try{
-      stage="checking profile";
+      stage="preparing profile";
       const ref=doc(db,"profiles",id);
-      const old=await getDoc(ref);
-      const editing=old.exists();
+      const editing=profiles.some(p=>String(p.id)===id);
 
       stage="compressing photos";
       let photos=[];
       if(files.length)photos=await Promise.all(files.map(f=>imageToDataUrl(f)));
-      else if(editing)photos=old.data().photos||[old.data().photo].filter(Boolean);
+      else if(editing){
+        const existing=profiles.find(p=>String(p.id)===id);
+        photos=existing?.photos||[existing?.photo].filter(Boolean);
+      }
 
       // Firestore free plan ke liye photo size ko low rakha gaya hai.
       stage="saving biodata";
