@@ -8,6 +8,6 @@
   "theme_color":"#7c3aed",
   "lang":"hi",
   "icons":[
-    {"src":"/api/pwa-icon","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+    {"src":"/api/pwa-icon","sizes":"any","purpose":"any maskable"}
   ]
 }
