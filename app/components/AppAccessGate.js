@@ -5,10 +5,23 @@ import {useEffect,useState} from "react";
 import {usePathname} from "next/navigation";
 
 const ADMIN_PATH="/admin";
+const INSTALLED_KEY="zaraAppInstalledV4";
 const ICON="/api/pwa-icon?size=512";
 
 function isStandalone(){
   return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
+}
+
+function hasInstalledMark(){
+  try{return localStorage.getItem(INSTALLED_KEY)==="1"}catch(e){return false}
+}
+
+function markInstalled(){
+  try{localStorage.setItem(INSTALLED_KEY,"1")}catch(e){}
+}
+
+function clearInstalledMark(){
+  try{localStorage.removeItem(INSTALLED_KEY)}catch(e){}
 }
 
 export default function AppAccessGate({children}){
@@ -16,6 +29,7 @@ export default function AppAccessGate({children}){
   const admin=pathname===ADMIN_PATH || pathname.startsWith(ADMIN_PATH+"/");
   const [checking,setChecking]=useState(true);
   const [standalone,setStandalone]=useState(false);
+  const [installed,setInstalled]=useState(false);
   const [prompt,setPrompt]=useState(null);
   const [splash,setSplash]=useState(false);
   const [icon,setIcon]=useState(ICON);
@@ -24,31 +38,65 @@ export default function AppAccessGate({children}){
 
   useEffect(()=>{
     if(admin){setChecking(false);return;}
+
     const standaloneNow=isStandalone();
+    const remembered=hasInstalledMark();
     setStandalone(standaloneNow);
+    setInstalled(remembered);
     setChecking(false);
+
     const ua=navigator.userAgent||"";
     setIos(/iphone|ipad|ipod/i.test(ua) && !standaloneNow);
-    setCanInstall(!!window.__zaraInstallPrompt);
+
     try{
       const cached=JSON.parse(localStorage.getItem("zaraBrandingCache")||"null");
       if(cached?.appIcon) setIcon(cached.appIcon);
     }catch(e){}
-    const applyIcon=()=>{try{const cached=JSON.parse(localStorage.getItem("zaraBrandingCache")||"null");if(cached?.appIcon)setIcon(cached.appIcon)}catch(e){}};
-    const before=e=>{e.preventDefault();window.__zaraInstallPrompt=e;setPrompt(e);setCanInstall(true)};
-    const ready=()=>{if(window.__zaraInstallPrompt){setPrompt(window.__zaraInstallPrompt);setCanInstall(true)}};
+
+    const applyIcon=()=>{
+      try{
+        const cached=JSON.parse(localStorage.getItem("zaraBrandingCache")||"null");
+        if(cached?.appIcon)setIcon(cached.appIcon);
+      }catch(e){}
+    };
+
+    const before=e=>{
+      e.preventDefault();
+      // If the browser can offer installation again, the previous PWA was
+      // removed. Clear the remembered install state so the gate returns.
+      clearInstalledMark();
+      setInstalled(false);
+      window.__zaraInstallPrompt=e;
+      setPrompt(e);
+      setCanInstall(true);
+    };
+
+    const ready=()=>{
+      if(window.__zaraInstallPrompt){
+        setPrompt(window.__zaraInstallPrompt);
+        setCanInstall(true);
+      }
+    };
+
     const onInstalled=()=>{
+      markInstalled();
+      setInstalled(true);
       window.__zaraInstallPrompt=null;
       setPrompt(null);
-      setStandalone(true);
+      setCanInstall(false);
+      setStandalone(isStandalone());
       setSplash(true);
       setTimeout(()=>setSplash(false),3000);
     };
+
     window.addEventListener("beforeinstallprompt",before);
     window.addEventListener("zara-install-ready",ready);
     window.addEventListener("zara-branding-updated",applyIcon);
     window.addEventListener("appinstalled",onInstalled);
-    ready();applyIcon();
+
+    ready();
+    applyIcon();
+
     return()=>{
       window.removeEventListener("beforeinstallprompt",before);
       window.removeEventListener("zara-install-ready",ready);
@@ -67,17 +115,24 @@ export default function AppAccessGate({children}){
   async function install(){
     const event=prompt||window.__zaraInstallPrompt;
     if(!event){
-      if(ios){alert("iPhone/iPad par Safari me neeche Share (□↑) दबाएँ → Add to Home Screen चुनें → Add दबाएँ। फिर Zara Nikah App खोलें।");return;}
+      if(ios){
+        alert("iPhone/iPad par Safari me neeche Share (□↑) दबाएँ → Add to Home Screen चुनें → Add दबाएँ। फिर Zara Nikah App खोलें।");
+        return;
+      }
       alert("Browser ke ⋮ menu me “Install Zara Nikah Service” ya “Add to Home screen” चुनें. Install ke baad app kholen.");
       return;
     }
+
     try{
       event.prompt();
       const choice=await event.userChoice;
       window.__zaraInstallPrompt=null;
       setPrompt(null);
       setCanInstall(false);
+
       if(choice?.outcome==="accepted"){
+        markInstalled();
+        setInstalled(true);
         setStandalone(true);
         setSplash(true);
         setTimeout(()=>setSplash(false),3000);
@@ -88,7 +143,9 @@ export default function AppAccessGate({children}){
   if(admin) return <>{children}</>;
   if(checking) return <div className="zaraBootScreen" aria-hidden="true"/>;
 
-  if(!standalone) return (
+  // Installed app OR browser that has already completed installation:
+  // refreshing the normal website must not show the install gate.
+  if(!standalone && !installed) return (
     <div className="zaraInstallGate" role="dialog" aria-modal="true" aria-labelledby="zaraInstallTitle">
       <div className="zaraInstallGlow zaraGlowOne"/><div className="zaraInstallGlow zaraGlowTwo"/>
       <div className="zaraInstallCard">
