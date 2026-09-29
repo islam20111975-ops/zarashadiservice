@@ -10,7 +10,8 @@ export default function Home(){
   const [r,setR]=useState(null);
   const [data,setData]=useState([]);
   const [allProfiles,setAllProfiles]=useState([]),[sliderIds,setSliderIds]=useState([]);
-  const [slideIndex,setSlideIndex]=useState(0),[installPrompt,setInstallPrompt]=useState(null);\n  const [showInstallGate,setShowInstallGate]=useState(true);
+  const [slideIndex,setSlideIndex]=useState(0),[installPrompt,setInstallPrompt]=useState(null);
+  const [showInstallGate,setShowInstallGate]=useState(true);
   const [loading,setLoading]=useState(false);
   const [wallpaper,setWallpaper]=useState("");
   const [social,setSocial]=useState({whatsapp:"",facebook:"",instagram:""});
@@ -18,7 +19,23 @@ export default function Home(){
   const router=useRouter();
 
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
-  useEffect(()=>{\n    const standalone=window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;\n    if(standalone || window.localStorage.getItem("zaraPwaInstalled")==="1") setShowInstallGate(false);\n    const handler=e=>{e.preventDefault();setInstallPrompt(e)};\n    const installed=()=>{window.localStorage.setItem("zaraPwaInstalled","1");setInstallPrompt(null);setShowInstallGate(false)};\n    window.addEventListener("beforeinstallprompt",handler);\n    window.addEventListener("appinstalled",installed);\n    return()=>{window.removeEventListener("beforeinstallprompt",handler);window.removeEventListener("appinstalled",installed)};\n  },[]);\n  async function installApp(){\n    if(installPrompt){\n      try{installPrompt.prompt();await installPrompt.userChoice;setInstallPrompt(null)}catch(e){}\n      return;\n    }\n    alert("Chrome ke ⋮ menu me “Install app” ya “Add to Home screen” select karein. Install hone ke baad Zara Nikah kholte hi Home Page dikhega.");\n  }\n  useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
+  useEffect(()=>{
+    const standalone=window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
+    if(standalone || window.localStorage.getItem("zaraPwaInstalled")==="1") setShowInstallGate(false);
+    const handler=e=>{e.preventDefault();setInstallPrompt(e)};
+    const installed=()=>{window.localStorage.setItem("zaraPwaInstalled","1");setInstallPrompt(null);setShowInstallGate(false)};
+    window.addEventListener("beforeinstallprompt",handler);
+    window.addEventListener("appinstalled",installed);
+    return()=>{window.removeEventListener("beforeinstallprompt",handler);window.removeEventListener("appinstalled",installed)};
+  },[]);
+  async function installApp(){
+    if(installPrompt){
+      try{installPrompt.prompt();await installPrompt.userChoice;setInstallPrompt(null)}catch(e){}
+      return;
+    }
+    alert("Chrome ke ⋮ menu me “Install app” ya “Add to Home screen” select karein. Install hone ke baad Zara Nikah kholte hi Home Page dikhega.");
+  }
+  useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
   useEffect(()=>{
     let cancelled=false;
     async function loadSlider(){
@@ -84,7 +101,8 @@ export default function Home(){
           <button className="zaraInstallMainBtn" onClick={installApp}>📲 APP INSTALL करें <span>→</span></button>
           <p className="zaraInstallNote">🔒 आपकी जानकारी सुरक्षित रखने के लिए यह service App के रूप में इस्तेमाल करें।</p>
         </div>
-      </div>\n    <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"url("+wallpaper+")","--site-wallpaper":"url("+wallpaper+")"}:undefined}>
+      </div>
+    <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"url("+wallpaper+")","--site-wallpaper":"url("+wallpaper+")"}:undefined}>
       <header className="siteHeader"><div className="headerInner">
         <button className="logo" onClick={()=>router.push("/")}><span className="logoMark logoMarkBrand" aria-hidden="true"><span className="logoZ">Z</span><span className="logoN">N</span></span><span className="brand3d"><strong>ZARA NIKAH</strong><small>SERVICE</small></span></button>
         <nav className="mainNav" aria-label="Main navigation"><a href="/islamic-calendar">🌙 Islamic Calendar</a></nav>
