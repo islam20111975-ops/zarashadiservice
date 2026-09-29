@@ -99,5 +99,5 @@ export default function AppAccessGate({children}){
     </div>
   );
 
-  return <>{splash&&<div className="zaraPwaSplash"><img src="/api/app-splash" alt="" className="zaraPwaSplashBg"/><div className="zaraPwaSplashShade"/><div className="zaraPwaSplashBrand">ZARA NIKAH <small>SERVICE</small></div></div>}{children}</>;
+  return <>{splash&&<div className="zaraPwaSplash"><img src="/api/app-splash" alt="" className="zaraPwaSplashBg"/><div className="zaraPwaSplashShade"/></div>}{children}</>;
 }
