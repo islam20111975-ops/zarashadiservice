@@ -8,7 +8,7 @@ import {collection,deleteDoc,doc,getDoc,onSnapshot,setDoc,serverTimestamp,writeB
 import {auth,db} from "../../../lib/firebase";
 
 const ADMIN="ngogrant454@gmail.com";
-const empty={id:"",gender:"female",name:"",address:"",phone:"",age:"",income:"",description:"",
+const empty={id:"",gender:"",name:"",address:"",phone:"",age:"",income:"",description:"",
  maritalStatus:"",height:"",dob:"",birthPlace:"",education:"",occupation:"",company:"",city:"",district:"",state:"",nativePlace:"",
  religion:"",caste:"",language:"",fatherName:"",motherName:"",brothers:"",sisters:"",familyDetails:"",expectations:"",
  preferredAge:"",preferredEducation:"",preferredLocation:"",otherExpectations:"",otherInfo:""};
@@ -93,9 +93,12 @@ function BiodataAdminPage(){
 
   async function save(e){
     e.preventDefault();setError("");
-    const id=form.id.trim(),phone=form.phone.replace(/\D/g,"");
+    let id=form.id.trim(),phone=form.phone.replace(/\D/g,"");
+    if(!id){
+      const numericIds=profiles.map(p=>parseInt(p.id,10)).filter(Number.isFinite);
+      id=String(Math.max(0,...numericIds)+1).padStart(3,"0");
+    }
     if(!/^[A-Za-z0-9_-]{2,40}$/.test(id))return setError("Profile ID sirf letters, numbers, _ ya - mein 2–40 characters ka hona chahiye.");
-    if(!id)return setError("Profile ID bharna zaroori hai.");
     if(phone&&!/^[6-9]\d{9}$/.test(phone))return setError("Mobile number 10 digit ka hona chahiye.");
     setSaving(true);
     try{
@@ -104,7 +107,7 @@ function BiodataAdminPage(){
       if(files.length)photos=await Promise.all(files.map(f=>imageToDataUrl(f)));
       else if(editing)photos=old.data().photos||[old.data().photo].filter(Boolean);
       const batch=writeBatch(db);
-      batch.set(ref,{profileId:id,gender:form.gender,photos,photo:photos[0]||"",status:"active",updatedAt:serverTimestamp()},{merge:true});
+      batch.set(ref,{profileId:id,gender:form.gender||"",photos,photo:photos[0]||"",status:"active",updatedAt:serverTimestamp()},{merge:true});
       if(photos[0]){
         const sliderImage=await dataUrlToSlider(photos[0]);
         batch.set(doc(db,"homeSliderImages",id),{profileId:id,image:sliderImage,status:"active",updatedAt:serverTimestamp()},{merge:true});
@@ -114,7 +117,7 @@ function BiodataAdminPage(){
       const nextSliderIds=[...new Set([...currentSliderIds,id])];
       batch.set(doc(db,"settings","homeSlider"),{profileIds:nextSliderIds,updatedAt:serverTimestamp()},{merge:true});
       batch.set(doc(db,"profileBiodataPrivate",id),{
-        profileId:id,gender:form.gender,name:form.name.trim(),address:form.address.trim(),age:form.age.trim()?Number(form.age):"",income:form.income.trim(),
+        profileId:id,gender:form.gender||"",name:form.name.trim(),address:form.address.trim(),age:form.age.trim()?Number(form.age):"",income:form.income.trim(),
         maritalStatus:form.maritalStatus.trim(),height:form.height.trim(),dob:form.dob.trim(),birthPlace:form.birthPlace.trim(),
         education:form.education.trim(),occupation:form.occupation.trim(),company:form.company.trim(),city:form.city.trim(),
         district:form.district.trim(),state:form.state.trim(),nativePlace:form.nativePlace.trim(),religion:form.religion.trim(),
@@ -199,7 +202,7 @@ function BiodataAdminPage(){
       <div className="boxTitle"><div><span className="eyebrow">SEPARATE BIODATA</span><h3>{form.id?"✏️ Edit Biodata":"➕ New Biodata"}</h3></div><div style={{display:"flex",gap:8,alignItems:"center"}}>{form.id&&<button type="button" className="backAction" style={{width:"auto",marginTop:0}} onClick={resetForm}>+ New</button>}<button type="submit" className="primaryAction" style={{width:"auto",marginTop:0,whiteSpace:"nowrap"}} disabled={saving}>{saving?"Saving...":"💾 Save Biodata"}</button></div></div>
       <div className="formGrid">
         <input className="adminInput" placeholder="Profile ID (unique)" value={form.id} disabled={!!params.get("edit")} onChange={e=>setForm({...form,id:e.target.value})}/>
-        <select className="adminInput" value={form.gender} onChange={e=>setForm({...form,gender:e.target.value})}><option value="female">Female</option><option value="male">Male</option></select>
+        <select className="adminInput" value={form.gender} onChange={e=>setForm({...form,gender:e.target.value})}><option value="">Gender (optional)</option><option value="female">Female</option><option value="male">Male</option></select>
       </div>
       <input className="adminInput" placeholder="Full Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
       <textarea className="adminInput" rows="3" placeholder="Full Address" value={form.address} onChange={e=>setForm({...form,address:e.target.value})}/>
