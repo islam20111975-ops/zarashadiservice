@@ -7,7 +7,7 @@ export const metadata={
  keywords:["Zara Nikah Service","Nikah Service","Marriage Profiles","Rishta Service"],
  openGraph:{title:"Zara Nikah Service",description:"Aapka Rishta, Hamari Zimmedari",type:"website",url:"https://zarashadiservice.vercel.app/"},
  twitter:{card:"summary",title:"Zara Nikah Service",description:"Aapka Rishta, Hamari Zimmedari"},
- icons:{icon:"/zara-icon.svg",apple:"/zara-icon.svg"},
+ icons:{icon:"/api/pwa-icon",apple:"/api/pwa-icon"},
  manifest:"/manifest.webmanifest"
 };
 
