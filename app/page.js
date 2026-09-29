@@ -10,8 +10,7 @@ export default function Home(){
   const [r,setR]=useState(null);
   const [data,setData]=useState([]);
   const [allProfiles,setAllProfiles]=useState([]),[sliderIds,setSliderIds]=useState([]);
-  const [slideIndex,setSlideIndex]=useState(0),[installPrompt,setInstallPrompt]=useState(null);
-  const [showInstallGate,setShowInstallGate]=useState(false);
+  const [slideIndex,setSlideIndex]=useState(0);
   const [loading,setLoading]=useState(false);
   const [wallpaper,setWallpaper]=useState("");
   const [branding,setBranding]=useState(()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");return cached&&typeof cached==="object"?{logo:cached.logo||"",appIcon:cached.appIcon||"/api/pwa-icon?size=512"}:{logo:"",appIcon:"/api/pwa-icon?size=512"}}catch(e){return {logo:"",appIcon:"/api/pwa-icon?size=512"}}});
@@ -63,33 +62,7 @@ export default function Home(){
   const currentProfile=sliderIds.length?allProfiles.find(p=>p.id===sliderIds[slideIndex]):null;
   return (
     <>
-      {showInstallGate&&<div className="zaraInstallGate" role="dialog" aria-modal="true" aria-labelledby="zaraInstallTitle">
-        <div className="zaraInstallGlow zaraGlowOne"></div><div className="zaraInstallGlow zaraGlowTwo"></div>
-        <div className="zaraInstallCard">
-          <div className="zaraInstallLogo"><img src={branding.appIcon||"/api/pwa-icon?size=512"} alt="Zara Nikah App" /></div>
-          <div className="zaraInstallBrand">ZARA NIKAH <small>SERVICE</small></div>
-          <div className="zaraInstallBadge">✓ VERIFIED NIKAH SERVICE</div>
-          <h1 id="zaraInstallTitle">📲 पहले App Install करें</h1>
-          <p className="zaraInstallLead">रिश्ते देखने के लिए पहले <b>Zara Nikah App</b> अपने मोबाइल या PC में Install करें।</p>
-          <div className="zaraInstallSteps">
-            <div><b>1</b><span><strong>Install App</strong><small>नीचे दिए बटन पर क्लिक करें</small></span></div>
-            <div><b>2</b><span><strong>App Install होने दें</strong><small>Browser का install prompt पूरा करें</small></span></div>
-            <div><b>3</b><span><strong>रिश्ते देखें</strong><small>Install के बाद Home Page अपने-आप खुलेगा</small></span></div>
-          </div>
-          <button className="zaraInstallMainBtn" onClick={installApp}>📲 APP INSTALL करें <span>→</span></button>
-          <p className="zaraInstallNote">🔒 आपकी जानकारी सुरक्षित रखने के लिए यह service App के रूप में इस्तेमाल करें।</p>
-        </div>
-      </div>}
-      <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"url("+wallpaper+")","--site-wallpaper":"url("+wallpaper+")"}:undefined}>
-        <header className="siteHeader"><div className="headerInner">
-          <button className="logo" onClick={()=>router.push("/")}><span className="logoMark logoMarkBrand" aria-hidden="true">{branding.logo?<img src={branding.logo} alt="Zara Nikah logo" />:<><span className="logoZ">Z</span><span className="logoN">N</span></>}</span><span className="brand3d"><strong>ZARA NIKAH</strong><small>SERVICE</small></span></button>
-          <nav className="mainNav" aria-label="Main navigation"><a href="/islamic-calendar">🌙 Islamic Calendar</a></nav>
-          <div className="headerActions"><span className="secureChip">✓ Verified Service</span><button className="headerLogin" disabled={loginBusy} onClick={async()=>{setLoginError("");if(user){router.push(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account");return}setLoginBusy(true);try{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});const result=await signInWithPopup(auth,p);router.push(result.user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account")}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}finally{setLoginBusy(false)}}}>{loginBusy?"Login...":user?(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"🔐 Admin Dashboard":"👤 My Profile"):"🔐 Login"}</button></div>
-        </div></header>{loginError&&<div className="errorBox homeLoginError">{loginError}</div>}
-        <section className="heroHome" id="profiles">
-          <div className="heroGlow one"></div><div className="heroGlow two"></div>
-          <div className="heroContent">
-            <div className="homeAutoSlider" aria-label="Nikah profiles automatic slideshow">
+      <div className="homeAutoSlider" aria-label="Nikah profiles automatic slideshow">
               {sliderIds.length && currentProfile ? <button className="homeSlide" onClick={()=>router.push("/profile/"+currentProfile.id)} aria-label={"Profile "+currentProfile.id+" dekhein"}>
                 <img key={currentProfile.id} src={currentProfile.image||""} alt={"Marriage profile "+currentProfile.id} loading="eager" decoding="async" fetchPriority="high"/>
                 <span className="slideShade"></span><span className="slideId">💍 Profile {currentProfile.id}</span><span className="slideVerified">✓ Verified</span>
