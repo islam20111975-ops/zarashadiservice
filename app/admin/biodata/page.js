@@ -205,6 +205,7 @@ function BiodataAdminPage(){
   return <main><section className="admin dashboardPage">
     <div className="dashTop"><div><span className="eyebrow">ZARA NIKAH SERVICE</span><h1>📋 Biodata Management</h1><p>Har person ka biodata, photo aur description alag record rahega.</p></div><button className="logout" onClick={()=>router.push("/admin")}>← Admin Board</button></div>
     {error&&<div className="errorBox">{error}</div>}
+    {success&&<div role="status" aria-live="assertive" style={{position:"fixed",left:"50%",top:"50%",transform:"translate(-50%,-50%)",zIndex:2147483647,width:"min(92vw,560px)",padding:"20px 22px",borderRadius:20,border:"3px solid #168653",background:"#eafff3",color:"#075c35",textAlign:"center",fontWeight:900,fontSize:18,boxShadow:"0 20px 70px rgba(0,0,0,.35)"}}>{success}</div>}
     <form className="adminBox biodataForm" onSubmit={save}>
       <div className="boxTitle"><div><span className="eyebrow">SEPARATE BIODATA</span><h3>{form.id?"✏️ Edit Biodata":"➕ New Biodata"}</h3></div>{form.id&&<button type="button" className="backAction" style={{width:"auto",marginTop:0}} onClick={resetForm}>+ New</button>}</div>
       <div className="formGrid">
