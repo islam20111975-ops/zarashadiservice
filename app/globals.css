@@ -1031,3 +1031,8 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 .zaraInstallLogo{overflow:hidden!important}
 .zaraInstallLogo img{width:100%!important;height:100%!important;display:block!important;object-fit:contain!important;border-radius:inherit!important}
 .uploadPreview img[alt="Website logo"],.uploadPreview img[alt="App logo"]{width:150px!important;height:150px!important;object-fit:contain!important;background:#fff!important;border-radius:22px!important;padding:8px!important}
+
+
+/* Branding logo images on all headers */
+.logoMark{overflow:hidden!important}
+.logoMark img{width:100%!important;height:100%!important;display:block!important;object-fit:contain!important;border-radius:inherit!important}
