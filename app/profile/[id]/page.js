@@ -12,10 +12,11 @@ const Section=({title,children})=>{const items=Children.toArray(children).filter
 
 export default function Profile(){
  const {id}=useParams(),router=useRouter();
- const [p,setP]=useState(null),[privateData,setPrivateData]=useState(null),[contact,setContact]=useState(null),[user,setUser]=useState(null);
+ const [p,setP]=useState(null),[privateData,setPrivateData]=useState(null),[contact,setContact]=useState(null),[user,setUser]=useState(null),[branding,setBranding]=useState({logo:"",appIcon:""});
  const [loading,setLoading]=useState(true),[unlocked,setUnlocked]=useState(false),[mobile,setMobile]=useState(false),[lightbox,setLightbox]=useState(false),[loadError,setLoadError]=useState(""),[loginError,setLoginError]=useState("");
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
+ useEffect(()=>{getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists())setBranding({logo:s.data().logo||"",appIcon:s.data().appIcon||""})}).catch(()=>{})},[]);
  useEffect(()=>{
   if(!id)return;
   let alive=true;
@@ -99,7 +100,7 @@ export default function Profile(){
 
  return <main>
   <header className="siteHeader"><div className="headerInner">
-   <button className="logo" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button>
+   <button className="logo" onClick={()=>router.push("/")}><span className="logoMark">{branding.logo?<img src={branding.logo} alt="Zara Nikah logo"/>:"💍"}</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button>
    <button className="headerLogin" onClick={()=>user?router.push(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account"):login()}>{!user?"🔐 Login":user.email?.toLowerCase()==="ngogrant454@gmail.com"?"🔐 Admin Dashboard":"👤 My Profile"}</button>
   </div></header>
 
