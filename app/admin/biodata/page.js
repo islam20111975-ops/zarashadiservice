@@ -120,11 +120,9 @@ function BiodataAdminPage(){
     }
 
     const phone=String(form.phone??"").replace(/\D/g,"").slice(0,10);
-    const ageText=String(form.age??"").trim();
-    if(ageText && (!/^\d+$/.test(ageText)||Number(ageText)<18||Number(ageText)>100)){
-      setError("Age 18–100 ke beech hona chahiye, ya Age blank chhodein.");
-      return;
-    }
+    // Sabhi biodata fields optional hain. Age/phone ke incomplete values bhi save ko block nahi karenge.
+    const ageRaw=String(form.age??"").trim();
+    const ageText=/^\d+$/.test(ageRaw) ? ageRaw : "";
 
     setSaving(true);
     try{
