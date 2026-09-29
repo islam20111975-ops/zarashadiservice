@@ -17,6 +17,7 @@ export default function Admin(){
   const [wallFile,setWallFile]=useState(null),[wallPreview,setWallPreview]=useState("");
   const [logoFile,setLogoFile]=useState(null),[logoPreview,setLogoPreview]=useState("");
   const [appLogoFile,setAppLogoFile]=useState(null),[appLogoPreview,setAppLogoPreview]=useState("");
+  const [splashFile,setSplashFile]=useState(null),[splashPreview,setSplashPreview]=useState("");
   const sliderSyncDone=useRef(false);
   const [saving,setSaving]=useState(false),[requestFilter,setRequestFilter]=useState("pending"),[requestSearch,setRequestSearch]=useState("");
   const [pages,setPages]=useState({about:"Zara Nikah Service ek online Nikah aur rishta profile service hai. Hamara maqsad serious rishta search karne wale users ko registered profiles ek simple aur organised platform par available karana hai.\n\nWebsite par profiles ko manage kiya jata hai aur users ko available service ke rules ke mutabik profile information ka access diya jata hai.\n\nZara Nikah Service ka focus simple process, privacy aur Nikah ke liye serious rishta search par hai.\n\nKisi bhi service, profile ya registration se related sawal ke liye Contact page par diye gaye madhyam se message karein.",contact:"Zara Nikah Service se contact karne ke liye website par diye gaye WhatsApp/social contact option ka use karein.\n\nMessage mein apna naam aur apni query ya zaroori details likhein, taaki aapki request ko samajhna aur jawab dena aasaan ho.\n\nProfile, registration, payment, biodata access ya mobile-number access se related sawal bhi message ke zariye bheje ja sakte hain.\n\nPlease bina zaroorat personal ya sensitive information share na karein.",privacy:"Zara Nikah Service users ki information ko service provide karne aur account/profile management ke liye use karta hai.\n\nGoogle login se milne wali basic account information aur user dwara submit ki gayi profile information ko service ke purpose ke liye process kiya ja sakta hai.\n\nPrivate biodata, contact/mobile number aur payment-related information ko public profile par bina authorised access ke display nahi kiya jata.\n\nPayment ke waqt diya gaya UTR/Transaction ID payment verification aur request processing ke liye use kiya ja sakta hai.\n\nUsers ko apni personal information sirf utni hi submit karni chahiye jitni service ke liye zaroori ho. Kisi privacy concern ke liye Contact page ke madhyam se message karein.",terms:"Zara Nikah Service par users registered rishta profiles dekhne aur website par available services ka use kar sakte hain.\n\nRegistration, profile information, payment aur access request ke waqt sahi information dena user ki responsibility hai.\n\nBiodata ya mobile-number access paid service ke roop mein available ho sakta hai. Payment request verification aur approval ke baad access diya jata hai.\n\nWebsite par kisi profile ki personal information ka misuse, unauthorised copying, sharing ya harassment ke liye use nahi kiya jana chahiye.\n\nZara Nikah Service par dikhayi gayi profile information ko users ko respect aur privacy ke saath use karna chahiye.\n\nService ke rules, fees aur available features ko zaroorat ke mutabik update kiya ja sakta hai. Website ka use karte rehne ka matlab updated terms ko follow karna hai."});
@@ -62,7 +63,7 @@ export default function Admin(){
     getDoc(doc(db,"settings","social")).then(s=>s.exists()&&setSocial({...{whatsapp:"",facebook:"",instagram:""},...s.data()})).catch(()=>{});
     getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists()){setUpi(s.data().upiId||"");setQrPreview(s.data().qrUrl||"")}}).catch(e=>setError("Payment settings load error: "+e.message));
     getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallPreview(s.data().wallpaper||"")}).catch(e=>setError("Appearance settings load error: "+e.message));
-    getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){setLogoPreview(s.data().logo||"");setAppLogoPreview(s.data().appIcon||"")}}).catch(e=>setError("Branding settings load error: "+e.message));
+    getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){setLogoPreview(s.data().logo||"");setAppLogoPreview(s.data().appIcon||"");setSplashPreview(s.data().splash||"")}}).catch(e=>setError("Branding settings load error: "+e.message));
     getDoc(doc(db,"settings","legalPages")).then(s=>{if(s.exists())setPages(p=>({...p,about:s.data().about||"",contact:s.data().contact||"",privacy:s.data().privacy||"",terms:s.data().terms||""}))}).catch(e=>setError("Website pages load error: "+e.message));
     return()=>unsubs.forEach(x=>x());
   },[user]);
@@ -254,13 +255,14 @@ export default function Admin(){
   async function saveBranding(e){
     e.preventDefault();setError("");
     try{
-      let logo="",appIcon="",appIcon192="",appIcon512="";
+      let logo="",appIcon="",appIcon192="",appIcon512="",splash="";
       const old=await getDoc(doc(db,"settings","branding"));
       if(old.exists()){
         logo=old.data().logo||"";
         appIcon=old.data().appIcon||old.data().appIcon512||"";
         appIcon192=old.data().appIcon192||"";
         appIcon512=old.data().appIcon512||appIcon;
+        splash=old.data().splash||"";
       }
       async function compressImage(file,label,maxSize=100000){
         if(!file)return "";
@@ -307,7 +309,29 @@ export default function Admin(){
           return data;
         }finally{URL.revokeObjectURL(url)}
       }
+      async function compressSplash(file){
+        if(!file)return "";
+        if(!file.type.startsWith("image/")||file.size>8*1024*1024)throw new Error("App Opening Image 8 MB se chhoti honi chahiye.");
+        const url=URL.createObjectURL(file);
+        try{
+          const img=new Image();img.src=url;
+          await new Promise((res,rej)=>{img.onload=res;img.onerror=rej});
+          const canvas=document.createElement("canvas");
+          const scale=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));
+          canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
+          canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+          const ctx=canvas.getContext("2d");
+          ctx.fillStyle="#ffffff";
+          ctx.fillRect(0,0,canvas.width,canvas.height);
+          ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          let q=.78,data=canvas.toDataURL("image/jpeg",q);
+          while(data.length>500000&&q>.35){q-=.06;data=canvas.toDataURL("image/jpeg",q)}
+          if(data.length>500000)throw new Error("App Opening Image bahut badi hai. Chhoti image upload karein.");
+          return data;
+        }finally{URL.revokeObjectURL(url)}
+      }
       if(logoFile)logo=await compressImage(logoFile,"Website Logo");
+      if(splashFile)splash=await compressSplash(splashFile);
       if(appLogoFile){
         appIcon512=await makePwaIcon(appLogoFile,"App Icon",512);
         appIcon192=await makePwaIcon(appLogoFile,"App Icon",192);
@@ -318,11 +342,12 @@ export default function Admin(){
         appIcon,
         appIcon192,
         appIcon512,
+        splash,
         updatedAt:serverTimestamp()
       },{merge:true});
-      setLogoFile(null);setAppLogoFile(null);
-      setLogoPreview(logo);setAppLogoPreview(appIcon512||appIcon);
-      try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify({logo,appIcon:appIcon512||appIcon}))}catch(e){}
+      setLogoFile(null);setAppLogoFile(null);setSplashFile(null);
+      setLogoPreview(logo);setAppLogoPreview(appIcon512||appIcon);setSplashPreview(splash);
+      try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify({logo,appIcon:appIcon512||appIcon,splash}))}catch(e){}
       alert("Dono logo images save ho gayi.");
     }catch(e){setError(e.message)}
   }
@@ -381,7 +406,7 @@ export default function Admin(){
 
     {tab==="transactions"&&<div className="adminList"><div className="listHead"><h3>🧾 All Wallet / Payment Transactions</h3><span>{transactions.length}</span></div>{transactions.map(x=><div className="adminRow" key={x.id}><span><b>{x.type} • ₹{x.amount}</b><small>UID: {x.uid}</small><small>Profile: {x.profileId||"-"} • UTR: {x.utr||"-"}</small><small>{x.createdAt?.toDate?.()?.toLocaleString?.()||""}</small></span></div>)}</div>}
 
-    {tab==="settings"&&<><form className="adminBox" onSubmit={savePages}><h3>📄 Website Pages</h3><p>About, Contact, Privacy Policy aur Terms & Conditions ka text yahin se likhein/update karein.</p><label>About<textarea className="adminInput pageEditor" rows="7" value={pages.about} onChange={e=>setPages({...pages,about:e.target.value})}/></label><label>Contact<textarea className="adminInput pageEditor" rows="7" value={pages.contact} onChange={e=>setPages({...pages,contact:e.target.value})}/></label><label>Privacy Policy<textarea className="adminInput pageEditor" rows="9" value={pages.privacy} onChange={e=>setPages({...pages,privacy:e.target.value})}/></label><label>Terms & Conditions<textarea className="adminInput pageEditor" rows="9" value={pages.terms} onChange={e=>setPages({...pages,terms:e.target.value})}/></label><button className="primaryAction">💾 Website Pages Save →</button></form><form className="adminBox" onSubmit={savePayment}><h3>💳 UPI Payment Settings</h3><input className="adminInput" placeholder="UPI ID" value={upi} onChange={e=>setUpi(e.target.value)}/><label className="uploadBox">QR Image<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setQrFile(f);setQrPreview(URL.createObjectURL(f))}}}/></label>{qrPreview&&<div className="uploadPreview"><img src={qrPreview} alt="QR"/></div>}<button className="primaryAction">💾 Payment Save →</button></form><form className="adminBox" onSubmit={saveBranding}><h3>💍 Logo / App Icon</h3><p>Admin yahin se website logo aur App icon dono upload/change kar sakta hai.</p><label className="uploadBox">🌐 Website Logo<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f))}}}/><small>Header mein dikhne wala logo. Image automatically compress hogi.</small></label>{logoPreview&&<div className="uploadPreview"><img src={logoPreview} alt="Website logo"/></div>}<label className="uploadBox">📲 App Logo / Icon<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setAppLogoFile(f);setAppLogoPreview(URL.createObjectURL(f))}}}/><small>Install screen aur app branding ke liye icon. Square image best rahegi.</small></label>{appLogoPreview&&<div className="uploadPreview"><img src={appLogoPreview} alt="App logo"/></div>}<button className="primaryAction">💾 Logo Save →</button></form><form className="adminBox" onSubmit={saveAppearance}><h3>🖼️ Website Appearance</h3><label className="uploadBox">Wallpaper / Background<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setWallFile(f);setWallPreview(URL.createObjectURL(f))}}}/><small>Image automatically compress hogi.</small></label>{wallPreview&&<div className="uploadPreview"><img src={wallPreview} alt="Website wallpaper"/></div>}<div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+    {tab==="settings"&&<><form className="adminBox" onSubmit={savePages}><h3>📄 Website Pages</h3><p>About, Contact, Privacy Policy aur Terms & Conditions ka text yahin se likhein/update karein.</p><label>About<textarea className="adminInput pageEditor" rows="7" value={pages.about} onChange={e=>setPages({...pages,about:e.target.value})}/></label><label>Contact<textarea className="adminInput pageEditor" rows="7" value={pages.contact} onChange={e=>setPages({...pages,contact:e.target.value})}/></label><label>Privacy Policy<textarea className="adminInput pageEditor" rows="9" value={pages.privacy} onChange={e=>setPages({...pages,privacy:e.target.value})}/></label><label>Terms & Conditions<textarea className="adminInput pageEditor" rows="9" value={pages.terms} onChange={e=>setPages({...pages,terms:e.target.value})}/></label><button className="primaryAction">💾 Website Pages Save →</button></form><form className="adminBox" onSubmit={savePayment}><h3>💳 UPI Payment Settings</h3><input className="adminInput" placeholder="UPI ID" value={upi} onChange={e=>setUpi(e.target.value)}/><label className="uploadBox">QR Image<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setQrFile(f);setQrPreview(URL.createObjectURL(f))}}}/></label>{qrPreview&&<div className="uploadPreview"><img src={qrPreview} alt="QR"/></div>}<button className="primaryAction">💾 Payment Save →</button></form><form className="adminBox" onSubmit={saveBranding}><h3>💍 Logo / App Icon</h3><p>Admin yahin se website logo aur App icon dono upload/change kar sakta hai.</p><label className="uploadBox">🌐 Website Logo<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f))}}}/><small>Header mein dikhne wala logo. Image automatically compress hogi.</small></label>{logoPreview&&<div className="uploadPreview"><img src={logoPreview} alt="Website logo"/></div>}<label className="uploadBox">📲 App Logo / Icon<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setAppLogoFile(f);setAppLogoPreview(URL.createObjectURL(f))}}}/><small>Install screen aur app branding ke liye icon. Square image best rahegi.</small></label>{appLogoPreview&&<div className="uploadPreview"><img src={appLogoPreview} alt="App logo"/></div>}<label className="uploadBox">🖥️ App Opening Image / Splash<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setSplashFile(f);setSplashPreview(URL.createObjectURL(f))}}}/><small>App open hote waqt ye image poori screen par dikhegi. Portrait image best rahegi.</small></label>{splashPreview&&<div className="uploadPreview"><img src={splashPreview} alt="App opening image"/></div>}<button className="primaryAction">💾 Logo & Opening Image Save →</button></form><form className="adminBox" onSubmit={saveAppearance}><h3>🖼️ Website Appearance</h3><label className="uploadBox">Wallpaper / Background<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setWallFile(f);setWallPreview(URL.createObjectURL(f))}}}/><small>Image automatically compress hogi.</small></label>{wallPreview&&<div className="uploadPreview"><img src={wallPreview} alt="Website wallpaper"/></div>}<div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
   <button className="primaryAction" style={{flex:"1 1 220px"}}>💾 Appearance Save →</button>
   {wallPreview&&<button type="button" className="backAction" style={{flex:"1 1 180px",marginTop:0,color:"#b42318",background:"#fff1f2"}} onClick={deleteAppearance}>❌ Delete Wallpaper</button>}
 </div></form><form className="adminBox" onSubmit={saveSocial}><h3>📲 Social Links</h3><input className="adminInput" placeholder="WhatsApp" value={social.whatsapp} onChange={e=>setSocial({...social,whatsapp:e.target.value})}/><input className="adminInput" placeholder="Facebook" value={social.facebook} onChange={e=>setSocial({...social,facebook:e.target.value})}/><input className="adminInput" placeholder="Instagram" value={social.instagram} onChange={e=>setSocial({...social,instagram:e.target.value})}/><button className="primaryAction">💾 Social Save →</button></form></>}
