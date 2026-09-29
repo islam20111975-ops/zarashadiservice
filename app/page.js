@@ -14,7 +14,7 @@ export default function Home(){
   const [showInstallGate,setShowInstallGate]=useState(true);
   const [loading,setLoading]=useState(false);
   const [wallpaper,setWallpaper]=useState("");
-  const [branding,setBranding]=useState(()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");return cached&&typeof cached==="object"?{logo:cached.logo||"",appIcon:cached.appIcon||""}:{logo:"",appIcon:""}}catch(e){return {logo:"",appIcon:""}}});
+  const [branding,setBranding]=useState(()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");return cached&&typeof cached==="object"?{logo:cached.logo||"",appIcon:cached.appIcon||"/api/pwa-icon?size=512"}:{logo:"",appIcon:"/api/pwa-icon?size=512"}}catch(e){return {logo:"",appIcon:"/api/pwa-icon?size=512"}}});
   const [social,setSocial]=useState({whatsapp:"",facebook:"",instagram:""});
   const [user,setUser]=useState(null),[loginBusy,setLoginBusy]=useState(false),[loginError,setLoginError]=useState("");
   const router=useRouter();
@@ -51,7 +51,7 @@ export default function Home(){
     }
     alert("Install option browser ke menu se use karein. Install complete hone ke baad ye screen khud hat jayegi aur Home Page khul jayega.");
   }
-  useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});(async()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");if(cached?.logo||cached?.appIcon){const b={logo:cached.logo||"",appIcon:cached.appIcon||""};setBranding(b);if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}catch(e){} getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){const b={logo:s.data().logo||"",appIcon:s.data().appIcon||""};setBranding(b);try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify(b))}catch(e){} if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}).catch(()=>{})})();getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
+  useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});(async()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");if(cached?.logo||cached?.appIcon){const b={logo:cached.logo||"",appIcon:cached.appIcon||"/api/pwa-icon?size=512"};setBranding(b);if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}catch(e){} getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){const b={logo:s.data().logo||"",appIcon:s.data().appIcon||"/api/pwa-icon?size=512"};setBranding(b);try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify(b))}catch(e){} if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}).catch(()=>{})})();getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
   useEffect(()=>{
     let cancelled=false;
     async function loadSlider(){
@@ -97,7 +97,7 @@ export default function Home(){
       {showInstallGate&&<div className="zaraInstallGate" role="dialog" aria-modal="true" aria-labelledby="zaraInstallTitle">
         <div className="zaraInstallGlow zaraGlowOne"></div><div className="zaraInstallGlow zaraGlowTwo"></div>
         <div className="zaraInstallCard">
-          <div className="zaraInstallLogo">{branding.appIcon?<img src={branding.appIcon} alt="Zara Nikah App" />:<span>💍</span>}</div>
+          <div className="zaraInstallLogo"><img src={branding.appIcon||"/api/pwa-icon?size=512"} alt="Zara Nikah App" /></div>
           <div className="zaraInstallBrand">ZARA NIKAH <small>SERVICE</small></div>
           <div className="zaraInstallBadge">✓ VERIFIED NIKAH SERVICE</div>
           <h1 id="zaraInstallTitle">📲 पहले App Install करें</h1>
