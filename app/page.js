@@ -23,15 +23,18 @@ export default function Home(){
   useEffect(()=>{
     const standalone=window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
     if(standalone) setShowInstallGate(false);
-    const handler=e=>{e.preventDefault();setInstallPrompt(e)};
-    const installed=()=>{setInstallPrompt(null);setShowInstallGate(false)};
+    const handler=e=>{e.preventDefault();window.__zaraInstallPrompt=e;setInstallPrompt(e)};
+    const ready=()=>{if(window.__zaraInstallPrompt)setInstallPrompt(window.__zaraInstallPrompt)};
+    const installed=()=>{window.__zaraInstallPrompt=null;setInstallPrompt(null);setShowInstallGate(false)};
     window.addEventListener("beforeinstallprompt",handler);
-    window.addEventListener("appinstalled",installed);
-    return()=>{window.removeEventListener("beforeinstallprompt",handler);window.removeEventListener("appinstalled",installed)};
+    window.addEventListener("zara-install-ready",ready);
+    ready();
+    return()=>{window.removeEventListener("beforeinstallprompt",handler);window.removeEventListener("zara-install-ready",ready);window.removeEventListener("appinstalled",installed)};
   },[]);
   async function installApp(){
-    if(installPrompt){
-      try{installPrompt.prompt();await installPrompt.userChoice;setInstallPrompt(null)}catch(e){}
+    const promptEvent=installPrompt||window.__zaraInstallPrompt;
+    if(promptEvent){
+      try{promptEvent.prompt();await promptEvent.userChoice;window.__zaraInstallPrompt=null;setInstallPrompt(null)}catch(e){}
       return;
     }
     alert("Chrome ke ⋮ menu me “Install app” ya “Add to Home screen” select karein. Install hone ke baad Zara Nikah kholte hi Home Page dikhega.");
