@@ -311,22 +311,40 @@ export default function Admin(){
       }
       async function compressSplash(file){
         if(!file)return "";
-        if(!file.type.startsWith("image/")||file.size>8*1024*1024)throw new Error("App Opening Image 8 MB se chhoti honi chahiye.");
+        if(!file.type.startsWith("image/"))throw new Error("Sirf image upload karein.");
+        if(file.size>25*1024*1024)throw new Error("Image file 25 MB se chhoti honi chahiye.");
         const url=URL.createObjectURL(file);
         try{
           const img=new Image();img.src=url;
           await new Promise((res,rej)=>{img.onload=res;img.onerror=rej});
+          // Kisi bhi width/height/ratio ki image ko standard full-screen
+          // portrait canvas me automatically set karein.
+          const targetW=1080,targetH=1920;
           const canvas=document.createElement("canvas");
-          const scale=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));
-          canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
-          canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+          canvas.width=targetW;canvas.height=targetH;
           const ctx=canvas.getContext("2d");
-          ctx.fillStyle="#ffffff";
-          ctx.fillRect(0,0,canvas.width,canvas.height);
-          ctx.drawImage(img,0,0,canvas.width,canvas.height);
-          let q=.78,data=canvas.toDataURL("image/jpeg",q);
-          while(data.length>500000&&q>.35){q-=.06;data=canvas.toDataURL("image/jpeg",q)}
-          if(data.length>500000)throw new Error("App Opening Image bahut badi hai. Chhoti image upload karein.");
+          if(!ctx)throw new Error("Image processor available nahi hai.");
+          // Cover resize: image ko stretch nahi karna, proportion same rakhein.
+          const scale=Math.max(targetW/img.naturalWidth,targetH/img.naturalHeight);
+          const drawW=Math.max(1,Math.round(img.naturalWidth*scale));
+          const drawH=Math.max(1,Math.round(img.naturalHeight*scale));
+          const x=Math.round((targetW-drawW)/2);
+          const y=Math.round((targetH-drawH)/2);
+          // Har ratio ki image ko screen-fill banane ke liye centre crop.
+          ctx.fillStyle="#0b0714";
+          ctx.fillRect(0,0,targetW,targetH);
+          ctx.drawImage(img,x,y,drawW,drawH);
+          // File size bhi automatically compress hota rahe.
+          let q=.82,data=canvas.toDataURL("image/jpeg",q);
+          while(data.length>500000&&q>.30){
+            q-=.06;
+            data=canvas.toDataURL("image/jpeg",q);
+          }
+          if(data.length>500000){
+            q=.24;
+            data=canvas.toDataURL("image/jpeg",q);
+          }
+          if(data.length>500000)throw new Error("Image process nahi ho paayi. Thodi chhoti file try karein.");
           return data;
         }finally{URL.revokeObjectURL(url)}
       }
@@ -348,7 +366,7 @@ export default function Admin(){
       setLogoFile(null);setAppLogoFile(null);setSplashFile(null);
       setLogoPreview(logo);setAppLogoPreview(appIcon512||appIcon);setSplashPreview(splash);
       try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify({logo,appIcon:appIcon512||appIcon,splash}))}catch(e){}
-      alert("Dono logo images save ho gayi.");
+      alert("Logo aur App Opening Image save ho gayi.");
     }catch(e){setError(e.message)}
   }
 
@@ -406,7 +424,7 @@ export default function Admin(){
 
     {tab==="transactions"&&<div className="adminList"><div className="listHead"><h3>🧾 All Wallet / Payment Transactions</h3><span>{transactions.length}</span></div>{transactions.map(x=><div className="adminRow" key={x.id}><span><b>{x.type} • ₹{x.amount}</b><small>UID: {x.uid}</small><small>Profile: {x.profileId||"-"} • UTR: {x.utr||"-"}</small><small>{x.createdAt?.toDate?.()?.toLocaleString?.()||""}</small></span></div>)}</div>}
 
-    {tab==="settings"&&<><form className="adminBox" onSubmit={savePages}><h3>📄 Website Pages</h3><p>About, Contact, Privacy Policy aur Terms & Conditions ka text yahin se likhein/update karein.</p><label>About<textarea className="adminInput pageEditor" rows="7" value={pages.about} onChange={e=>setPages({...pages,about:e.target.value})}/></label><label>Contact<textarea className="adminInput pageEditor" rows="7" value={pages.contact} onChange={e=>setPages({...pages,contact:e.target.value})}/></label><label>Privacy Policy<textarea className="adminInput pageEditor" rows="9" value={pages.privacy} onChange={e=>setPages({...pages,privacy:e.target.value})}/></label><label>Terms & Conditions<textarea className="adminInput pageEditor" rows="9" value={pages.terms} onChange={e=>setPages({...pages,terms:e.target.value})}/></label><button className="primaryAction">💾 Website Pages Save →</button></form><form className="adminBox" onSubmit={savePayment}><h3>💳 UPI Payment Settings</h3><input className="adminInput" placeholder="UPI ID" value={upi} onChange={e=>setUpi(e.target.value)}/><label className="uploadBox">QR Image<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setQrFile(f);setQrPreview(URL.createObjectURL(f))}}}/></label>{qrPreview&&<div className="uploadPreview"><img src={qrPreview} alt="QR"/></div>}<button className="primaryAction">💾 Payment Save →</button></form><form className="adminBox" onSubmit={saveBranding}><h3>💍 Logo / App Icon</h3><p>Admin yahin se website logo aur App icon dono upload/change kar sakta hai.</p><label className="uploadBox">🌐 Website Logo<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f))}}}/><small>Header mein dikhne wala logo. Image automatically compress hogi.</small></label>{logoPreview&&<div className="uploadPreview"><img src={logoPreview} alt="Website logo"/></div>}<label className="uploadBox">📲 App Logo / Icon<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setAppLogoFile(f);setAppLogoPreview(URL.createObjectURL(f))}}}/><small>Install screen aur app branding ke liye icon. Square image best rahegi.</small></label>{appLogoPreview&&<div className="uploadPreview"><img src={appLogoPreview} alt="App logo"/></div>}<label className="uploadBox">🖥️ App Opening Image / Splash<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setSplashFile(f);setSplashPreview(URL.createObjectURL(f))}}}/><small>App open hote waqt ye image poori screen par dikhegi. Portrait image best rahegi.</small></label>{splashPreview&&<div className="uploadPreview"><img src={splashPreview} alt="App opening image"/></div>}<button className="primaryAction">💾 Logo & Opening Image Save →</button></form><form className="adminBox" onSubmit={saveAppearance}><h3>🖼️ Website Appearance</h3><label className="uploadBox">Wallpaper / Background<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setWallFile(f);setWallPreview(URL.createObjectURL(f))}}}/><small>Image automatically compress hogi.</small></label>{wallPreview&&<div className="uploadPreview"><img src={wallPreview} alt="Website wallpaper"/></div>}<div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+    {tab==="settings"&&<><form className="adminBox" onSubmit={savePages}><h3>📄 Website Pages</h3><p>About, Contact, Privacy Policy aur Terms & Conditions ka text yahin se likhein/update karein.</p><label>About<textarea className="adminInput pageEditor" rows="7" value={pages.about} onChange={e=>setPages({...pages,about:e.target.value})}/></label><label>Contact<textarea className="adminInput pageEditor" rows="7" value={pages.contact} onChange={e=>setPages({...pages,contact:e.target.value})}/></label><label>Privacy Policy<textarea className="adminInput pageEditor" rows="9" value={pages.privacy} onChange={e=>setPages({...pages,privacy:e.target.value})}/></label><label>Terms & Conditions<textarea className="adminInput pageEditor" rows="9" value={pages.terms} onChange={e=>setPages({...pages,terms:e.target.value})}/></label><button className="primaryAction">💾 Website Pages Save →</button></form><form className="adminBox" onSubmit={savePayment}><h3>💳 UPI Payment Settings</h3><input className="adminInput" placeholder="UPI ID" value={upi} onChange={e=>setUpi(e.target.value)}/><label className="uploadBox">QR Image<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setQrFile(f);setQrPreview(URL.createObjectURL(f))}}}/></label>{qrPreview&&<div className="uploadPreview"><img src={qrPreview} alt="QR"/></div>}<button className="primaryAction">💾 Payment Save →</button></form><form className="adminBox" onSubmit={saveBranding}><h3>💍 Logo / App Icon</h3><p>Admin yahin se website logo aur App icon dono upload/change kar sakta hai.</p><label className="uploadBox">🌐 Website Logo<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f))}}}/><small>Header mein dikhne wala logo. Image automatically compress hogi.</small></label>{logoPreview&&<div className="uploadPreview"><img src={logoPreview} alt="Website logo"/></div>}<label className="uploadBox">📲 App Logo / Icon<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setAppLogoFile(f);setAppLogoPreview(URL.createObjectURL(f))}}}/><small>Install screen aur app branding ke liye icon. Square image best rahegi.</small></label>{appLogoPreview&&<div className="uploadPreview"><img src={appLogoPreview} alt="App logo"/></div>}<label className="uploadBox">🖥️ App Opening Image / Splash<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setSplashFile(f);setSplashPreview(URL.createObjectURL(f))}}}/><small>Kisi bhi size ya ratio ki image upload karein. System use automatically full-screen 1080×1920 format me resize aur compress karega.</small></label>{splashPreview&&<div className="uploadPreview"><img src={splashPreview} alt="App opening image"/></div>}<button className="primaryAction">💾 Logo & Opening Image Save →</button></form><form className="adminBox" onSubmit={saveAppearance}><h3>🖼️ Website Appearance</h3><label className="uploadBox">Wallpaper / Background<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setWallFile(f);setWallPreview(URL.createObjectURL(f))}}}/><small>Image automatically compress hogi.</small></label>{wallPreview&&<div className="uploadPreview"><img src={wallPreview} alt="Website wallpaper"/></div>}<div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
   <button className="primaryAction" style={{flex:"1 1 220px"}}>💾 Appearance Save →</button>
   {wallPreview&&<button type="button" className="backAction" style={{flex:"1 1 180px",marginTop:0,color:"#b42318",background:"#fff1f2"}} onClick={deleteAppearance}>❌ Delete Wallpaper</button>}
 </div></form><form className="adminBox" onSubmit={saveSocial}><h3>📲 Social Links</h3><input className="adminInput" placeholder="WhatsApp" value={social.whatsapp} onChange={e=>setSocial({...social,whatsapp:e.target.value})}/><input className="adminInput" placeholder="Facebook" value={social.facebook} onChange={e=>setSocial({...social,facebook:e.target.value})}/><input className="adminInput" placeholder="Instagram" value={social.instagram} onChange={e=>setSocial({...social,instagram:e.target.value})}/><button className="primaryAction">💾 Social Save →</button></form></>}
