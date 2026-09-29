@@ -38,12 +38,16 @@ export default function AppAccessGate({children}){
     const applyIcon=()=>{try{const cached=JSON.parse(localStorage.getItem("zaraBrandingCache")||"null");if(cached?.appIcon)setIcon(cached.appIcon)}catch(e){}};
     const before=e=>{e.preventDefault();window.__zaraInstallPrompt=e;setPrompt(e);setCanInstall(true)};
     const ready=()=>{if(window.__zaraInstallPrompt){setPrompt(window.__zaraInstallPrompt);setCanInstall(true)}};
-    const onInstalled=()=>{\n      try{localStorage.setItem("zaraAppInstalled","1")}catch(e){}\n      window.__zaraInstallPrompt=null;setPrompt(null);setInstalled(true);setStandalone(true);setSplash(true);setTimeout(()=>setSplash(false),3000);\n    };
+    const onInstalled=()=>{
+      try{localStorage.setItem("zaraAppInstalled","1")}catch(e){}
+      window.__zaraInstallPrompt=null;setPrompt(null);setInstalled(true);setStandalone(true);setSplash(true);setTimeout(()=>setSplash(false),3000);
+    };
     window.addEventListener("beforeinstallprompt",before);
     window.addEventListener("zara-install-ready",ready);
     window.addEventListener("zara-branding-updated",applyIcon);
     window.addEventListener("appinstalled",onInstalled);
-    ready();applyIcon();\n    try{if(localStorage.getItem("zaraAppInstalled")==="1") setInstalled(true)}catch(e){}
+    ready();applyIcon();
+    try{if(localStorage.getItem("zaraAppInstalled")==="1") setInstalled(true)}catch(e){}
     return()=>{
       window.removeEventListener("beforeinstallprompt",before);
       window.removeEventListener("zara-install-ready",ready);
@@ -79,7 +83,9 @@ export default function AppAccessGate({children}){
 
   if(checking) return <div className="zaraBootScreen" aria-hidden="true"/>;
 
-  let rememberedInstalled=false;\n  try{rememberedInstalled=localStorage.getItem("zaraAppInstalled")==="1"}catch(e){}\n  if(!standalone && !installed && !rememberedInstalled) return (
+  let rememberedInstalled=false;
+  try{rememberedInstalled=localStorage.getItem("zaraAppInstalled")==="1"}catch(e){}
+  if(!standalone && !installed && !rememberedInstalled) return (
     <div className="zaraInstallGate" role="dialog" aria-modal="true" aria-labelledby="zaraInstallTitle">
       <div className="zaraInstallGlow zaraGlowOne"/><div className="zaraInstallGlow zaraGlowTwo"/>
       <div className="zaraInstallCard">
