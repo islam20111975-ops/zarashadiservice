@@ -93,7 +93,7 @@ function BiodataAdminPage(){
 
   async function save(e){
     e.preventDefault();setError("");setSuccess("");
-    let id=form.id.trim(),phone=form.phone.replace(/\D/g,"");
+    let id=String(form.id ?? "").trim(),phone=String(form.phone ?? "").replace(/\D/g,"");
     if(!id){
       const numericIds=profiles.map(p=>parseInt(p.id,10)).filter(Number.isFinite);
       id=String(Math.max(0,...numericIds)+1).padStart(3,"0");
@@ -111,10 +111,10 @@ function BiodataAdminPage(){
       // Core biodata save ko slider se alag rakho.
       const batch=writeBatch(db);
 
-      batch.set(ref,{profileId:id,gender:form.gender||"",photos,photo:photos[0]||"",status:"active",updatedAt:serverTimestamp()},{merge:true});
+      batch.set(ref,{profileId:id,gender:String(form.gender||""),photos,photo:photos[0]||"",status:"active",updatedAt:serverTimestamp()},{merge:true});
 
       batch.set(doc(db,"profileBiodataPrivate",id),{
-        profileId:id,gender:form.gender||"",name:form.name.trim(),address:form.address.trim(),age:ageText?Number(ageText):"",income:form.income.trim(),
+        profileId:id,gender:String(form.gender||""),name:String(form.name??"").trim(),address:String(form.address??"").trim(),age:ageText?Number(ageText):"",income:String(form.income??"").trim(),
         maritalStatus:String(form.maritalStatus??"").trim(),height:String(form.height??"").trim(),dob:String(form.dob??"").trim(),birthPlace:String(form.birthPlace??"").trim(),
         education:String(form.education??"").trim(),occupation:String(form.occupation??"").trim(),company:String(form.company??"").trim(),city:String(form.city??"").trim(),
         district:String(form.district??"").trim(),state:String(form.state??"").trim(),nativePlace:String(form.nativePlace??"").trim(),religion:String(form.religion??"").trim(),
