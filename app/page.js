@@ -14,6 +14,7 @@ export default function Home(){
   const [showInstallGate,setShowInstallGate]=useState(true);
   const [loading,setLoading]=useState(false);
   const [wallpaper,setWallpaper]=useState("");
+  const [branding,setBranding]=useState({logo:"",appIcon:""});
   const [social,setSocial]=useState({whatsapp:"",facebook:"",instagram:""});
   const [user,setUser]=useState(null),[loginBusy,setLoginBusy]=useState(false),[loginError,setLoginError]=useState("");
   const router=useRouter();
@@ -35,7 +36,7 @@ export default function Home(){
     }
     alert("Chrome ke ⋮ menu me “Install app” ya “Add to Home screen” select karein. Install hone ke baad Zara Nikah kholte hi Home Page dikhega.");
   }
-  useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
+  useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){const b={logo:s.data().logo||"",appIcon:s.data().appIcon||""};setBranding(b);if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}).catch(()=>{});getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
   useEffect(()=>{
     let cancelled=false;
     async function loadSlider(){
@@ -81,7 +82,7 @@ export default function Home(){
       {showInstallGate&&<div className="zaraInstallGate" role="dialog" aria-modal="true" aria-labelledby="zaraInstallTitle">
         <div className="zaraInstallGlow zaraGlowOne"></div><div className="zaraInstallGlow zaraGlowTwo"></div>
         <div className="zaraInstallCard">
-          <div className="zaraInstallLogo"><span>💍</span></div>
+          <div className="zaraInstallLogo">{branding.appIcon?<img src={branding.appIcon} alt="Zara Nikah App" />:<span>💍</span>}</div>
           <div className="zaraInstallBrand">ZARA NIKAH <small>SERVICE</small></div>
           <div className="zaraInstallBadge">✓ VERIFIED NIKAH SERVICE</div>
           <h1 id="zaraInstallTitle">📲 पहले App Install करें</h1>
@@ -97,7 +98,7 @@ export default function Home(){
       </div>}
       <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"url("+wallpaper+")","--site-wallpaper":"url("+wallpaper+")"}:undefined}>
         <header className="siteHeader"><div className="headerInner">
-          <button className="logo" onClick={()=>router.push("/")}><span className="logoMark logoMarkBrand" aria-hidden="true"><span className="logoZ">Z</span><span className="logoN">N</span></span><span className="brand3d"><strong>ZARA NIKAH</strong><small>SERVICE</small></span></button>
+          <button className="logo" onClick={()=>router.push("/")}><span className="logoMark logoMarkBrand" aria-hidden="true">{branding.logo?<img src={branding.logo} alt="Zara Nikah logo" />:<><span className="logoZ">Z</span><span className="logoN">N</span></>}</span><span className="brand3d"><strong>ZARA NIKAH</strong><small>SERVICE</small></span></button>
           <nav className="mainNav" aria-label="Main navigation"><a href="/islamic-calendar">🌙 Islamic Calendar</a></nav>
           <div className="headerActions"><span className="secureChip">✓ Verified Service</span><button className="headerLogin" disabled={loginBusy} onClick={async()=>{setLoginError("");if(user){router.push(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account");return}setLoginBusy(true);try{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});const result=await signInWithPopup(auth,p);router.push(result.user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account")}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}finally{setLoginBusy(false)}}}>{loginBusy?"Login...":user?(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"🔐 Admin Dashboard":"👤 My Profile"):"🔐 Login"}</button></div>
         </div></header>{loginError&&<div className="errorBox homeLoginError">{loginError}</div>}
