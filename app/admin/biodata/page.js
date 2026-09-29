@@ -4,7 +4,7 @@ import {useEffect,useState} from "react";
 import {Suspense} from "react";
 import {useRouter,useSearchParams} from "next/navigation";
 import {GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signInWithRedirect} from "firebase/auth";
-import {collection,deleteDoc,doc,getDoc,onSnapshot,setDoc,serverTimestamp,writeBatch} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,setDoc,serverTimestamp,writeBatch} from "firebase/firestore";
 import {auth,db} from "../../../lib/firebase";
 
 const ADMIN="ngogrant454@gmail.com";
@@ -92,7 +92,7 @@ function BiodataAdminPage(){
     setFiles(fs);setPreview(fs.map(f=>URL.createObjectURL(f)));setError("");
   }
 
-  function resetForm(){setForm(empty);setFiles([]);setPreview([]);router.replace("/admin/biodata")}
+  function resetForm(){setForm({...empty});setFiles([]);setPreview([]);setError("");setSuccess("");router.replace("/admin/biodata")}
 
   async function save(e){
     e?.preventDefault?.();
@@ -119,6 +119,13 @@ function BiodataAdminPage(){
       return;
     }
 
+    const existing=profiles.find(p=>String(p.id)===id);
+    const editing=Boolean(params.get("edit"));
+    if(existing && !editing){
+      setError("❌ Ye Profile ID pehle se maujood hai. Naya biodata ke liye alag Profile ID dein.");
+      return;
+    }
+
     const phone=String(form.phone??"").replace(/\D/g,"").slice(0,10);
     // Sabhi biodata fields optional hain. Age/phone ke incomplete values bhi save ko block nahi karenge.
     const ageRaw=String(form.age??"").trim();
@@ -129,7 +136,6 @@ function BiodataAdminPage(){
       setSuccess("⏳ Saving...");
 
       let photos=[];
-      const existing=profiles.find(p=>String(p.id)===id);
       if(files.length){
         photos=await Promise.all(files.map(f=>imageToDataUrl(f)));
       }else{
@@ -405,7 +411,7 @@ function BiodataAdminPage(){
         </div>
         <div style={{marginTop:18}}>
           <h3>📱 Contact</h3>
-          <div className="adminBox" style={{margin:0,padding:15}}>Mobile: <b>{adminView.contact.phone||adminView.biodata.phone||"Not entered"}</b></div>
+          {(adminView.contact.phone||adminView.biodata.phone)&&<div className="adminBox" style={{margin:0,padding:15}}>Mobile: <b>{adminView.contact.phone||adminView.biodata.phone}</b></div>}
           <h3 style={{marginTop:22}}>📋 Biodata Details</h3>
           <div style={{display:"grid",gap:9}}>
             {Object.entries({...adminView.biodata,gender:adminView.biodata.gender||adminView.profile.gender})
