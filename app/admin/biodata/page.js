@@ -136,7 +136,9 @@ function BiodataAdminPage(){
         profileId:id,phone,updatedAt:serverTimestamp()
       },{merge:true});
       await batch.commit();
-      alert(editing?"Biodata update ho gaya.":"Naya Biodata save ho gaya.");
+      setSaving(false);
+      setError("");
+      alert(editing ? "SUCCESS — Biodata successfully update ho gaya.\n\nProfile ID: " + id : "SUCCESS — Naya Biodata successfully save ho gaya.\n\nProfile ID: " + id);
       resetForm();
     }catch(e){setError("Biodata save nahi hua: "+e.message)}finally{setSaving(false)}
   }
