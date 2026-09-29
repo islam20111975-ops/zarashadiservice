@@ -8,7 +8,7 @@ export const metadata={
  openGraph:{title:"Zara Nikah Service",description:"Aapka Rishta, Hamari Zimmedari",type:"website",url:"https://zarashadiservice.vercel.app/"},
  twitter:{card:"summary",title:"Zara Nikah Service",description:"Aapka Rishta, Hamari Zimmedari"},
  icons:{icon:"/api/pwa-icon?size=192",apple:"/api/pwa-icon?size=192"},
- manifest:"/manifest.webmanifest"
+ manifest:"/manifest.webmanifest?v=20260929-3"
 };
 
-export default function RootLayout({children}){return <html lang="hi"><body>{children}<script dangerouslySetInnerHTML={{__html:`if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))}`}} /></body></html>}
+export default function RootLayout({children}){return <html lang="hi"><body>{children}<script dangerouslySetInnerHTML={{__html:`if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").then(r=>r.update()).catch(()=>{}))}`}} /></body></html>}
