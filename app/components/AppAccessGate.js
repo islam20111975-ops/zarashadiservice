@@ -6,8 +6,8 @@ import {usePathname} from "next/navigation";
 
 const ADMIN_PATH="/admin";
 const ICON="/api/pwa-icon?size=512";
-const INSTALLED_KEY="zaraAppInstalledV2";
-const INSTALLED_COOKIE="zaraAppInstalledV2=1";
+const INSTALLED_KEY="zaraAppInstalledV3";
+const INSTALLED_COOKIE="zaraAppInstalledV3=1";
 
 function markInstalled(){
   try{localStorage.setItem(INSTALLED_KEY,"1")}catch(e){}
@@ -15,7 +15,7 @@ function markInstalled(){
 }
 
 function hasInstalledMark(){
-  try{if(localStorage.getItem(INSTALLED_KEY)==="1"||localStorage.getItem("zaraAppInstalled")==="1") return true}catch(e){}
+  try{if(localStorage.getItem(INSTALLED_KEY)==="1") return true}catch(e){}
   try{return document.cookie.split(";").some(v=>v.trim()===INSTALLED_COOKIE)}catch(e){return false}
 }
 
@@ -87,7 +87,7 @@ export default function AppAccessGate({children}){
       const choice=await event.userChoice;
       window.__zaraInstallPrompt=null;setPrompt(null);setCanInstall(false);
       if(choice?.outcome==="accepted"){
-        try{localStorage.setItem("zaraAppInstalledV2","1")}catch(e){}
+        try{localStorage.setItem("zaraAppInstalledV3","1")}catch(e){}
         setInstalled(true);
         setStandalone(true);
       }
