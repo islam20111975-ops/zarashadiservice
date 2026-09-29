@@ -112,10 +112,14 @@ function BiodataAdminPage(){
         const sliderImage=await dataUrlToSlider(photos[0]);
         batch.set(doc(db,"homeSliderImages",id),{profileId:id,image:sliderImage,status:"active",updatedAt:serverTimestamp()},{merge:true});
       }
-      const sliderSettings=await getDoc(doc(db,"settings","homeSlider"));
-      const currentSliderIds=sliderSettings.exists()&&Array.isArray(sliderSettings.data().profileIds)?sliderSettings.data().profileIds:[];
-      const nextSliderIds=[...new Set([...currentSliderIds,id])];
-      batch.set(doc(db,"settings","homeSlider"),{profileIds:nextSliderIds,updatedAt:serverTimestamp()},{merge:true});
+      // Home slider settings are only touched when a photo exists.
+      // A completely blank biodata must still save without depending on slider data.
+      if(photos[0]){
+        const sliderSettings=await getDoc(doc(db,"settings","homeSlider"));
+        const currentSliderIds=sliderSettings.exists()&&Array.isArray(sliderSettings.data().profileIds)?sliderSettings.data().profileIds:[];
+        const nextSliderIds=[...new Set([...currentSliderIds,id])];
+        batch.set(doc(db,"settings","homeSlider"),{profileIds:nextSliderIds,updatedAt:serverTimestamp()},{merge:true});
+      }
       batch.set(doc(db,"profileBiodataPrivate",id),{
         profileId:id,gender:form.gender||"",name:form.name.trim(),address:form.address.trim(),age:form.age.trim()?Number(form.age):"",income:form.income.trim(),
         maritalStatus:form.maritalStatus.trim(),height:form.height.trim(),dob:form.dob.trim(),birthPlace:form.birthPlace.trim(),
