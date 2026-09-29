@@ -1061,3 +1061,24 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 .zaraPwaSplashBrand small{display:block;font-size:11px;letter-spacing:4px;margin-top:2px}
 @media(max-width:600px){.zaraInstallGate{padding:12px}.zaraInstallGate .zaraInstallCard{padding:22px 15px;border-radius:24px}.zaraInstallGate .zaraInstallLogo{width:96px;height:96px}.zaraInstallGate h1{font-size:23px}.zaraInstallGate .zaraInstallBrand{font-size:21px}}
 .zaraBootScreen{position:fixed;inset:0;z-index:2147483647;background:#000}
+
+
+/* PUBLIC BIODATA SPACING */
+.biodataBox{text-align:left;margin-top:18px}
+.biodataSection{margin:16px 0;padding:16px;border:1px solid #eee3f5;border-radius:18px;background:linear-gradient(145deg,#fff,#faf7ff)}
+.biodataSection h3{margin:0 0 12px;font-size:15px;color:#5b21b6;line-height:1.4}
+.biodataRow{display:block;padding:10px 0;border-bottom:1px solid #f0eaf5;line-height:1.5}
+.biodataRow:last-child{border-bottom:0;padding-bottom:2px}
+.biodataRow span{display:block;margin-bottom:5px;font-size:12px;font-weight:800;color:#76687e}
+.biodataRow b{display:block;font-size:14px;color:#241b35;overflow-wrap:anywhere}
+.biodataTitle{font-size:18px;font-weight:900;text-align:center;margin:8px 0 16px;color:#4c1d95}
+.biodataBox .notice{margin:16px 0}
+.biodataBox .primaryAction{margin:4px 0 8px}
+@media(max-width:600px){
+  .biodataSection{padding:14px;margin:12px 0}
+  .biodataSection h3{font-size:14px}
+  .biodataRow{padding:9px 0}
+  .biodataRow span{font-size:11px;margin-bottom:4px}
+  .biodataRow b{font-size:14px}
+  .biodataTitle{font-size:17px;margin-bottom:12px}
+}
