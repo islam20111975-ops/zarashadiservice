@@ -54,7 +54,7 @@ function BiodataAdminPage(){
   const router=useRouter(),params=useSearchParams();
   const [user,setUser]=useState(undefined),[profiles,setProfiles]=useState([]),[form,setForm]=useState(empty);
   const [files,setFiles]=useState([]),[preview,setPreview]=useState([]),[search,setSearch]=useState("");
-  const [saving,setSaving]=useState(false),[error,setError]=useState(""),[adminView,setAdminView]=useState(null),[viewLoading,setViewLoading]=useState(false);
+  const [saving,setSaving]=useState(false),[error,setError]=useState(""),[success,setSuccess]=useState(""),[adminView,setAdminView]=useState(null),[viewLoading,setViewLoading]=useState(false);
 
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
   useEffect(()=>{
@@ -92,7 +92,7 @@ function BiodataAdminPage(){
   function resetForm(){setForm(empty);setFiles([]);setPreview([]);router.replace("/admin/biodata")}
 
   async function save(e){
-    e.preventDefault();setError("");
+    e.preventDefault();setError("");setSuccess("");
     let id=form.id.trim(),phone=form.phone.replace(/\D/g,"");
     if(!id){
       const numericIds=profiles.map(p=>parseInt(p.id,10)).filter(Number.isFinite);
@@ -138,8 +138,9 @@ function BiodataAdminPage(){
       await batch.commit();
       setSaving(false);
       setError("");
-      alert(editing ? "SUCCESS — Biodata successfully update ho gaya.\n\nProfile ID: " + id : "SUCCESS — Naya Biodata successfully save ho gaya.\n\nProfile ID: " + id);
+      setSuccess(editing ? "Biodata update ho gaya • Profile ID: " + id : "Naya Biodata save ho gaya • Profile ID: " + id);
       resetForm();
+      setTimeout(()=>setSuccess(""),5000);
     }catch(e){setError("Biodata save nahi hua: "+e.message)}finally{setSaving(false)}
   }
 
@@ -199,7 +200,7 @@ function BiodataAdminPage(){
 
   const filtered=profiles.filter(p=>(p.id+" "+p.gender+" "+(p.name||"")).toLowerCase().includes(search.toLowerCase())).sort((a,b)=>a.id.localeCompare(b.id));
   if(user===undefined)return <main><section className="admin cardPage"><h1>Loading...</h1></section></main>;
-  if(!user)return <main><section className="admin cardPage"><div className="adminIcon">🔐</div><h1>Admin Login</h1><p>Google se Admin login karein.</p><button className="primaryAction" onClick={login}>Google Login →</button>{error&&<div className="errorBox">{error}</div>}</section></main>;
+  if(!user)return <main><section className="admin cardPage"><div className="adminIcon">🔐</div><h1>Admin Login</h1><p>Google se Admin login karein.</p><button className="primaryAction" onClick={login}>Google Login →</button>{error&&<div className="errorBox">{error}</div>}{success&&<div className="successBox" style={{marginBottom:14,fontWeight:800}}>🎉 {success}</div>}</section></main>;
   if(user.email?.toLowerCase()!==ADMIN)return <main><section className="admin cardPage"><div className="adminIcon">🚫</div><h1>Access Denied</h1><button className="backAction" onClick={()=>auth.signOut()}>Logout</button></section></main>;
 
   return <main><section className="admin dashboardPage">
@@ -264,7 +265,7 @@ function BiodataAdminPage(){
       <textarea className="adminInput" rows="3" placeholder="Other Important Information" value={form.otherInfo} onChange={e=>setForm({...form,otherInfo:e.target.value})}/>
       <label className="uploadBox">📷 1–5 Photos<input type="file" accept="image/*" multiple onChange={chooseFiles}/><small>Photos compress hokar Firestore mein save hongi.</small></label>
       {preview.length>0&&<div className="photoPreviewGrid">{preview.map((s,i)=><img key={i} src={s} alt={"Preview "+(i+1)}/>)}</div>}
-      <div className="messageBox">{saving?"⏳ Biodata save ho raha hai...":form.id?"✏️ Changes save karne ke liye neeche <b>Save Biodata</b> dabayein.":"📝 Biodata bhar kar neeche <b>Save Biodata</b> dabayein. Save hone ke baad neeche <b>All Biodata</b> mein profile dikhegi."}</div><button type="submit" className="primaryAction" style={{width:"100%",marginTop:12,whiteSpace:"nowrap",minHeight:52}} disabled={saving}>{saving?"⏳ Saving...":"💾 Save Biodata"}</button>
+      <div className="messageBox">{saving?"⏳ Biodata save ho raha hai...":form.id?"✏️ Changes save karne ke liye neeche <b>Save Biodata</b> dabayein.":"📝 Biodata bhar kar neeche <b>Save Biodata</b> dabayein. Save hone ke baad neeche <b>All Biodata</b> mein profile dikhegi."}</div><button type="submit" className="primaryAction" style={{width:"100%",marginTop:12,whiteSpace:"nowrap",minHeight:52}} disabled={saving}>{saving?"⏳ Saving...":"💾 Save Biodata"}</button>{success&&<div className="successBox" style={{marginTop:10,textAlign:"center",fontWeight:800}}>🎉 {success}</div>}
     </form>
 
     <div className="adminList">
