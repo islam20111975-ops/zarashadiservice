@@ -72,10 +72,13 @@ export default function AppAccessGate({children}){
     }
     try{
       event.prompt();
-      await event.userChoice;
+      const choice=await event.userChoice;
       window.__zaraInstallPrompt=null;setPrompt(null);setCanInstall(false);
-      // Do not unlock the website here. The appinstalled event/standalone
-      // detection will unlock it only after the installation actually completes.
+      if(choice?.outcome==="accepted"){
+        try{localStorage.setItem("zaraAppInstalledV2","1")}catch(e){}
+        setInstalled(true);
+        setStandalone(true);
+      }
     }catch(e){}
   }
 
