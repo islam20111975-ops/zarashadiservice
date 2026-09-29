@@ -197,17 +197,50 @@ function BiodataAdminPage(){
 
   async function permanentlyDelete(p){
     if(!confirm("⚠️ Profile "+p.id+" ko PERMANENTLY DELETE karein? Biodata, photo aur mobile record delete ho jayega. Payment/access history delete nahi hogi."))return;
+
+    setError("");
+    setSuccess("");
+
     try{
-      await Promise.all([
-        deleteDoc(doc(db,"profiles",p.id)),
-        deleteDoc(doc(db,"profileBiodataPrivate",p.id)),
-        deleteDoc(doc(db,"profileContact",p.id)),
-        deleteDoc(doc(db,"homeSliderImages",p.id))
-      ]);
+      // Sab profile records ek hi atomic batch mein delete honge.
+      // Isse ek record delete aur doosra record bacha rehne ki problem nahi hogi.
+      const batch=writeBatch(db);
+
+      batch.delete(doc(db,"profiles",p.id));
+      batch.delete(doc(db,"profileBiodataPrivate",p.id));
+      batch.delete(doc(db,"profileContact",p.id));
+      batch.delete(doc(db,"homeSliderImages",p.id));
+
+      // Home slider ke profileIds se bhi ID hatao.
+      const sliderRef=doc(db,"settings","homeSlider");
+      const sliderSnap=await getDoc(sliderRef);
+      if(sliderSnap.exists()){
+        const currentIds=Array.isArray(sliderSnap.data().profileIds)
+          ? sliderSnap.data().profileIds.map(String)
+          : [];
+        const nextIds=currentIds.filter(x=>x!==String(p.id));
+        batch.set(sliderRef,{
+          profileIds:nextIds,
+          updatedAt:serverTimestamp()
+        },{merge:true});
+      }
+
+      await batch.commit();
+
+      // Delete ke baad public profile record verify karo.
+      const deletedProfile=await getDoc(doc(db,"profiles",p.id));
+      if(deletedProfile.exists()){
+        throw new Error("Profile Firestore se delete verify nahi hua.");
+      }
+
       if(params.get("edit")===p.id)resetForm();
       if(adminView?.id===p.id)setAdminView(null);
-      alert("Profile "+p.id+" permanently delete ho gaya.");
-    }catch(e){setError("Profile delete nahi hua: "+e.message)}
+
+      setSuccess("✅ SUCCESS — Profile "+p.id+" permanently delete ho gaya.");
+      setTimeout(()=>setSuccess(""),5000);
+    }catch(e){
+      setError("❌ Profile "+p.id+" delete nahi hua: "+(e?.message||"Unknown error"));
+    }
   }
 
   const filtered=profiles.filter(p=>(p.id+" "+p.gender+" "+(p.name||"")).toLowerCase().includes(search.toLowerCase())).sort((a,b)=>a.id.localeCompare(b.id));
