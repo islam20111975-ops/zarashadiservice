@@ -51,15 +51,12 @@ export default function AppAccessGate({children}){
 
   useEffect(()=>{
     if(admin || !standalone) return;
-    let cancelled=false;
-    try{
-      const shown=sessionStorage.getItem("zaraPwaSplashShown")==="1";
-      if(shown) return;
-      sessionStorage.setItem("zaraPwaSplashShown","1");
-    }catch(e){}
+
+    // Every time the installed PWA is opened, show the admin-managed
+    // full-screen opening image for exactly 3 seconds.
     setSplash(true);
-    const timer=setTimeout(()=>{if(!cancelled)setSplash(false)},1200);
-    return()=>{cancelled=true;clearTimeout(timer)};
+    const timer=setTimeout(()=>setSplash(false),3000);
+    return()=>clearTimeout(timer);
   },[admin,standalone]);
 
   async function install(){
