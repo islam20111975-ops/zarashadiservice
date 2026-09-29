@@ -53,8 +53,11 @@ export default function Home(){
         window.__zaraInstallPrompt=null;
         setInstallPrompt(null);
         if(choice?.outcome==="accepted"){
-          // Keep the gate until the browser confirms the PWA was actually installed.
-          // The appinstalled event will then open Home.
+          // Most browsers fire appinstalled. For browsers that do not, an accepted
+          // install prompt is still a successful install confirmation, so do not
+          // leave the user trapped on the gate forever.
+          setShowInstallGate(false);
+          window.location.href="/";
           return;
         }
       }catch(e){}
