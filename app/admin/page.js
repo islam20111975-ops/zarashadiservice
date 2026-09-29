@@ -365,7 +365,7 @@ export default function Admin(){
       },{merge:true});
       setLogoFile(null);setAppLogoFile(null);setSplashFile(null);
       setLogoPreview(logo);setAppLogoPreview(appIcon512||appIcon);setSplashPreview(splash);
-      try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify({logo,appIcon:appIcon512||appIcon,splash}))}catch(e){}
+      try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify({logo,appIcon:appIcon512||appIcon,splash}));window.dispatchEvent(new Event("zara-branding-updated"))}catch(e){}
       alert("Logo aur App Opening Image save ho gayi.");
     }catch(e){setError(e.message)}
   }
