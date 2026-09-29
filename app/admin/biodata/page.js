@@ -212,7 +212,7 @@ function BiodataAdminPage(){
       <textarea className="adminInput" rows="3" placeholder="Full Address" value={form.address} onChange={e=>setForm({...form,address:e.target.value})}/>
       <div className="formGrid">
         <input className="adminInput" placeholder="Mobile" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value.replace(/\D/g,"").slice(0,10)})}/>
-        <input className="adminInput" type="number" min="18" max="100" placeholder="Age" value={form.age} onChange={e=>setForm({...form,age:e.target.value})}/>
+        <input className="adminInput" type="number" min="18" max="100" placeholder="Age (optional)" value={form.age ?? ""} onChange={e=>setForm({...form,age:e.target.value})}/>
       </div>
       <input className="adminInput" placeholder="Income" value={form.income} onChange={e=>setForm({...form,income:e.target.value})}/>
       <div className="formGrid">
