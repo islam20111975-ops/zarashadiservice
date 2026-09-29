@@ -95,8 +95,10 @@ function BiodataAdminPage(){
   function resetForm(){setForm(empty);setFiles([]);setPreview([]);router.replace("/admin/biodata")}
 
   async function save(e){
-    e.preventDefault();
+    e?.preventDefault?.();
     setError("");setSuccess("");
+    if(!auth.currentUser){setError("❌ Admin login session nahi hai. Pehle Admin login karein.");return;}
+    if(auth.currentUser.email?.toLowerCase()!==ADMIN){setError("❌ Sirf Admin account se Biodata save ho sakta hai.");return;}
     let id=String(form.id ?? "").trim();
     const phone=String(form.phone ?? "").replace(/\D/g,"");
     if(!id){
@@ -353,7 +355,7 @@ function BiodataAdminPage(){
       <textarea className="adminInput" rows="3" placeholder="Other Important Information" value={form.otherInfo} onChange={e=>setForm({...form,otherInfo:e.target.value})}/>
       <label className="uploadBox">📷 1–5 Photos<input type="file" accept="image/*" multiple onChange={chooseFiles}/><small>Photos compress hokar Firestore mein save hongi.</small></label>
       {preview.length>0&&<div className="photoPreviewGrid">{preview.map((s,i)=><img key={i} src={s} alt={"Preview "+(i+1)}/>)}</div>}
-      <div className="messageBox">{saving?"⏳ Biodata save ho raha hai...":form.id?"✏️ Changes save karne ke liye neeche <b>Save Biodata</b> dabayein.":"📝 Biodata bhar kar neeche <b>Save Biodata</b> dabayein. Save hone ke baad neeche <b>All Biodata</b> mein profile dikhegi."}</div><div style={{position:"relative"}}><button type="submit" className="primaryAction" style={{width:"100%",marginTop:12,whiteSpace:"nowrap",minHeight:52}} disabled={saving}>{saving?"⏳ Saving...":"💾 Save Biodata"}</button>{success&&<div role="status" aria-live="assertive" style={{marginTop:12,padding:"14px 16px",borderRadius:16,border:"2px solid #168653",background:"#eafff3",color:"#075c35",textAlign:"center",fontWeight:900,fontSize:16,boxShadow:"0 8px 25px rgba(0,0,0,.12)"}}>{success}</div>}</div>
+      <div className="messageBox">{saving?"⏳ Biodata save ho raha hai...":form.id?"✏️ Changes save karne ke liye neeche <b>Save Biodata</b> dabayein.":"📝 Biodata bhar kar neeche <b>Save Biodata</b> dabayein. Save hone ke baad neeche <b>All Biodata</b> mein profile dikhegi."}</div><div style={{position:"relative"}}><button type="button" onClick={save} className="primaryAction" style={{width:"100%",marginTop:12,whiteSpace:"nowrap",minHeight:52}} disabled={saving}>{saving?"⏳ Saving...":"💾 Save Biodata"}</button>{success&&<div role="status" aria-live="assertive" style={{marginTop:12,padding:"14px 16px",borderRadius:16,border:"2px solid #168653",background:"#eafff3",color:"#075c35",textAlign:"center",fontWeight:900,fontSize:16,boxShadow:"0 8px 25px rgba(0,0,0,.12)"}}>{success}</div>}</div>
     </form>
 
     <div className="adminList">
