@@ -103,17 +103,18 @@ function BiodataAdminPage(){
       let photos=[];
       if(files.length)photos=await Promise.all(files.map(f=>imageToDataUrl(f)));
       else if(editing)photos=old.data().photos||[old.data().photo].filter(Boolean);
-      if(!photos.length)return setError("Kam se kam 1 photo zaroori hai.");
-      const sliderImage=await dataUrlToSlider(photos[0]);
       const batch=writeBatch(db);
-      batch.set(ref,{profileId:id,gender:form.gender,photos,photo:photos[0],status:"active",updatedAt:serverTimestamp()},{merge:true});
-      batch.set(doc(db,"homeSliderImages",id),{profileId:id,image:sliderImage,status:"active",updatedAt:serverTimestamp()},{merge:true});
+      batch.set(ref,{profileId:id,gender:form.gender,photos,photo:photos[0]||"",status:"active",updatedAt:serverTimestamp()},{merge:true});
+      if(photos[0]){
+        const sliderImage=await dataUrlToSlider(photos[0]);
+        batch.set(doc(db,"homeSliderImages",id),{profileId:id,image:sliderImage,status:"active",updatedAt:serverTimestamp()},{merge:true});
+      }
       const sliderSettings=await getDoc(doc(db,"settings","homeSlider"));
       const currentSliderIds=sliderSettings.exists()&&Array.isArray(sliderSettings.data().profileIds)?sliderSettings.data().profileIds:[];
       const nextSliderIds=[...new Set([...currentSliderIds,id])];
       batch.set(doc(db,"settings","homeSlider"),{profileIds:nextSliderIds,updatedAt:serverTimestamp()},{merge:true});
       batch.set(doc(db,"profileBiodataPrivate",id),{
-        profileId:id,gender:form.gender,name:form.name.trim(),address:form.address.trim(),age:Number(form.age),income:form.income.trim(),
+        profileId:id,gender:form.gender,name:form.name.trim(),address:form.address.trim(),age:form.age.trim()?Number(form.age):"",income:form.income.trim(),
         maritalStatus:form.maritalStatus.trim(),height:form.height.trim(),dob:form.dob.trim(),birthPlace:form.birthPlace.trim(),
         education:form.education.trim(),occupation:form.occupation.trim(),company:form.company.trim(),city:form.city.trim(),
         district:form.district.trim(),state:form.state.trim(),nativePlace:form.nativePlace.trim(),religion:form.religion.trim(),
