@@ -22,9 +22,9 @@ export default function Home(){
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
   useEffect(()=>{
     const standalone=window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
-    if(standalone || window.localStorage.getItem("zaraPwaInstalled")==="1") setShowInstallGate(false);
+    if(standalone) setShowInstallGate(false);
     const handler=e=>{e.preventDefault();setInstallPrompt(e)};
-    const installed=()=>{window.localStorage.setItem("zaraPwaInstalled","1");setInstallPrompt(null);setShowInstallGate(false)};
+    const installed=()=>{setInstallPrompt(null);setShowInstallGate(false)};
     window.addEventListener("beforeinstallprompt",handler);
     window.addEventListener("appinstalled",installed);
     return()=>{window.removeEventListener("beforeinstallprompt",handler);window.removeEventListener("appinstalled",installed)};
