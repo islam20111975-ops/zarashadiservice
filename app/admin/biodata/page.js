@@ -136,11 +136,24 @@ function BiodataAdminPage(){
         profileId:id,phone,updatedAt:serverTimestamp()
       },{merge:true});
       await batch.commit();
-      setSaving(false);
+
+      // Firestore commit ke baad read-back verification.
+      const [savedProfile,savedBiodata,savedContact]=await Promise.all([
+        getDoc(ref),
+        getDoc(doc(db,"profileBiodataPrivate",id)),
+        getDoc(doc(db,"profileContact",id))
+      ]);
+
+      if(!savedProfile.exists()||!savedBiodata.exists()||!savedContact.exists()){
+        throw new Error("Firestore me save ke baad record verify nahi hua.");
+      }
+
       setError("");
       setSuccess(editing ? "✅ SUCCESS — Biodata update ho gaya • Profile ID: " + id : "✅ SUCCESS — Naya Biodata save ho gaya • Profile ID: " + id);
       setTimeout(()=>setSuccess(""),5000);
-    }catch(e){setError("Biodata save nahi hua: "+e.message)}finally{setSaving(false)}
+    }catch(e){
+      setError("❌ Biodata save nahi hua: "+(e?.message||"Unknown error"));
+    }finally{setSaving(false)}
   }
 
   const fieldLabels={
@@ -216,7 +229,7 @@ function BiodataAdminPage(){
       <textarea className="adminInput" rows="3" placeholder="Full Address" value={form.address} onChange={e=>setForm({...form,address:e.target.value})}/>
       <div className="formGrid">
         <input className="adminInput" placeholder="Mobile" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value.replace(/\D/g,"").slice(0,10)})}/>
-        <input className="adminInput" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="Age (optional)" value={form.age ?? ""} onChange={e=>setForm({...form,age:e.target.value.replace(/\\D/g,"").slice(0,3)})}/>
+        <input className="adminInput" type="text" inputMode="numeric" pattern="[0-9]*" placeholder="Age (optional)" value={form.age ?? ""} onChange={e=>setForm({...form,age:e.target.value.replace(/\D/g,"").slice(0,3)})}/>
       </div>
       <input className="adminInput" placeholder="Income" value={form.income} onChange={e=>setForm({...form,income:e.target.value})}/>
       <div className="formGrid">
