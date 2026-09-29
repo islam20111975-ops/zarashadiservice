@@ -11,10 +11,11 @@ function Pay(){
  const profile=q.get("profile")||"";
  const type=q.get("type")==="mobile"?"mobile":"biodata";
  const amount=type==="mobile"?500:100;
- const [user,setUser]=useState(null),[p,setP]=useState(null),[wallet,setWallet]=useState(0),[requests,setRequests]=useState([]);
+ const [user,setUser]=useState(null),[p,setP]=useState(null),[wallet,setWallet]=useState(0),[requests,setRequests]=useState([]),[branding,setBranding]=useState({logo:"",appIcon:""});
  const [msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
+ useEffect(()=>{getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists())setBranding({logo:s.data().logo||"",appIcon:s.data().appIcon||""})}).catch(()=>{})},[]);
  useEffect(()=>{
   if(!user)return;
   return onSnapshot(doc(db,"users",user.uid),s=>setWallet(s.exists()?Number(s.data().walletBalance||0):0));
@@ -81,7 +82,7 @@ function Pay(){
  const pending=requests.find(x=>x.status==="pending");
  const approved=requests.find(x=>x.status==="approved");
  return <main className="paymentPage">
-  <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button></div></header>
+  <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">{branding.logo?<img src={branding.logo} alt="Zara Nikah logo"/>:"💍"}</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button></div></header>
   <section className="payment paymentPremium cardPage">
    <div className="paymentIcon">₹</div><span className="eyebrow">{type==="mobile"?"MOBILE ACCESS":"BIODATA UNLOCK"}</span>
    <h1>₹{amount} {type==="mobile"?"Mobile Number":"Biodata"} Access</h1>
