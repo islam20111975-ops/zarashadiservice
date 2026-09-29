@@ -20,51 +20,6 @@ export default function Home(){
   const router=useRouter();
 
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
-  useEffect(()=>{
-    const standalone=window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
-    // Website/browser view must always show the install gate.
-    // Only a genuinely installed standalone PWA may bypass it.
-    if(standalone) setShowInstallGate(false);
-
-    const handler=e=>{e.preventDefault();window.__zaraInstallPrompt=e;setInstallPrompt(e)};
-    const ready=()=>{if(window.__zaraInstallPrompt)setInstallPrompt(window.__zaraInstallPrompt)};
-    const installed=()=>{
-      window.__zaraInstallPrompt=null;
-      setInstallPrompt(null);
-      setShowInstallGate(false);
-      window.location.href="/";
-    };
-    window.addEventListener("beforeinstallprompt",handler);
-    window.addEventListener("zara-install-ready",ready);
-    window.addEventListener("appinstalled",installed);
-    ready();
-    return()=>{
-      window.removeEventListener("beforeinstallprompt",handler);
-      window.removeEventListener("zara-install-ready",ready);
-      window.removeEventListener("appinstalled",installed);
-    };
-  },[]);
-  async function installApp(){
-    const promptEvent=installPrompt||window.__zaraInstallPrompt;
-    if(promptEvent){
-      try{
-        promptEvent.prompt();
-        const choice=await promptEvent.userChoice;
-        window.__zaraInstallPrompt=null;
-        setInstallPrompt(null);
-        if(choice?.outcome==="accepted"){
-          // Most browsers fire appinstalled. For browsers that do not, an accepted
-          // install prompt is still a successful install confirmation, so do not
-          // leave the user trapped on the gate forever.
-          setShowInstallGate(false);
-          window.location.href="/";
-          return;
-        }
-      }catch(e){}
-      return;
-    }
-    alert("Install option browser ke menu se use karein. Install complete hone ke baad ye screen khud hat jayegi aur Home Page khul jayega.");
-  }
   useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});(async()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");if(cached?.logo||cached?.appIcon){const b={logo:cached.logo||"",appIcon:cached.appIcon||"/api/pwa-icon?size=512"};setBranding(b);if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}catch(e){} getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){const b={logo:s.data().logo||"",appIcon:s.data().appIcon||"/api/pwa-icon?size=512"};setBranding(b);try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify(b))}catch(e){} if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}).catch(()=>{})})();getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
   useEffect(()=>{
     let cancelled=false;
