@@ -6,6 +6,18 @@ import {usePathname} from "next/navigation";
 
 const ADMIN_PATH="/admin";
 const ICON="/api/pwa-icon?size=512";
+const INSTALLED_KEY="zaraAppInstalledV2";
+const INSTALLED_COOKIE="zaraAppInstalledV2=1";
+
+function markInstalled(){
+  try{localStorage.setItem(INSTALLED_KEY,"1")}catch(e){}
+  try{document.cookie=INSTALLED_COOKIE+"; Max-Age=31536000; Path=/; SameSite=Lax"}catch(e){}
+}
+
+function hasInstalledMark(){
+  try{if(localStorage.getItem(INSTALLED_KEY)==="1"||localStorage.getItem("zaraAppInstalled")==="1") return true}catch(e){}
+  try{return document.cookie.split(";").some(v=>v.trim()===INSTALLED_COOKIE)}catch(e){return false}
+}
 
 function isStandalone(){
   return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
@@ -39,7 +51,7 @@ export default function AppAccessGate({children}){
     const before=e=>{e.preventDefault();window.__zaraInstallPrompt=e;setPrompt(e);setCanInstall(true)};
     const ready=()=>{if(window.__zaraInstallPrompt){setPrompt(window.__zaraInstallPrompt);setCanInstall(true)}};
     const onInstalled=()=>{
-      try{localStorage.setItem("zaraAppInstalledV2","1")}catch(e){}
+      markInstalled()
       window.__zaraInstallPrompt=null;setPrompt(null);setInstalled(true);setStandalone(true);setSplash(true);setTimeout(()=>setSplash(false),3000);
     };
     window.addEventListener("beforeinstallprompt",before);
@@ -47,7 +59,7 @@ export default function AppAccessGate({children}){
     window.addEventListener("zara-branding-updated",applyIcon);
     window.addEventListener("appinstalled",onInstalled);
     ready();applyIcon();
-    try{if(localStorage.getItem("zaraAppInstalledV2")==="1") setInstalled(true)}catch(e){}
+    if(hasInstalledMark()) setInstalled(true)
     return()=>{
       window.removeEventListener("beforeinstallprompt",before);
       window.removeEventListener("zara-install-ready",ready);
@@ -86,8 +98,7 @@ export default function AppAccessGate({children}){
 
   if(checking) return <div className="zaraBootScreen" aria-hidden="true"/>;
 
-  let rememberedInstalled=false;
-  try{rememberedInstalled=localStorage.getItem("zaraAppInstalledV2")==="1"}catch(e){}
+  const rememberedInstalled=hasInstalledMark();
   if(!standalone && !installed && !rememberedInstalled) return (
     <div className="zaraInstallGate" role="dialog" aria-modal="true" aria-labelledby="zaraInstallTitle">
       <div className="zaraInstallGlow zaraGlowOne"/><div className="zaraInstallGlow zaraGlowTwo"/>
