@@ -143,7 +143,7 @@ function BiodataAdminPage(){
         gender:String(form.gender||""),
         photos,
         photo:photos[0]||"",
-        status:"active",
+        status:existing?.status==="deleted"?"deleted":"active",
         updatedAt:serverTimestamp()
       };
 
@@ -379,7 +379,7 @@ function BiodataAdminPage(){
       <input className="adminInput" placeholder="Preferred Location" value={form.preferredLocation} onChange={e=>setForm({...form,preferredLocation:e.target.value})}/>
       <textarea className="adminInput" rows="3" placeholder="Other Expectations" value={form.otherExpectations} onChange={e=>setForm({...form,otherExpectations:e.target.value})}/>
       <textarea className="adminInput" rows="3" placeholder="Other Important Information" value={form.otherInfo} onChange={e=>setForm({...form,otherInfo:e.target.value})}/>
-      <label className="uploadBox">📷 1–5 Photos<input type="file" accept="image/*" multiple onChange={chooseFiles}/><small>Photos compress hokar Firestore mein save hongi.</small></label>
+      <label className="uploadBox">📷 Photos (optional, maximum 5)<input type="file" accept="image/*" multiple onChange={chooseFiles}/><small>Photos compress hokar Firestore mein save hongi.</small></label>
       {preview.length>0&&<div className="photoPreviewGrid">{preview.map((s,i)=><img key={i} src={s} alt={"Preview "+(i+1)}/>)}</div>}
       <div className="messageBox">{saving?"⏳ Biodata save ho raha hai...":form.id?"✏️ Changes save karne ke liye neeche <b>Save Biodata</b> dabayein.":"📝 Biodata bhar kar neeche <b>Save Biodata</b> dabayein. Save hone ke baad neeche <b>All Biodata</b> mein profile dikhegi."}</div><div style={{position:"relative"}}><button type="button" onClick={save} className="primaryAction" style={{width:"100%",marginTop:12,whiteSpace:"nowrap",minHeight:52}} disabled={saving}>{saving?"⏳ Saving...":"💾 Save Biodata"}</button>{success&&<div role="status" aria-live="assertive" style={{marginTop:12,padding:"14px 16px",borderRadius:16,border:"2px solid #168653",background:"#eafff3",color:"#075c35",textAlign:"center",fontWeight:900,fontSize:16,boxShadow:"0 8px 25px rgba(0,0,0,.12)"}}>{success}</div>}</div>
     </form>
@@ -390,7 +390,7 @@ function BiodataAdminPage(){
       {filtered.length===0?<div className="empty">Koi Biodata nahi mila.</div>:filtered.map(p=>{
         const photos=p.photos?.length?p.photos:[p.photo].filter(Boolean);
         return <div className="userAdminCard" key={p.id}>
-          <div className="rowProfile">{photos[0]?<img src={photos[0]} alt=""/>:<div className="rowPlaceholder">📷</div>}<div><b>{p.id}</b><small>{p.gender==="female"?"Female":"Male"}</small><small>{p.status==="deleted"?"⚠️ Hidden":"✓ Active"}</small></div></div>
+          <div className="rowProfile">{photos[0]?<img src={photos[0]} alt=""/>:<div className="rowPlaceholder">📷</div>}<div><b>{p.id}</b>{p.gender&&<small>{p.gender==="female"?"Female":"Male"}</small>}<small>{p.status==="deleted"?"⚠️ Hidden":"✓ Active"}</small></div></div>
           <div className="cardButtons"><button onClick={()=>edit(p)}>✏️ Edit</button>{p.status==="deleted"?<button onClick={async()=>{try{await setDoc(doc(db,"profiles",p.id),{status:"active",updatedAt:serverTimestamp()},{merge:true});alert("Biodata restore ho gaya.");}catch(e){setError(e.message)}}}>↩️ Restore</button>:<button onClick={()=>remove(p)}>🗑 Hide</button>}<button onClick={()=>viewAdmin(p)}>👁 View</button><button onClick={()=>permanentlyDelete(p)} style={{color:"#b42318",borderColor:"#f3b5b0"}}>❌ Delete</button></div>
         </div>
       })}
