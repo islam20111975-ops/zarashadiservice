@@ -12,6 +12,17 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
+  const url = new URL(event.request.url);
+
+  // Admin-managed app opening image must always come fresh.
+  // Existing installed PWAs do not need to be reinstalled after Admin changes it.
+  if (url.pathname === "/api/app-splash") {
+    event.respondWith(
+      fetch(event.request, { cache: "no-store" }).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );
