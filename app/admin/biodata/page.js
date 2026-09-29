@@ -96,74 +96,105 @@ function BiodataAdminPage(){
 
   async function save(e){
     e?.preventDefault?.();
+    if(saving)return;
     setError("");setSuccess("");
-    if(!auth.currentUser){setError("❌ Admin login session nahi hai. Pehle Admin login karein.");return;}
-    if(auth.currentUser.email?.toLowerCase()!==ADMIN){setError("❌ Sirf Admin account se Biodata save ho sakta hai.");return;}
-    let id=String(form.id ?? "").trim();
-    const phone=String(form.phone ?? "").replace(/\D/g,"");
+
+    const currentUser=auth.currentUser;
+    if(!currentUser){
+      setError("❌ Admin login session nahi hai. Pehle Admin login karein.");
+      return;
+    }
+    if((currentUser.email||"").toLowerCase()!==ADMIN){
+      setError("❌ Sirf Admin account se Biodata save ho sakta hai.");
+      return;
+    }
+
+    let id=String(form.id??"").trim();
     if(!id){
-      const numericIds=profiles.map(p=>parseInt(p.id,10)).filter(Number.isFinite);
+      const numericIds=profiles.map(p=>parseInt(String(p.id||""),10)).filter(Number.isFinite);
       id=String(Math.max(0,...numericIds)+1).padStart(3,"0");
     }
-    if(!/^[A-Za-z0-9_-]{2,40}$/.test(id))return setError("Profile ID sirf letters, numbers, _ ya - mein 2–40 characters ka hona chahiye.");
-    if(phone&&!/^[6-9]\d{9}$/.test(phone))return setError("Mobile number 10 digit ka hona chahiye.");
-    const ageText=String(form.age ?? "").trim();
-    if(ageText && (!/^\d+$/.test(ageText) || Number(ageText)<18 || Number(ageText)>100))return setError("Age 18–100 ke beech hona chahiye, ya Age ko blank chhodein.");
-    setSaving(true);
-    let stage="starting";
-    try{
-      stage="preparing profile";
-      const ref=doc(db,"profiles",id);
-      const editing=profiles.some(p=>String(p.id)===id);
+    if(!/^[A-Za-z0-9_-]{2,40}$/.test(id)){
+      setError("Profile ID galat hai.");
+      return;
+    }
 
-      stage="compressing photos";
+    const phone=String(form.phone??"").replace(/\\D/g,"").slice(0,10);
+    const ageText=String(form.age??"").trim();
+    if(ageText && (!/^\\d+$/.test(ageText)||Number(ageText)<18||Number(ageText)>100)){
+      setError("Age 18–100 ke beech hona chahiye, ya Age blank chhodein.");
+      return;
+    }
+
+    setSaving(true);
+    try{
+      setSuccess("⏳ Saving...");
+
       let photos=[];
-      if(files.length)photos=await Promise.all(files.map(f=>imageToDataUrl(f)));
-      else if(editing){
-        const existing=profiles.find(p=>String(p.id)===id);
+      const existing=profiles.find(p=>String(p.id)===id);
+      if(files.length){
+        photos=await Promise.all(files.map(f=>imageToDataUrl(f)));
+      }else{
         photos=existing?.photos||[existing?.photo].filter(Boolean);
       }
 
-      // Firestore free plan ke liye photo size ko low rakha gaya hai.
-      stage="saving biodata";
-      const batch=writeBatch(db);
-      batch.set(ref,{
+      const profileData={
         profileId:id,
         gender:String(form.gender||""),
         photos,
         photo:photos[0]||"",
         status:"active",
         updatedAt:serverTimestamp()
-      },{merge:true});
+      };
 
-      batch.set(doc(db,"profileBiodataPrivate",id),{
-        profileId:id,gender:String(form.gender||""),
-        name:String(form.name??"").trim(),address:String(form.address??"").trim(),
-        age:ageText?Number(ageText):"",income:String(form.income??"").trim(),
-        maritalStatus:String(form.maritalStatus??"").trim(),height:String(form.height??"").trim(),
-        dob:String(form.dob??"").trim(),birthPlace:String(form.birthPlace??"").trim(),
-        education:String(form.education??"").trim(),occupation:String(form.occupation??"").trim(),
-        company:String(form.company??"").trim(),city:String(form.city??"").trim(),
-        district:String(form.district??"").trim(),state:String(form.state??"").trim(),
-        nativePlace:String(form.nativePlace??"").trim(),religion:String(form.religion??"").trim(),
-        caste:String(form.caste??"").trim(),language:String(form.language??"").trim(),
-        fatherName:String(form.fatherName??"").trim(),motherName:String(form.motherName??"").trim(),
-        brothers:String(form.brothers??"").trim(),sisters:String(form.sisters??"").trim(),
-        familyDetails:String(form.familyDetails??"").trim(),description:String(form.description??"").trim(),
-        expectations:String(form.expectations??"").trim(),preferredAge:String(form.preferredAge??"").trim(),
+      const biodataData={
+        profileId:id,
+        gender:String(form.gender||""),
+        name:String(form.name??"").trim(),
+        address:String(form.address??"").trim(),
+        age:ageText?Number(ageText):"",
+        income:String(form.income??"").trim(),
+        maritalStatus:String(form.maritalStatus??"").trim(),
+        height:String(form.height??"").trim(),
+        dob:String(form.dob??"").trim(),
+        birthPlace:String(form.birthPlace??"").trim(),
+        education:String(form.education??"").trim(),
+        occupation:String(form.occupation??"").trim(),
+        company:String(form.company??"").trim(),
+        city:String(form.city??"").trim(),
+        district:String(form.district??"").trim(),
+        state:String(form.state??"").trim(),
+        nativePlace:String(form.nativePlace??"").trim(),
+        religion:String(form.religion??"").trim(),
+        caste:String(form.caste??"").trim(),
+        language:String(form.language??"").trim(),
+        fatherName:String(form.fatherName??"").trim(),
+        motherName:String(form.motherName??"").trim(),
+        brothers:String(form.brothers??"").trim(),
+        sisters:String(form.sisters??"").trim(),
+        familyDetails:String(form.familyDetails??"").trim(),
+        description:String(form.description??"").trim(),
+        expectations:String(form.expectations??"").trim(),
+        preferredAge:String(form.preferredAge??"").trim(),
         preferredEducation:String(form.preferredEducation??"").trim(),
         preferredLocation:String(form.preferredLocation??"").trim(),
         otherExpectations:String(form.otherExpectations??"").trim(),
         otherInfo:String(form.otherInfo??"").trim(),
         updatedAt:serverTimestamp()
-      });
+      };
 
-      batch.set(doc(db,"profileContact",id),{profileId:id,phone,updatedAt:serverTimestamp()});
+      const batch=writeBatch(db);
+      batch.set(doc(db,"profiles",id),profileData,{merge:true});
+      batch.set(doc(db,"profileBiodataPrivate",id),biodataData,{merge:true});
+      batch.set(doc(db,"profileContact",id),{
+        profileId:id,
+        phone,
+        updatedAt:serverTimestamp()
+      },{merge:true});
 
-      stage="committing to Firestore";
       await batch.commit();
 
-      // Slider optional hai: iske fail hone par main biodata save fail nahi hoga.
+      // Photo slider optional hai; main biodata save ko kabhi block nahi karega.
       if(photos[0]){
         try{
           const sliderImage=await dataUrlToSlider(photos[0]);
@@ -183,23 +214,16 @@ function BiodataAdminPage(){
         }
       }
 
-      stage="verifying saved records";
-      const [savedProfile,savedBiodata,savedContact]=await Promise.all([
-        getDoc(ref),getDoc(doc(db,"profileBiodataPrivate",id)),getDoc(doc(db,"profileContact",id))
-      ]);
-      if(!savedProfile.exists()||!savedBiodata.exists()||!savedContact.exists()){
-        throw new Error("Save ke baad Firestore record verify nahi hua.");
-      }
-
       setError("");
-      setSuccess(editing
-        ?"✅ SUCCESS — Biodata update ho gaya • Profile ID: "+id
-        :"✅ SUCCESS — Naya Biodata save ho gaya • Profile ID: "+id);
+      setSuccess((existing?"✅ SUCCESS — Biodata update ho gaya • Profile ID: ":"✅ SUCCESS — Naya Biodata save ho gaya • Profile ID: ")+id);
       setTimeout(()=>setSuccess(""),5000);
     }catch(e){
-      const code=e?.code?(" ["+e.code+"]"):"";
-      setError("❌ Biodata save nahi hua — "+stage+" par error: "+(e?.message||"Unknown error")+code);
-    }finally{setSaving(false)}
+      console.error("Biodata save error:",e);
+      setSuccess("");
+      setError("❌ Save nahi hua: "+(e?.message||"Unknown error")+(e?.code?" ["+e.code+"]":""));
+    }finally{
+      setSaving(false);
+    }
   }
 
   const fieldLabels={
