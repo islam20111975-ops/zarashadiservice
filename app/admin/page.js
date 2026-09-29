@@ -254,9 +254,14 @@ export default function Admin(){
   async function saveBranding(e){
     e.preventDefault();setError("");
     try{
-      let logo="",appIcon="";
+      let logo="",appIcon="",appIcon192="",appIcon512="";
       const old=await getDoc(doc(db,"settings","branding"));
-      if(old.exists()){logo=old.data().logo||"";appIcon=old.data().appIcon||"";}
+      if(old.exists()){
+        logo=old.data().logo||"";
+        appIcon=old.data().appIcon||old.data().appIcon512||"";
+        appIcon192=old.data().appIcon192||"";
+        appIcon512=old.data().appIcon512||appIcon;
+      }
       async function compressImage(file,label,maxSize=320000){
         if(!file)return "";
         if(!file.type.startsWith("image/")||file.size>5*1024*1024)throw new Error(label+" image 5 MB se chhoti honi chahiye.");
@@ -277,10 +282,46 @@ export default function Admin(){
           return data;
         }finally{URL.revokeObjectURL(url)}
       }
+      async function makePwaIcon(file,label,size,maxSize=220000){
+        if(!file)return "";
+        if(!file.type.startsWith("image/")||file.size>5*1024*1024)throw new Error(label+" image 5 MB se chhoti honi chahiye.");
+        const url=URL.createObjectURL(file);
+        try{
+          const img=new Image();img.src=url;
+          await new Promise((res,rej)=>{img.onload=res;img.onerror=rej});
+          const canvas=document.createElement("canvas");
+          canvas.width=size;canvas.height=size;
+          const ctx=canvas.getContext("2d");
+          ctx.clearRect(0,0,size,size);
+          const pad=Math.round(size*.08);
+          const box=size-pad*2;
+          const scale=Math.min(box/img.naturalWidth,box/img.naturalHeight,1);
+          const w=Math.max(1,Math.round(img.naturalWidth*scale));
+          const h=Math.max(1,Math.round(img.naturalHeight*scale));
+          const x=Math.round((size-w)/2);
+          const y=Math.round((size-h)/2);
+          ctx.drawImage(img,x,y,w,h);
+          let q=.9,data=canvas.toDataURL("image/webp",q);
+          while(data.length>maxSize&&q>.35){q-=.07;data=canvas.toDataURL("image/webp",q)}
+          if(data.length>maxSize)throw new Error(label+" icon bahut badi hai. Simple/square logo upload karein.");
+          return data;
+        }finally{URL.revokeObjectURL(url)}
+      }
       if(logoFile)logo=await compressImage(logoFile,"Website Logo");
-      if(appLogoFile)appIcon=await compressImage(appLogoFile,"App Icon");
-      await setDoc(doc(db,"settings","branding"),{logo,appIcon,updatedAt:serverTimestamp()},{merge:true});
-      setLogoFile(null);setAppLogoFile(null);setLogoPreview(logo);setAppLogoPreview(appIcon);
+      if(appLogoFile){
+        appIcon512=await makePwaIcon(appLogoFile,"App Icon",512);
+        appIcon192=await makePwaIcon(appLogoFile,"App Icon",192);
+        appIcon=appIcon512;
+      }
+      await setDoc(doc(db,"settings","branding"),{
+        logo,
+        appIcon,
+        appIcon192,
+        appIcon512,
+        updatedAt:serverTimestamp()
+      },{merge:true});
+      setLogoFile(null);setAppLogoFile(null);
+      setLogoPreview(logo);setAppLogoPreview(appIcon512||appIcon);
       alert("Dono logo images save ho gayi.");
     }catch(e){setError(e.message)}
   }
