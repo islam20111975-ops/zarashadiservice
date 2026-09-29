@@ -15,7 +15,7 @@ function Pay(){
  const [msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
- useEffect(()=>{getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists())setBranding({logo:s.data().logo||"",appIcon:s.data().appIcon||""})}).catch(()=>{})},[]);
+ useEffect(()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");if(cached?.logo||cached?.appIcon)setBranding({logo:cached.logo||"",appIcon:cached.appIcon||""})}catch(e){} getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){const b={logo:s.data().logo||"",appIcon:s.data().appIcon||""};setBranding(b);try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify(b))}catch(e){}}}).catch(()=>{})},[]);
  useEffect(()=>{
   if(!user)return;
   return onSnapshot(doc(db,"users",user.uid),s=>setWallet(s.exists()?Number(s.data().walletBalance||0):0));
