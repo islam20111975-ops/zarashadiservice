@@ -100,6 +100,7 @@ function BiodataAdminPage(){
     }
     if(!/^[A-Za-z0-9_-]{2,40}$/.test(id))return setError("Profile ID sirf letters, numbers, _ ya - mein 2–40 characters ka hona chahiye.");
     if(phone&&!/^[6-9]\d{9}$/.test(phone))return setError("Mobile number 10 digit ka hona chahiye.");
+    if(form.age.trim() && (!/^\d+$/.test(form.age.trim()) || Number(form.age)<18 || Number(form.age)>100))return setError("Age 18–100 ke beech hona chahiye, ya Age ko blank chhodein.");
     setSaving(true);
     try{
       const ref=doc(db,"profiles",id),old=await getDoc(ref),editing=old.exists();
@@ -212,7 +213,7 @@ function BiodataAdminPage(){
       <textarea className="adminInput" rows="3" placeholder="Full Address" value={form.address} onChange={e=>setForm({...form,address:e.target.value})}/>
       <div className="formGrid">
         <input className="adminInput" placeholder="Mobile" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value.replace(/\D/g,"").slice(0,10)})}/>
-        <input className="adminInput" type="number" min="18" max="100" placeholder="Age (optional)" value={form.age ?? ""} onChange={e=>setForm({...form,age:e.target.value})}/>
+        <input className="adminInput" type="number" min="18" max="100" placeholder="Age (optional)" required={false} value={form.age ?? ""} onChange={e=>setForm({...form,age:e.target.value})}/>
       </div>
       <input className="adminInput" placeholder="Income" value={form.income} onChange={e=>setForm({...form,income:e.target.value})}/>
       <div className="formGrid">
