@@ -35,14 +35,8 @@ export default function Profile(){
  },[id]);
 
  useEffect(()=>{
-  if(!id||!user){
-   setUnlocked(false);setMobile(false);setPrivateData(null);setContact(null);
-   return;
-  }
-  let alive=true;
-  let timer=null;
-  let privateUnsubscribe=null;
-
+  if(!id||!user){setUnlocked(false);setMobile(false);setPrivateData(null);setContact(null);return;}
+  let alive=true,timer=null,privateUnsubscribe=null;
   const loadAccess=async()=>{
    try{
     const snap=await getDocs(query(collection(db,"paidAccessRequests"),where("uid","==",user.uid)));
@@ -50,50 +44,21 @@ export default function Profile(){
     const biodataOk=matches.some(x=>x.type==="biodata"&&x.status==="approved");
     const mobileOk=matches.some(x=>x.type==="mobile"&&x.status==="approved");
     if(!alive)return;
-
-    setUnlocked(biodataOk);
-    setMobile(mobileOk);
-
+    setUnlocked(biodataOk);setMobile(mobileOk);
     if(privateUnsubscribe){privateUnsubscribe();privateUnsubscribe=null;}
-
     if(biodataOk){
-      const privateRef=doc(db,"profileBiodataPrivate",id);
-      privateUnsubscribe=onSnapshot(privateRef,
-       snap=>{
-        if(!alive)return;
-        if(snap.exists()){
-         const data=snap.data()||{};
-         setPrivateData(data);
-         setLoadError("");
-        }else{
-         setPrivateData({});
-         setLoadError("");
-        }
-       },
-       e=>{if(alive)setLoadError(e?.message||"Biodata load nahi ho saka.")}
-      );
-    }else{
-      setPrivateData(null);
-    }
-
-    if(mobileOk){
-     try{
-      const cr=await getDoc(doc(db,"profileContact",id));
-      if(alive&&cr.exists())setContact(cr.data());
-     }catch(e){if(alive)setLoadError(e?.message||"Mobile number load nahi ho saka.")}
-    }else setContact(null);
-   }catch(e){if(alive)setLoadError(e?.message||"Access status load nahi ho saka.");}
+      privateUnsubscribe=onSnapshot(doc(db,"profileBiodataPrivate",id),snap=>{if(!alive)return;if(snap.exists()){setPrivateData(snap.data()||{});setLoadError("")}else{setPrivateData({});setLoadError("")}},e=>{if(alive)setLoadError(e?.message||"Biodata load nahi ho saka.")});
+    }else setPrivateData(null);
+    if(mobileOk){try{const cr=await getDoc(doc(db,"profileContact",id));if(alive&&cr.exists())setContact(cr.data())}catch(e){if(alive)setLoadError(e?.message||"Mobile number load nahi ho saka.")}}else setContact(null);
+   }catch(e){if(alive)setLoadError(e?.message||"Access status load nahi ho saka.")}
   };
-
-  loadAccess();
-  timer=setInterval(loadAccess,3000);
-  return()=>{alive=false;if(timer)clearInterval(timer);if(privateUnsubscribe)privateUnsubscribe();};
+  loadAccess();timer=setInterval(loadAccess,3000);
+  return()=>{alive=false;if(timer)clearInterval(timer);if(privateUnsubscribe)privateUnsubscribe()};
  },[id,user]);
 
  async function login(){setLoginError("");try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}}
  const photos=Array.isArray(p?.photos)&&p.photos.length?p.photos:(p?.photo?[p.photo]:[]);
- const d=privateData||{};
- const biodataAvailable=hasBiodata(d);
+ const d=privateData||{},biodataAvailable=hasBiodata(d);
 
  if(loading)return <main><section className="cardPage"><div className="notFound">Loading...</div></section></main>;
  if(!p)return <main><section className="cardPage"><div className="notFound">{loadError||"Profile not found"}</div></section></main>;
@@ -110,74 +75,74 @@ export default function Profile(){
 
    <div className="detailBody">
     <span className="profileId">{id}</span>
-    <h1>{unlocked&&biodataAvailable?(d.name||"Biodata"):"Rishta ki Jankari"}</h1>
+    <h1>{unlocked&&biodataAvailable?(d.name||"Biodata"):"Marriage Profile"}</h1>
 
-    {!unlocked?<><p className="detailLead">Complete biodata dekhne ke liye ₹100 payment required hai.</p><div className="notice">इस रिश्ते की पूरी जानकारी के लिए ₹100 भुगतान करें</div><button className="primaryAction" onClick={()=>user?router.push("/payment?profile="+encodeURIComponent(id)+"&type=biodata"):login()}>₹100 Biodata Unlock करें →</button></>:
+    {!unlocked?<><p className="detailLead">Complete biodata ke liye ₹100 payment required hai.</p><div className="notice">Pay ₹100 to view the complete biodata</div><button className="primaryAction" onClick={()=>user?router.push("/payment?profile="+encodeURIComponent(id)+"&type=biodata"):login()}>₹100 Biodata Unlock →</button></>:
     <div className="biodataBox">
-      {biodataAvailable&&<div className="biodataTitle">💍 शादी के लिए पूरा Biodata</div>}
+      {biodataAvailable&&<div className="biodataTitle">💍 Complete Biodata</div>}
 
-      <Section title="👤 व्यक्तिगत जानकारी">
-       <Row label="नाम" value={d.name}/>
-       <Row label="उम्र" value={d.age}/>
-       <Row label="लिंग" value={d.gender}/>
-       <Row label="वैवाहिक स्थिति" value={d.maritalStatus}/>
-       <Row label="कद" value={d.height}/>
-       <Row label="जन्म तिथि" value={d.dob}/>
-       <Row label="जन्म स्थान" value={d.birthPlace}/>
+      <Section title="👤 Personal Information">
+       <Row label="Full Name" value={d.name}/>
+       <Row label="Age" value={d.age}/>
+       <Row label="Gender" value={d.gender}/>
+       <Row label="Marital Status" value={d.maritalStatus}/>
+       <Row label="Height" value={d.height}/>
+       <Row label="Date of Birth" value={d.dob}/>
+       <Row label="Birth Place" value={d.birthPlace}/>
       </Section>
 
-      <Section title="🎓 शिक्षा और काम">
-       <Row label="शिक्षा" value={d.education}/>
-       <Row label="पेशा / व्यवसाय" value={d.occupation}/>
-       <Row label="कंपनी / संस्थान" value={d.company}/>
-       <Row label="आमदनी" value={d.income}/>
+      <Section title="🎓 Education & Work">
+       <Row label="Education" value={d.education}/>
+       <Row label="Occupation / Business" value={d.occupation}/>
+       <Row label="Company / Institution" value={d.company}/>
+       <Row label="Income" value={d.income}/>
       </Section>
 
-      <Section title="📍 पता और निवास">
-       <Row label="पूरा पता" value={d.address}/>
-       <Row label="शहर" value={d.city}/>
-       <Row label="जिला" value={d.district}/>
-       <Row label="राज्य" value={d.state}/>
-       <Row label="मूल निवास" value={d.nativePlace}/>
+      <Section title="📍 Address & Residence">
+       <Row label="Full Address" value={d.address}/>
+       <Row label="City" value={d.city}/>
+       <Row label="District" value={d.district}/>
+       <Row label="State" value={d.state}/>
+       <Row label="Native Place / Hometown" value={d.nativePlace}/>
       </Section>
 
-      <Section title="☪️ धार्मिक / सामाजिक जानकारी">
-       <Row label="धार्मिक जानकारी" value={d.religion}/>
-       <Row label="बिरादरी / जाति" value={d.caste}/>
-       <Row label="भाषा" value={d.language}/>
+      <Section title="☪️ Religion / Social Information">
+       <Row label="Religion / Maslak" value={d.religion}/>
+       <Row label="Biradari / Community" value={d.caste}/>
+       <Row label="Language / Mother Tongue" value={d.language}/>
       </Section>
 
-      <Section title="👨‍👩‍👧‍👦 परिवार की जानकारी">
-       <Row label="पिता" value={d.fatherName}/>
-       <Row label="माता" value={d.motherName}/>
-       <Row label="भाई" value={d.brothers}/>
-       <Row label="बहन" value={d.sisters}/>
-       <Row label="परिवार का विवरण" value={d.familyDetails}/>
+      <Section title="👨‍👩‍👧‍👦 Family Information">
+       <Row label="Father Name" value={d.fatherName}/>
+       <Row label="Mother Name" value={d.motherName}/>
+       <Row label="Brothers" value={d.brothers}/>
+       <Row label="Sisters" value={d.sisters}/>
+       <Row label="Family Details" value={d.familyDetails}/>
       </Section>
 
-      <Section title="📝 अपने बारे में">
-       <Row label="विवरण" value={d.description}/>
+      <Section title="📝 About / Biodata Description">
+       <Row label="About / Biodata Description" value={d.description}/>
       </Section>
 
-      <Section title="💍 शादी की अपेक्षाएँ">
-       <Row label="अपेक्षित उम्र" value={d.preferredAge}/>
-       <Row label="अपेक्षित शिक्षा" value={d.preferredEducation}/>
-       <Row label="अपेक्षित शहर / स्थान" value={d.preferredLocation}/>
-       <Row label="अन्य अपेक्षाएँ" value={d.otherExpectations}/>
-       <Row label="सामान्य अपेक्षाएँ" value={d.expectations}/>
+      <Section title="💍 Marriage / Partner Expectations">
+       <Row label="Preferred Age" value={d.preferredAge}/>
+       <Row label="Preferred Education" value={d.preferredEducation}/>
+       <Row label="Preferred Location" value={d.preferredLocation}/>
+       <Row label="Other Expectations" value={d.otherExpectations}/>
+       <Row label="Marriage / Partner Expectations" value={d.expectations}/>
       </Section>
 
-      <Section title="ℹ️ अन्य महत्वपूर्ण जानकारी">
-       <Row label="अन्य जानकारी" value={d.otherInfo}/>
+      <Section title="ℹ️ Other Important Information">
+       <Row label="Other Important Information" value={d.otherInfo}/>
       </Section>
 
       {mobile&&<div className="notice">📱 Mobile Number: {val(contact?.phone||contact?.mobile||contact?.mobileNumber)}</div>}
-      {!mobile&&<><div className="notice">📱 Mobile Number देखने के लिए ₹500 भुगतान करें</div><button className="primaryAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(id)+"&type=mobile")}>₹500 Mobile Number Access →</button></>}
+      {!mobile&&<><div className="notice">📱 Pay ₹500 to view Mobile Number</div><button className="primaryAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(id)+"&type=mobile")}>₹500 Mobile Number Access →</button></>}
     </div>}
 
-    {!user&&<><p className="small">Payment/access ke liye Google login zaroori hai.</p>{loginError&&<div className="errorBox">{loginError}</div>}</>}
+    {!user&&<><p className="small">Google login is required for payment/access.</p>{loginError&&<div className="errorBox">{loginError}</div>}</>}
     {loadError&&<div className="errorBox">{loadError}</div>}
-    <button className="backAction" onClick={()=>router.push("/")}>← Home पर जाएँ</button>
+    <button className="backAction" onClick={()=>router.push("/")}>← Home</button>
    </div>
   </section>
 
