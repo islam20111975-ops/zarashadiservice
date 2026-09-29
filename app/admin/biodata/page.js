@@ -69,7 +69,7 @@ function BiodataAdminPage(){
     if(!p)return;
     getDoc(doc(db,"profileBiodataPrivate",edit)).then(s=>{
       const d=s.exists()?s.data():{};
-      setForm({...empty,id:edit,gender:p.gender||"female",...d,phone:d.phone||""});
+      setForm({...empty,id:edit,gender:p.gender||"",...d,phone:d.phone||""});
       setPreview(p.photos||[p.photo].filter(Boolean));
     }).catch(e=>setError(e.message));
   },[params,profiles]);
@@ -121,6 +121,8 @@ function BiodataAdminPage(){
         const nextSliderIds=[...new Set([...currentSliderIds,id])];
         batch.set(doc(db,"settings","homeSlider"),{profileIds:nextSliderIds,updatedAt:serverTimestamp()},{merge:true});
       }
+      // Private biodata ko replace karo, merge nahi.
+      // Isse admin kisi field ko blank karke Save kare to purani value bhi hat jayegi.
       batch.set(doc(db,"profileBiodataPrivate",id),{
         profileId:id,gender:form.gender||"",name:form.name.trim(),address:form.address.trim(),age:form.age.trim()?Number(form.age):"",income:form.income.trim(),
         maritalStatus:form.maritalStatus.trim(),height:form.height.trim(),dob:form.dob.trim(),birthPlace:form.birthPlace.trim(),
@@ -131,10 +133,11 @@ function BiodataAdminPage(){
         expectations:form.expectations.trim(),preferredAge:form.preferredAge.trim(),preferredEducation:form.preferredEducation.trim(),
         preferredLocation:form.preferredLocation.trim(),otherExpectations:form.otherExpectations.trim(),otherInfo:form.otherInfo.trim(),
         updatedAt:serverTimestamp()
-      },{merge:true});
+      });
+      // Contact bhi replace hoga, taaki mobile blank karke Save karne par purana number na rahe.
       batch.set(doc(db,"profileContact",id),{
         profileId:id,phone,updatedAt:serverTimestamp()
-      },{merge:true});
+      });
       await batch.commit();
 
       // Firestore commit ke baad read-back verification.
@@ -182,7 +185,7 @@ function BiodataAdminPage(){
   async function edit(p){
     const [s,cs]=await Promise.all([getDoc(doc(db,"profileBiodataPrivate",p.id)),getDoc(doc(db,"profileContact",p.id))]);
     const d=s.exists()?s.data():{},contact=cs.exists()?cs.data():{};
-    setForm({...empty,id:p.id,gender:p.gender||"female",...d,phone:contact.phone||""});
+    setForm({...empty,id:p.id,gender:p.gender||"",...d,phone:contact.phone||""});
     setPreview(p.photos||[p.photo].filter(Boolean));setFiles([]);router.replace("/admin/biodata?edit="+encodeURIComponent(p.id));window.scrollTo({top:0,behavior:"smooth"});
   }
 
