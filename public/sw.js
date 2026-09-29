@@ -1,5 +1,5 @@
 // Vercel deployment trigger: service worker kept intentionally simple and static.
-const CACHE_NAME = "zara-nikah-v1";
+const CACHE_NAME = "zara-nikah-v2";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
