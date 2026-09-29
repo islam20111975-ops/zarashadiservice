@@ -10,7 +10,7 @@ export default function Home(){
   const [r,setR]=useState(null);
   const [data,setData]=useState([]);
   const [allProfiles,setAllProfiles]=useState([]),[sliderIds,setSliderIds]=useState([]);
-  const [slideIndex,setSlideIndex]=useState(0),[installPrompt,setInstallPrompt]=useState(null);
+  const [slideIndex,setSlideIndex]=useState(0),[installPrompt,setInstallPrompt]=useState(null);\n  const [showInstallGate,setShowInstallGate]=useState(true);
   const [loading,setLoading]=useState(false);
   const [wallpaper,setWallpaper]=useState("");
   const [social,setSocial]=useState({whatsapp:"",facebook:"",instagram:""});
@@ -18,21 +18,7 @@ export default function Home(){
   const router=useRouter();
 
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
-  useEffect(()=>{
-    const handler=e=>{e.preventDefault();setInstallPrompt(e)};
-    window.addEventListener("beforeinstallprompt",handler);
-    return()=>window.removeEventListener("beforeinstallprompt",handler);
-  },[]);
-  async function installApp(){
-    if(installPrompt){
-      installPrompt.prompt();
-      await installPrompt.userChoice;
-      setInstallPrompt(null);
-      return;
-    }
-    alert("App install karne ke liye Chrome ke ⋮ menu me jaakar “Install app” ya “Add to Home screen” select karein.");
-  }
-  useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
+  useEffect(()=>{\n    const standalone=window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;\n    if(standalone || window.localStorage.getItem("zaraPwaInstalled")==="1") setShowInstallGate(false);\n    const handler=e=>{e.preventDefault();setInstallPrompt(e)};\n    const installed=()=>{window.localStorage.setItem("zaraPwaInstalled","1");setInstallPrompt(null);setShowInstallGate(false)};\n    window.addEventListener("beforeinstallprompt",handler);\n    window.addEventListener("appinstalled",installed);\n    return()=>{window.removeEventListener("beforeinstallprompt",handler);window.removeEventListener("appinstalled",installed)};\n  },[]);\n  async function installApp(){\n    if(installPrompt){\n      try{installPrompt.prompt();await installPrompt.userChoice;setInstallPrompt(null)}catch(e){}\n      return;\n    }\n    alert("Chrome ke ⋮ menu me “Install app” ya “Add to Home screen” select karein. Install hone ke baad Zara Nikah kholte hi Home Page dikhega.");\n  }\n  useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
   useEffect(()=>{
     let cancelled=false;
     async function loadSlider(){
@@ -82,11 +68,27 @@ export default function Home(){
   const shown=data;
   const currentProfile=sliderIds.length?allProfiles.find(p=>p.id===sliderIds[slideIndex]):null;
   return (
-    <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"url("+wallpaper+")","--site-wallpaper":"url("+wallpaper+")"}:undefined}>
+      {showInstallGate&&<div className="zaraInstallGate" role="dialog" aria-modal="true" aria-labelledby="zaraInstallTitle">
+        <div className="zaraInstallGlow zaraGlowOne"></div><div className="zaraInstallGlow zaraGlowTwo"></div>
+        <div className="zaraInstallCard">
+          <div className="zaraInstallLogo"><span>💍</span></div>
+          <div className="zaraInstallBrand">ZARA NIKAH <small>SERVICE</small></div>
+          <div className="zaraInstallBadge">✓ VERIFIED NIKAH SERVICE</div>
+          <h1 id="zaraInstallTitle">📲 पहले App Install करें</h1>
+          <p className="zaraInstallLead">रिश्ते देखने के लिए पहले <b>Zara Nikah App</b> अपने मोबाइल या PC में Install करें।</p>
+          <div className="zaraInstallSteps">
+            <div><b>1</b><span><strong>Install App</strong><small>नीचे दिए बटन पर क्लिक करें</small></span></div>
+            <div><b>2</b><span><strong>App Install होने दें</strong><small>Browser का install prompt पूरा करें</small></span></div>
+            <div><b>3</b><span><strong>रिश्ते देखें</strong><small>Install के बाद Home Page अपने-आप खुलेगा</small></span></div>
+          </div>
+          <button className="zaraInstallMainBtn" onClick={installApp}>📲 APP INSTALL करें <span>→</span></button>
+          <p className="zaraInstallNote">🔒 आपकी जानकारी सुरक्षित रखने के लिए यह service App के रूप में इस्तेमाल करें।</p>
+        </div>
+      </div>\n    <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"url("+wallpaper+")","--site-wallpaper":"url("+wallpaper+")"}:undefined}>
       <header className="siteHeader"><div className="headerInner">
         <button className="logo" onClick={()=>router.push("/")}><span className="logoMark logoMarkBrand" aria-hidden="true"><span className="logoZ">Z</span><span className="logoN">N</span></span><span className="brand3d"><strong>ZARA NIKAH</strong><small>SERVICE</small></span></button>
         <nav className="mainNav" aria-label="Main navigation"><a href="/islamic-calendar">🌙 Islamic Calendar</a></nav>
-        <div className="headerActions"><span className="secureChip">✓ Verified Service</span><button className="installAppBtn" onClick={installApp}>📲 App Install</button><button className="headerLogin" disabled={loginBusy} onClick={async()=>{setLoginError("");if(user){router.push(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account");return}setLoginBusy(true);try{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});const result=await signInWithPopup(auth,p);router.push(result.user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account")}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}finally{setLoginBusy(false)}}}>{loginBusy?"Login...":user?(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"🔐 Admin Dashboard":"👤 My Profile"):"🔐 Login"}</button></div>
+        <div className="headerActions"><span className="secureChip">✓ Verified Service</span><button className="headerLogin" disabled={loginBusy} onClick={async()=>{setLoginError("");if(user){router.push(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account");return}setLoginBusy(true);try{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});const result=await signInWithPopup(auth,p);router.push(result.user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account")}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}finally{setLoginBusy(false)}}}>{loginBusy?"Login...":user?(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"🔐 Admin Dashboard":"👤 My Profile"):"🔐 Login"}</button></div>
       </div></header>{loginError&&<div className="errorBox homeLoginError">{loginError}</div>}
       <section className="heroHome" id="profiles">
         <div className="heroGlow one"></div><div className="heroGlow two"></div>
