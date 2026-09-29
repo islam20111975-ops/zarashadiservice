@@ -100,7 +100,8 @@ function BiodataAdminPage(){
     }
     if(!/^[A-Za-z0-9_-]{2,40}$/.test(id))return setError("Profile ID sirf letters, numbers, _ ya - mein 2–40 characters ka hona chahiye.");
     if(phone&&!/^[6-9]\d{9}$/.test(phone))return setError("Mobile number 10 digit ka hona chahiye.");
-    if(form.age.trim() && (!/^\d+$/.test(form.age.trim()) || Number(form.age)<18 || Number(form.age)>100))return setError("Age 18–100 ke beech hona chahiye, ya Age ko blank chhodein.");
+    const ageText=String(form.age ?? "").trim();
+    if(ageText && (!/^\d+$/.test(ageText) || Number(ageText)<18 || Number(ageText)>100))return setError("Age 18–100 ke beech hona chahiye, ya Age ko blank chhodein.");
     setSaving(true);
     try{
       const ref=doc(db,"profiles",id),old=await getDoc(ref),editing=old.exists();
@@ -113,14 +114,14 @@ function BiodataAdminPage(){
       batch.set(ref,{profileId:id,gender:form.gender||"",photos,photo:photos[0]||"",status:"active",updatedAt:serverTimestamp()},{merge:true});
 
       batch.set(doc(db,"profileBiodataPrivate",id),{
-        profileId:id,gender:form.gender||"",name:form.name.trim(),address:form.address.trim(),age:form.age.trim()?Number(form.age):"",income:form.income.trim(),
-        maritalStatus:form.maritalStatus.trim(),height:form.height.trim(),dob:form.dob.trim(),birthPlace:form.birthPlace.trim(),
-        education:form.education.trim(),occupation:form.occupation.trim(),company:form.company.trim(),city:form.city.trim(),
-        district:form.district.trim(),state:form.state.trim(),nativePlace:form.nativePlace.trim(),religion:form.religion.trim(),
-        caste:form.caste.trim(),language:form.language.trim(),fatherName:form.fatherName.trim(),motherName:form.motherName.trim(),
-        brothers:form.brothers.trim(),sisters:form.sisters.trim(),familyDetails:form.familyDetails.trim(),description:form.description.trim(),
-        expectations:form.expectations.trim(),preferredAge:form.preferredAge.trim(),preferredEducation:form.preferredEducation.trim(),
-        preferredLocation:form.preferredLocation.trim(),otherExpectations:form.otherExpectations.trim(),otherInfo:form.otherInfo.trim(),
+        profileId:id,gender:form.gender||"",name:form.name.trim(),address:form.address.trim(),age:ageText?Number(ageText):"",income:form.income.trim(),
+        maritalStatus:String(form.maritalStatus??"").trim(),height:String(form.height??"").trim(),dob:String(form.dob??"").trim(),birthPlace:String(form.birthPlace??"").trim(),
+        education:String(form.education??"").trim(),occupation:String(form.occupation??"").trim(),company:String(form.company??"").trim(),city:String(form.city??"").trim(),
+        district:String(form.district??"").trim(),state:String(form.state??"").trim(),nativePlace:String(form.nativePlace??"").trim(),religion:String(form.religion??"").trim(),
+        caste:String(form.caste??"").trim(),language:String(form.language??"").trim(),fatherName:String(form.fatherName??"").trim(),motherName:String(form.motherName??"").trim(),
+        brothers:String(form.brothers??"").trim(),sisters:String(form.sisters??"").trim(),familyDetails:String(form.familyDetails??"").trim(),description:String(form.description??"").trim(),
+        expectations:String(form.expectations??"").trim(),preferredAge:String(form.preferredAge??"").trim(),preferredEducation:String(form.preferredEducation??"").trim(),
+        preferredLocation:String(form.preferredLocation??"").trim(),otherExpectations:String(form.otherExpectations??"").trim(),otherInfo:String(form.otherInfo??"").trim(),
         updatedAt:serverTimestamp()
       });
 
