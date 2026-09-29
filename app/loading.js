@@ -1,3 +1,7 @@
 export default function Loading(){
- return <main><section className="cardPage siteState"><div className="siteStateIcon">💍</div><h1>ZARA NIKAH</h1><p>Page load ho raha hai...</p><div className="loadingBar" aria-label="Loading"></div></section></main>;
+  return <div className="appOpeningSplash" aria-label="Zara Nikah Service loading">
+    <img src="/api/app-splash?v=1" alt="Zara Nikah Service" />
+    <div className="appOpeningShade"></div>
+    <div className="appOpeningBrand"><strong>ZARA NIKAH</strong><small>SERVICE</small></div>
+  </div>;
 }
