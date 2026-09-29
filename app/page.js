@@ -14,7 +14,7 @@ export default function Home(){
   const [showInstallGate,setShowInstallGate]=useState(true);
   const [loading,setLoading]=useState(false);
   const [wallpaper,setWallpaper]=useState("");
-  const [branding,setBranding]=useState({logo:"",appIcon:""});
+  const [branding,setBranding]=useState(()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");return cached&&typeof cached==="object"?{logo:cached.logo||"",appIcon:cached.appIcon||""}:{logo:"",appIcon:""}}catch(e){return {logo:"",appIcon:""}}});
   const [social,setSocial]=useState({whatsapp:"",facebook:"",instagram:""});
   const [user,setUser]=useState(null),[loginBusy,setLoginBusy]=useState(false),[loginError,setLoginError]=useState("");
   const router=useRouter();
