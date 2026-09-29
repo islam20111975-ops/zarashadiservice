@@ -39,7 +39,7 @@ export default function AppAccessGate({children}){
     const before=e=>{e.preventDefault();window.__zaraInstallPrompt=e;setPrompt(e);setCanInstall(true)};
     const ready=()=>{if(window.__zaraInstallPrompt){setPrompt(window.__zaraInstallPrompt);setCanInstall(true)}};
     const onInstalled=()=>{
-      try{localStorage.setItem("zaraAppInstalled","1")}catch(e){}
+      try{localStorage.setItem("zaraAppInstalledV2","1")}catch(e){}
       window.__zaraInstallPrompt=null;setPrompt(null);setInstalled(true);setStandalone(true);setSplash(true);setTimeout(()=>setSplash(false),3000);
     };
     window.addEventListener("beforeinstallprompt",before);
@@ -47,7 +47,7 @@ export default function AppAccessGate({children}){
     window.addEventListener("zara-branding-updated",applyIcon);
     window.addEventListener("appinstalled",onInstalled);
     ready();applyIcon();
-    try{if(localStorage.getItem("zaraAppInstalled")==="1") setInstalled(true)}catch(e){}
+    try{if(localStorage.getItem("zaraAppInstalledV2")==="1") setInstalled(true)}catch(e){}
     return()=>{
       window.removeEventListener("beforeinstallprompt",before);
       window.removeEventListener("zara-install-ready",ready);
@@ -84,7 +84,7 @@ export default function AppAccessGate({children}){
   if(checking) return <div className="zaraBootScreen" aria-hidden="true"/>;
 
   let rememberedInstalled=false;
-  try{rememberedInstalled=localStorage.getItem("zaraAppInstalled")==="1"}catch(e){}
+  try{rememberedInstalled=localStorage.getItem("zaraAppInstalledV2")==="1"}catch(e){}
   if(!standalone && !installed && !rememberedInstalled) return (
     <div className="zaraInstallGate" role="dialog" aria-modal="true" aria-labelledby="zaraInstallTitle">
       <div className="zaraInstallGlow zaraGlowOne"/><div className="zaraInstallGlow zaraGlowTwo"/>
