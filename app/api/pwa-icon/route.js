@@ -7,10 +7,18 @@ const FIRESTORE_URL = "https://firestore.googleapis.com/v1/projects/zara-shadi-s
 
 export async function GET(request){
   try{
+    const size = new URL(request.url).searchParams.get("size") === "192" ? "192" : "512";
     const response = await fetch(FIRESTORE_URL,{cache:"no-store"});
+
     if(response.ok){
       const doc = await response.json();
-      const value = doc?.fields?.appIcon?.stringValue || "";
+      const fields = doc?.fields || {};
+      const value =
+        fields["appIcon"+size]?.stringValue
+        || fields.appIcon512?.stringValue
+        || fields.appIcon?.stringValue
+        || "";
+
       if(value.startsWith("data:image/")){
         const match = value.match(/^data:(image\/[^;]+);base64,(.+)$/s);
         if(match){
