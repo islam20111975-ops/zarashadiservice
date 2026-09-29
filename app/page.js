@@ -22,16 +22,27 @@ export default function Home(){
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
   useEffect(()=>{
     const standalone=window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
-    const justInstalledAt=Number(window.localStorage.getItem("zaraPwaJustInstalledAt")||0);
-    const recentlyInstalled=justInstalledAt>0 && (Date.now()-justInstalledAt)<10*60*1000;
-    if(standalone || recentlyInstalled) setShowInstallGate(false);
+    // Website/browser view must always show the install gate.
+    // Only a genuinely installed standalone PWA may bypass it.
+    if(standalone) setShowInstallGate(false);
+
     const handler=e=>{e.preventDefault();window.__zaraInstallPrompt=e;setInstallPrompt(e)};
     const ready=()=>{if(window.__zaraInstallPrompt)setInstallPrompt(window.__zaraInstallPrompt)};
-    const installed=()=>{window.__zaraInstallPrompt=null;setInstallPrompt(null);window.localStorage.setItem("zaraPwaJustInstalledAt",String(Date.now()));setShowInstallGate(false);window.location.href="/"};
+    const installed=()=>{
+      window.__zaraInstallPrompt=null;
+      setInstallPrompt(null);
+      setShowInstallGate(false);
+      window.location.href="/";
+    };
     window.addEventListener("beforeinstallprompt",handler);
     window.addEventListener("zara-install-ready",ready);
+    window.addEventListener("appinstalled",installed);
     ready();
-    return()=>{window.removeEventListener("beforeinstallprompt",handler);window.removeEventListener("zara-install-ready",ready);window.removeEventListener("appinstalled",installed)};
+    return()=>{
+      window.removeEventListener("beforeinstallprompt",handler);
+      window.removeEventListener("zara-install-ready",ready);
+      window.removeEventListener("appinstalled",installed);
+    };
   },[]);
   async function installApp(){
     const promptEvent=installPrompt||window.__zaraInstallPrompt;
@@ -42,9 +53,9 @@ export default function Home(){
         window.__zaraInstallPrompt=null;
         setInstallPrompt(null);
         if(choice?.outcome==="accepted"){
-          window.localStorage.setItem("zaraPwaJustInstalledAt",String(Date.now()));
-          setShowInstallGate(false);
-          window.location.href="/";
+          // Keep the gate until the browser confirms the PWA was actually installed.
+          // The appinstalled event will then open Home.
+          return;
         }
       }catch(e){}
       return;
