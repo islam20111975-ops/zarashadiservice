@@ -262,7 +262,7 @@ export default function Admin(){
         appIcon192=old.data().appIcon192||"";
         appIcon512=old.data().appIcon512||appIcon;
       }
-      async function compressImage(file,label,maxSize=320000){
+      async function compressImage(file,label,maxSize=100000){
         if(!file)return "";
         if(!file.type.startsWith("image/")||file.size>5*1024*1024)throw new Error(label+" image 5 MB se chhoti honi chahiye.");
         const url=URL.createObjectURL(file);
@@ -282,7 +282,7 @@ export default function Admin(){
           return data;
         }finally{URL.revokeObjectURL(url)}
       }
-      async function makePwaIcon(file,label,size,maxSize=220000){
+      async function makePwaIcon(file,label,size,maxSize=80000){
         if(!file)return "";
         if(!file.type.startsWith("image/")||file.size>5*1024*1024)throw new Error(label+" image 5 MB se chhoti honi chahiye.");
         const url=URL.createObjectURL(file);
@@ -322,6 +322,7 @@ export default function Admin(){
       },{merge:true});
       setLogoFile(null);setAppLogoFile(null);
       setLogoPreview(logo);setAppLogoPreview(appIcon512||appIcon);
+      try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify({logo,appIcon:appIcon512||appIcon}))}catch(e){}
       alert("Dono logo images save ho gayi.");
     }catch(e){setError(e.message)}
   }
