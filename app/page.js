@@ -22,10 +22,12 @@ export default function Home(){
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
   useEffect(()=>{
     const standalone=window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
-    if(standalone) setShowInstallGate(false);
+    const justInstalledAt=Number(window.localStorage.getItem("zaraPwaJustInstalledAt")||0);
+    const recentlyInstalled=justInstalledAt>0 && (Date.now()-justInstalledAt)<10*60*1000;
+    if(standalone || recentlyInstalled) setShowInstallGate(false);
     const handler=e=>{e.preventDefault();window.__zaraInstallPrompt=e;setInstallPrompt(e)};
     const ready=()=>{if(window.__zaraInstallPrompt)setInstallPrompt(window.__zaraInstallPrompt)};
-    const installed=()=>{window.__zaraInstallPrompt=null;setInstallPrompt(null);setShowInstallGate(false)};
+    const installed=()=>{window.__zaraInstallPrompt=null;setInstallPrompt(null);window.localStorage.setItem("zaraPwaJustInstalledAt",String(Date.now()));setShowInstallGate(false);window.location.href="/"};
     window.addEventListener("beforeinstallprompt",handler);
     window.addEventListener("zara-install-ready",ready);
     ready();
@@ -34,10 +36,20 @@ export default function Home(){
   async function installApp(){
     const promptEvent=installPrompt||window.__zaraInstallPrompt;
     if(promptEvent){
-      try{promptEvent.prompt();await promptEvent.userChoice;window.__zaraInstallPrompt=null;setInstallPrompt(null)}catch(e){}
+      try{
+        promptEvent.prompt();
+        const choice=await promptEvent.userChoice;
+        window.__zaraInstallPrompt=null;
+        setInstallPrompt(null);
+        if(choice?.outcome==="accepted"){
+          window.localStorage.setItem("zaraPwaJustInstalledAt",String(Date.now()));
+          setShowInstallGate(false);
+          window.location.href="/";
+        }
+      }catch(e){}
       return;
     }
-    alert("Chrome ke ⋮ menu me “Install app” ya “Add to Home screen” select karein. Install hone ke baad Zara Nikah kholte hi Home Page dikhega.");
+    alert("Install option browser ke menu se use karein. Install complete hone ke baad ye screen khud hat jayegi aur Home Page khul jayega.");
   }
   useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){const b={logo:s.data().logo||"",appIcon:s.data().appIcon||""};setBranding(b);if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}).catch(()=>{});getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
   useEffect(()=>{
