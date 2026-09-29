@@ -40,21 +40,13 @@ export default function Home(){
     let cancelled=false;
     async function loadSlider(){
       try{
-        // Use the public profiles collection as the reliable fallback/source.
-        // It already allows public reads, so the Home slider does not depend on
-        // whether the separate thumbnail/settings rules have been published yet.
         const snap=await getDocs(collection(db,"profiles"));
-        const rows=snap.docs
-          .map(d=>({id:d.id,...d.data()}))
-          .filter(p=>p.status!=="deleted" && ((Array.isArray(p.photos)&&p.photos[0])||p.photo))
-          .sort((a,b)=>a.id.localeCompare(b.id));
+        const rows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted" && ((Array.isArray(p.photos)&&p.photos[0])||p.photo)).sort((a,b)=>a.id.localeCompare(b.id));
         if(cancelled||!rows.length)return;
         const ids=rows.map(p=>p.id);
         setSliderIds(ids);
         setAllProfiles(rows.map(p=>({id:p.id,image:(Array.isArray(p.photos)&&p.photos[0])||p.photo})));
-      }catch(e){
-        if(!cancelled){setSliderIds([]);setAllProfiles([]);}
-      }
+      }catch(e){if(!cancelled){setSliderIds([]);setAllProfiles([]);}}
     }
     loadSlider();
     return()=>{cancelled=true};
@@ -85,6 +77,7 @@ export default function Home(){
   const shown=data;
   const currentProfile=sliderIds.length?allProfiles.find(p=>p.id===sliderIds[slideIndex]):null;
   return (
+    <>
       {showInstallGate&&<div className="zaraInstallGate" role="dialog" aria-modal="true" aria-labelledby="zaraInstallTitle">
         <div className="zaraInstallGlow zaraGlowOne"></div><div className="zaraInstallGlow zaraGlowTwo"></div>
         <div className="zaraInstallCard">
@@ -101,34 +94,35 @@ export default function Home(){
           <button className="zaraInstallMainBtn" onClick={installApp}>📲 APP INSTALL करें <span>→</span></button>
           <p className="zaraInstallNote">🔒 आपकी जानकारी सुरक्षित रखने के लिए यह service App के रूप में इस्तेमाल करें।</p>
         </div>
-      </div>
-    <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"url("+wallpaper+")","--site-wallpaper":"url("+wallpaper+")"}:undefined}>
-      <header className="siteHeader"><div className="headerInner">
-        <button className="logo" onClick={()=>router.push("/")}><span className="logoMark logoMarkBrand" aria-hidden="true"><span className="logoZ">Z</span><span className="logoN">N</span></span><span className="brand3d"><strong>ZARA NIKAH</strong><small>SERVICE</small></span></button>
-        <nav className="mainNav" aria-label="Main navigation"><a href="/islamic-calendar">🌙 Islamic Calendar</a></nav>
-        <div className="headerActions"><span className="secureChip">✓ Verified Service</span><button className="headerLogin" disabled={loginBusy} onClick={async()=>{setLoginError("");if(user){router.push(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account");return}setLoginBusy(true);try{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});const result=await signInWithPopup(auth,p);router.push(result.user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account")}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}finally{setLoginBusy(false)}}}>{loginBusy?"Login...":user?(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"🔐 Admin Dashboard":"👤 My Profile"):"🔐 Login"}</button></div>
-      </div></header>{loginError&&<div className="errorBox homeLoginError">{loginError}</div>}
-      <section className="heroHome" id="profiles">
-        <div className="heroGlow one"></div><div className="heroGlow two"></div>
-        <div className="heroContent">
-          <div className="homeAutoSlider" aria-label="Nikah profiles automatic slideshow">
-            {sliderIds.length && currentProfile ? <button className="homeSlide" onClick={()=>router.push("/profile/"+currentProfile.id)} aria-label={"Profile "+currentProfile.id+" dekhein"}>
-              <img key={currentProfile.id} src={currentProfile.image||""} alt={"Marriage profile "+currentProfile.id} loading="eager" decoding="async" fetchPriority="high"/>
-              <span className="slideShade"></span><span className="slideId">💍 Profile {currentProfile.id}</span><span className="slideVerified">✓ Verified</span>
-            </button> : <div className="homeSlideEmpty">💍<span>{sliderIds.length?"Image loading...":"Nikah Profiles"}</span></div>}
-            {sliderIds.length>1&&<div className="slideDots">{sliderIds.map((p,i)=><span key={p} className={i===slideIndex?"active":""}></span>)}</div>}
+      </div>}
+      <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"url("+wallpaper+")","--site-wallpaper":"url("+wallpaper+")"}:undefined}>
+        <header className="siteHeader"><div className="headerInner">
+          <button className="logo" onClick={()=>router.push("/")}><span className="logoMark logoMarkBrand" aria-hidden="true"><span className="logoZ">Z</span><span className="logoN">N</span></span><span className="brand3d"><strong>ZARA NIKAH</strong><small>SERVICE</small></span></button>
+          <nav className="mainNav" aria-label="Main navigation"><a href="/islamic-calendar">🌙 Islamic Calendar</a></nav>
+          <div className="headerActions"><span className="secureChip">✓ Verified Service</span><button className="headerLogin" disabled={loginBusy} onClick={async()=>{setLoginError("");if(user){router.push(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account");return}setLoginBusy(true);try{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});const result=await signInWithPopup(auth,p);router.push(result.user.email?.toLowerCase()==="ngogrant454@gmail.com"?"/admin":"/account")}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}finally{setLoginBusy(false)}}}>{loginBusy?"Login...":user?(user.email?.toLowerCase()==="ngogrant454@gmail.com"?"🔐 Admin Dashboard":"👤 My Profile"):"🔐 Login"}</button></div>
+        </div></header>{loginError&&<div className="errorBox homeLoginError">{loginError}</div>}
+        <section className="heroHome" id="profiles">
+          <div className="heroGlow one"></div><div className="heroGlow two"></div>
+          <div className="heroContent">
+            <div className="homeAutoSlider" aria-label="Nikah profiles automatic slideshow">
+              {sliderIds.length && currentProfile ? <button className="homeSlide" onClick={()=>router.push("/profile/"+currentProfile.id)} aria-label={"Profile "+currentProfile.id+" dekhein"}>
+                <img key={currentProfile.id} src={currentProfile.image||""} alt={"Marriage profile "+currentProfile.id} loading="eager" decoding="async" fetchPriority="high"/>
+                <span className="slideShade"></span><span className="slideId">💍 Profile {currentProfile.id}</span><span className="slideVerified">✓ Verified</span>
+              </button> : <div className="homeSlideEmpty">💍<span>{sliderIds.length?"Image loading...":"Nikah Profiles"}</span></div>}
+              {sliderIds.length>1&&<div className="slideDots">{sliderIds.map((p,i)=><span key={p} className={i===slideIndex?"active":""}></span>)}</div>}
+            </div>
           </div>
-        </div>
-        <div className="gender genderPremium">
-          <button className={r==="male"?"genderCard premiumCard maleCard active":"genderCard premiumCard maleCard"} onClick={()=>setR("male")}><div className="cardIcon">👨</div><div><b>Male Rishte</b><small>Rishta dekhne ke liye button par click karein</small></div><span className="arrow">→</span></button>
-          <button className={r==="female"?"genderCard premiumCard femaleCard active":"genderCard premiumCard femaleCard"} onClick={()=>setR("female")}><div className="cardIcon">👩</div><div><b>Female Rishte</b><small>Rishta dekhne ke liye button par click karein</small></div><span className="arrow">→</span></button>
-        </div>
-      </section>
-      {r&&<section className="profiles"><div className="sectionHead"><div><span className="eyebrow">AVAILABLE PROFILES</span><h2>{r==="male"?"Male":"Female"} Rishte</h2></div><span className="count">{loading?"Loading...":shown.length+" Profiles"}</span></div>
-        <div className="grid">{shown.map(p=><article className="profileCard" key={p.id}><div className="photoWrap" onClick={()=>router.push("/profile/"+p.id)} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")router.push("/profile/"+p.id)}}><img src={(Array.isArray(p.photos)&&p.photos[0])||p.photo||""} alt={"Marriage profile "+p.id} onError={e=>{e.currentTarget.style.display="none";e.currentTarget.parentElement?.classList.add("photoMissing")}}/><span className="verified">✓ Verified</span></div><div className="cardInfo"><span className="profileId">{p.id}</span></div></article>)}</div>
-      </section>}
-      <section className="trustStrip"><div><b>🔒 Privacy</b><small>Aapki details ko respect ke saath handle kiya jata hai</small></div><div><b>✓ Verified</b><small>Registered profiles ko manage kiya jata hai</small></div><div><b>💗 Nikah Focus</b><small>Serious rishta search ke liye simple process</small></div></section>
-      <div className="socialLinks">{social.whatsapp&&<a className="socialBtn whatsapp" href={social.whatsapp} target="_blank" rel="noreferrer">🟢 WhatsApp</a>}{social.facebook&&<a className="socialBtn facebook" href={social.facebook} target="_blank" rel="noreferrer">🔵 Facebook</a>}{social.instagram&&<a className="socialBtn instagram" href={social.instagram} target="_blank" rel="noreferrer">🟣 Instagram</a>}</div><nav className="footerNav" aria-label="Footer"><a href="/about">About</a><a href="/contact">Contact</a><a href="/privacy">Privacy Policy</a><a href="/terms">Terms & Conditions</a></nav><footer>© 2026 Zara Nikah Service <span>•</span> Aapka Rishta, Hamari Zimmedari</footer>
-    </main>
+          <div className="gender genderPremium">
+            <button className={r==="male"?"genderCard premiumCard maleCard active":"genderCard premiumCard maleCard"} onClick={()=>setR("male")}><div className="cardIcon">👨</div><div><b>Male Rishte</b><small>Rishta dekhne ke liye button par click karein</small></div><span className="arrow">→</span></button>
+            <button className={r==="female"?"genderCard premiumCard femaleCard active":"genderCard premiumCard femaleCard"} onClick={()=>setR("female")}><div className="cardIcon">👩</div><div><b>Female Rishte</b><small>Rishta dekhne ke liye button par click karein</small></div><span className="arrow">→</span></button>
+          </div>
+        </section>
+        {r&&<section className="profiles"><div className="sectionHead"><div><span className="eyebrow">AVAILABLE PROFILES</span><h2>{r==="male"?"Male":"Female"} Rishte</h2></div><span className="count">{loading?"Loading...":shown.length+" Profiles"}</span></div>
+          <div className="grid">{shown.map(p=><article className="profileCard" key={p.id}><div className="photoWrap" onClick={()=>router.push("/profile/"+p.id)} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")router.push("/profile/"+p.id)}}><img src={(Array.isArray(p.photos)&&p.photos[0])||p.photo||""} alt={"Marriage profile "+p.id} onError={e=>{e.currentTarget.style.display="none";e.currentTarget.parentElement?.classList.add("photoMissing")}}/><span className="verified">✓ Verified</span></div><div className="cardInfo"><span className="profileId">{p.id}</span></div></article>)}</div>
+        </section>}
+        <section className="trustStrip"><div><b>🔒 Privacy</b><small>Aapki details ko respect ke saath handle kiya jata hai</small></div><div><b>✓ Verified</b><small>Registered profiles ko manage kiya jata hai</small></div><div><b>💗 Nikah Focus</b><small>Serious rishta search ke liye simple process</small></div></section>
+        <div className="socialLinks">{social.whatsapp&&<a className="socialBtn whatsapp" href={social.whatsapp} target="_blank" rel="noreferrer">🟢 WhatsApp</a>}{social.facebook&&<a className="socialBtn facebook" href={social.facebook} target="_blank" rel="noreferrer">🔵 Facebook</a>}{social.instagram&&<a className="socialBtn instagram" href={social.instagram} target="_blank" rel="noreferrer">🟣 Instagram</a>}</div><nav className="footerNav" aria-label="Footer"><a href="/about">About</a><a href="/contact">Contact</a><a href="/privacy">Privacy Policy</a><a href="/terms">Terms & Conditions</a></nav><footer>© 2026 Zara Nikah Service <span>•</span> Aapka Rishta, Hamari Zimmedari</footer>
+      </main>
+    </>
   );
 }
