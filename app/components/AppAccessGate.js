@@ -14,6 +14,7 @@ function isStandalone(){
 export default function AppAccessGate({children}){
   const pathname=usePathname();
   const admin=pathname===ADMIN_PATH || pathname.startsWith(ADMIN_PATH+"/");
+  const [checking,setChecking]=useState(true);
   const [standalone,setStandalone]=useState(false);
   const [prompt,setPrompt]=useState(null);
   const [installed,setInstalled]=useState(false);
@@ -23,10 +24,12 @@ export default function AppAccessGate({children}){
   const [canInstall,setCanInstall]=useState(false);
 
   useEffect(()=>{
-    if(admin){setStandalone(true);return;}
-    setStandalone(isStandalone());
+    if(admin){setChecking(false);return;}
+    const standaloneNow=isStandalone();
+    setStandalone(standaloneNow);
+    setChecking(false);
     const ua=navigator.userAgent||"";
-    setIos(/iphone|ipad|ipod/i.test(ua) && !isStandalone());
+    setIos(/iphone|ipad|ipod/i.test(ua) && !standaloneNow);
     setCanInstall(!!window.__zaraInstallPrompt);
     try{
       const cached=JSON.parse(localStorage.getItem("zaraBrandingCache")||"null");
@@ -35,7 +38,7 @@ export default function AppAccessGate({children}){
     const applyIcon=()=>{try{const cached=JSON.parse(localStorage.getItem("zaraBrandingCache")||"null");if(cached?.appIcon)setIcon(cached.appIcon)}catch(e){}};
     const before=e=>{e.preventDefault();window.__zaraInstallPrompt=e;setPrompt(e);setCanInstall(true)};
     const ready=()=>{if(window.__zaraInstallPrompt){setPrompt(window.__zaraInstallPrompt);setCanInstall(true)}};
-    const onInstalled=()=>{window.__zaraInstallPrompt=null;setPrompt(null);setInstalled(true);setStandalone(true);};
+    const onInstalled=()=>{window.__zaraInstallPrompt=null;setPrompt(null);setInstalled(true);setStandalone(true);setSplash(true);setTimeout(()=>setSplash(false),3000);};
     window.addEventListener("beforeinstallprompt",before);
     window.addEventListener("zara-install-ready",ready);
     window.addEventListener("zara-branding-updated",applyIcon);
@@ -51,9 +54,6 @@ export default function AppAccessGate({children}){
 
   useEffect(()=>{
     if(admin || !standalone) return;
-
-    // Every time the installed PWA is opened, show the admin-managed
-    // full-screen opening image for exactly 3 seconds.
     setSplash(true);
     const timer=setTimeout(()=>setSplash(false),3000);
     return()=>clearTimeout(timer);
@@ -68,17 +68,18 @@ export default function AppAccessGate({children}){
     }
     try{
       event.prompt();
-      const choice=await event.userChoice;
+      await event.userChoice;
       window.__zaraInstallPrompt=null;setPrompt(null);setCanInstall(false);
-      if(choice?.outcome==="accepted"){
-        setInstalled(true);setStandalone(true);setCanInstall(false);
-      }
+      // Do not unlock the website here. The appinstalled event/standalone
+      // detection will unlock it only after the installation actually completes.
     }catch(e){}
   }
 
-  if(admin || standalone || installed) return <>{splash&&<div className="zaraPwaSplash"><img src="/api/app-splash" alt="" className="zaraPwaSplashBg"/><div className="zaraPwaSplashShade"/><img src={icon||ICON} alt="Zara Nikah" className="zaraPwaSplashIcon"/><div className="zaraPwaSplashBrand">ZARA NIKAH <small>SERVICE</small></div></div>}{children}</>;
+  if(admin) return <>{children}</>;
 
-  return <>
+  if(checking) return <div className="zaraBootScreen" aria-hidden="true"/>;
+
+  if(!standalone && !installed) return (
     <div className="zaraInstallGate" role="dialog" aria-modal="true" aria-labelledby="zaraInstallTitle">
       <div className="zaraInstallGlow zaraGlowOne"/><div className="zaraInstallGlow zaraGlowTwo"/>
       <div className="zaraInstallCard">
@@ -96,6 +97,7 @@ export default function AppAccessGate({children}){
         <p className="zaraInstallNote">🔒 बिना install किए public website pages और profiles नहीं खुलेंगे।</p>
       </div>
     </div>
-    {children}
-  </>;
+  );
+
+  return <>{splash&&<div className="zaraPwaSplash"><img src="/api/app-splash" alt="" className="zaraPwaSplashBg"/><div className="zaraPwaSplashShade"/><div className="zaraPwaSplashBrand">ZARA NIKAH <small>SERVICE</small></div></div>}{children}</>;
 }
