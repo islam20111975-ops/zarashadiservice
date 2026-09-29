@@ -1036,3 +1036,13 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 /* Branding logo images on all headers */
 .logoMark{overflow:hidden!important}
 .logoMark img{width:100%!important;height:100%!important;display:block!important;object-fit:contain!important;border-radius:inherit!important}
+
+
+/* Full-screen app opening splash */
+.appOpeningSplash{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;min-height:100dvh!important;z-index:2147483647!important;overflow:hidden!important;background:#0b0714!important;display:flex!important;align-items:center!important;justify-content:center!important}
+.appOpeningSplash>img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center!important;display:block!important}
+.appOpeningShade{position:absolute!important;inset:0!important;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.10) 55%,rgba(0,0,0,.30))!important;pointer-events:none!important}
+.appOpeningBrand{position:absolute!important;left:50%!important;bottom:28px!important;transform:translateX(-50%)!important;padding:9px 16px!important;border-radius:999px!important;background:rgba(0,0,0,.38)!important;color:#fff!important;text-align:center!important;backdrop-filter:blur(8px)!important;box-shadow:0 8px 30px rgba(0,0,0,.25)!important}
+.appOpeningBrand strong{display:block!important;font-size:clamp(18px,4vw,30px)!important;letter-spacing:1.5px!important}
+.appOpeningBrand small{display:block!important;font-size:9px!important;letter-spacing:5px!important;opacity:.9!important;margin-top:1px!important}
+@media(max-width:600px){.appOpeningBrand{bottom:18px!important;padding:7px 13px!important}.appOpeningBrand strong{font-size:18px!important}}
