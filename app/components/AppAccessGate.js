@@ -19,17 +19,22 @@ export default function AppAccessGate({children}){
   const [installed,setInstalled]=useState(false);
   const [splash,setSplash]=useState(false);
   const [icon,setIcon]=useState(ICON);
+  const [ios,setIos]=useState(false);
+  const [canInstall,setCanInstall]=useState(false);
 
   useEffect(()=>{
     if(admin){setStandalone(true);return;}
     setStandalone(isStandalone());
+    const ua=navigator.userAgent||"";
+    setIos(/iphone|ipad|ipod/i.test(ua) && !isStandalone());
+    setCanInstall(!!window.__zaraInstallPrompt);
     try{
       const cached=JSON.parse(localStorage.getItem("zaraBrandingCache")||"null");
       if(cached?.appIcon) setIcon(cached.appIcon);
     }catch(e){}
     const applyIcon=()=>{try{const cached=JSON.parse(localStorage.getItem("zaraBrandingCache")||"null");if(cached?.appIcon)setIcon(cached.appIcon)}catch(e){}};
-    const before=e=>{e.preventDefault();window.__zaraInstallPrompt=e;setPrompt(e)};
-    const ready=()=>{if(window.__zaraInstallPrompt)setPrompt(window.__zaraInstallPrompt)};
+    const before=e=>{e.preventDefault();window.__zaraInstallPrompt=e;setPrompt(e);setCanInstall(true)};
+    const ready=()=>{if(window.__zaraInstallPrompt){setPrompt(window.__zaraInstallPrompt);setCanInstall(true)}};
     const onInstalled=()=>{window.__zaraInstallPrompt=null;setPrompt(null);setInstalled(true);setStandalone(true);};
     window.addEventListener("beforeinstallprompt",before);
     window.addEventListener("zara-install-ready",ready);
@@ -60,15 +65,16 @@ export default function AppAccessGate({children}){
   async function install(){
     const event=prompt||window.__zaraInstallPrompt;
     if(!event){
-      alert("Install option browser ke menu se use karein. Install complete hone ke baad website/app khul jayega.");
+      if(ios){alert("iPhone/iPad par Safari me neeche Share (□↑) दबाएँ → Add to Home Screen चुनें → Add दबाएँ। फिर Zara Nikah App खोलें।");return;}
+      alert("Browser ke ⋮ menu me “Install Zara Nikah Service” ya “Add to Home screen” चुनें. Install ke baad app kholen.");
       return;
     }
     try{
       event.prompt();
       const choice=await event.userChoice;
-      window.__zaraInstallPrompt=null;setPrompt(null);
+      window.__zaraInstallPrompt=null;setPrompt(null);setCanInstall(false);
       if(choice?.outcome==="accepted"){
-        setInstalled(true);setStandalone(true);
+        setInstalled(true);setStandalone(true);setCanInstall(false);
       }
     }catch(e){}
   }
@@ -89,7 +95,7 @@ export default function AppAccessGate({children}){
           <div><b>2</b><span><strong>App Install होने दें</strong><small>Browser का install prompt पूरा करें</small></span></div>
           <div><b>3</b><span><strong>Website खोलें</strong><small>Install के बाद यही page अपने-आप खुलेगा</small></span></div>
         </div>
-        <button className="zaraInstallMainBtn" onClick={install}>📲 APP INSTALL करें <span>→</span></button>
+        <button className="zaraInstallMainBtn" onClick={install}>📲 {canInstall ? "APP INSTALL करें" : ios ? "iPhone में INSTALL कैसे करें" : "APP INSTALL करें"} <span>→</span></button>
         <p className="zaraInstallNote">🔒 बिना install किए public website pages और profiles नहीं खुलेंगे।</p>
       </div>
     </div>
