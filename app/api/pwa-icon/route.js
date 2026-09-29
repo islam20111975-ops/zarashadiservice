@@ -36,5 +36,5 @@ export async function GET(request){
     }
   }catch(e){}
 
-  return NextResponse.redirect(new URL("/zara-icon.svg",request.url),302);
+  return NextResponse.redirect(new URL(size === "192" ? "/zara-icon-192.png" : "/zara-icon-512.png",request.url),302);
 }
