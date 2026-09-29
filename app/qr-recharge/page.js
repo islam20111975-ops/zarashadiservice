@@ -16,7 +16,7 @@ function PageBody(){
  const redirected=useRef(false);
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
- useEffect(()=>{getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists())setBranding({logo:s.data().logo||"",appIcon:s.data().appIcon||""})}).catch(()=>{})},[]);
+ useEffect(()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");if(cached?.logo||cached?.appIcon)setBranding({logo:cached.logo||"",appIcon:cached.appIcon||""})}catch(e){} getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){const b={logo:s.data().logo||"",appIcon:s.data().appIcon||""};setBranding(b);try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify(b))}catch(e){}}}).catch(()=>{})},[]);
  useEffect(()=>{
   getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists()){setQrUrl(s.data().qrUrl||"");setUpiId((s.data().upiId||"").trim())}}).catch(()=>{});
  },[]);
