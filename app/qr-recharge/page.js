@@ -11,11 +11,12 @@ function PageBody(){
  const profile=q.get("profile")||"";
  const type=q.get("type")==="mobile"?"mobile":"biodata";
  const amount=type==="mobile"?500:100;
- const [user,setUser]=useState(null),[qrUrl,setQrUrl]=useState(""),[upiId,setUpiId]=useState(""),[utr,setUtr]=useState(""),[copied,setCopied]=useState(false),[clickedButton,setClickedButton]=useState("");
+ const [user,setUser]=useState(null),[qrUrl,setQrUrl]=useState(""),[upiId,setUpiId]=useState(""),[utr,setUtr]=useState(""),[copied,setCopied]=useState(false),[clickedButton,setClickedButton]=useState(""),[branding,setBranding]=useState({logo:"",appIcon:""});
  const [requests,setRequests]=useState([]),[profileData,setProfileData]=useState(null),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
  const redirected=useRef(false);
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
+ useEffect(()=>{getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists())setBranding({logo:s.data().logo||"",appIcon:s.data().appIcon||""})}).catch(()=>{})},[]);
  useEffect(()=>{
   getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists()){setQrUrl(s.data().qrUrl||"");setUpiId((s.data().upiId||"").trim())}}).catch(()=>{});
  },[]);
@@ -165,7 +166,7 @@ function PageBody(){
  if(user&&approved)return <main><section className="cardPage payment paymentPremium" style={{maxWidth:760,margin:"25px auto"}}><div className="notice">✅ <b>Payment Approved</b><br/>Profile {profile} ka access approve ho gaya hai.<br/><small>Biodata page khola ja raha hai…</small></div></section></main>;
 
  return <main>
-  <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">💍</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button></div></header>
+  <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">{branding.logo?<img src={branding.logo} alt="Zara Nikah logo"/>:"💍"}</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button></div></header>
   <section className="cardPage payment paymentPremium" style={{maxWidth:760,margin:"25px auto"}}>
    <div style={{textAlign:"center"}}>
     <div className="paymentIcon">₹</div><span className="eyebrow">UPI ID + QR PAYMENT</span>
