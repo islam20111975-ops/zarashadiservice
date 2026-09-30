@@ -1,0 +1,45 @@
+name: Build Zara Nikah AAB
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-aab:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Bubblewrap
+        run: npm install -g @bubblewrap/cli
+
+      - name: Initialize TWA project
+        working-directory: play-store
+        run: |
+          printf '\n\n\n\n\n\n\n\n' | bubblewrap init --manifest=https://zarashadiservice.vercel.app/manifest.webmanifest --directory=.
+
+      - name: Build signed AAB
+        working-directory: play-store
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ZARA_KEYSTORE_PASSWORD }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ZARA_KEY_PASSWORD }}
+        run: bubblewrap build --manifest=.
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: zara-nikah-aab
+          path: play-store/app-release-bundle.aab
