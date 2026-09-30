@@ -1,6 +1,8 @@
 name: Build Zara Nikah AAB
 
 on:
+  push:
+    branches: [play-store-zara-nikah]
   workflow_dispatch:
 
 jobs:
