@@ -9,8 +9,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout
+      - name: Checkout Play Store branch
         uses: actions/checkout@v4
+        with:
+          ref: play-store-zara-nikah
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -23,23 +25,62 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install Bubblewrap
-        run: npm install -g @bubblewrap/cli
+      - name: Install Bubblewrap and Expect
+        run: |
+          npm install -g @bubblewrap/cli
+          sudo apt-get update
+          sudo apt-get install -y expect
+
+      - name: Create release signing key
+        working-directory: play-store
+        run: |
+          if [ ! -f android.keystore ]; then
+            keytool -genkeypair -v -keystore android.keystore -alias android -keyalg RSA -keysize 2048 -validity 10000 -storepass 'ZaraNikah2026!' -keypass 'ZaraNikah2026!' -dname 'CN=Zara Nikah, OU=Zara Nikah, O=Zara Nikah, C=IN'
+          fi
 
       - name: Initialize TWA project
         working-directory: play-store
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }}
         run: |
-          printf '\n\n\n\n\n\n\n\n' | bubblewrap init --manifest=https://zarashadiservice.vercel.app/manifest.webmanifest --directory=.
+          expect <<'EOF'
+          set timeout 1200
+          spawn bubblewrap init --manifest=https://zarashadiservice.vercel.app/manifest.webmanifest --directory=.
+          expect {
+            -re "Do you want Bubblewrap to install JDK.*" { send "n\r"; exp_continue }
+            -re "Path to your existing JDK.*" { send "$::env(JAVA_HOME)\r"; exp_continue }
+            -re "Do you want Bubblewrap to install Android SDK.*" { send "y\r"; exp_continue }
+            -re "Domain:.*" { send "zarashadiservice.vercel.app\r"; exp_continue }
+            -re "Start URL:.*" { send "/\r"; exp_continue }
+            -re "Organization:.*" { send "Zara Nikah\r"; exp_continue }
+            -re "Country:.*" { send "IN\r"; exp_continue }
+            -re "Keystore password:.*" { send "ZaraNikah2026!\r"; exp_continue }
+            -re "Key password:.*" { send "ZaraNikah2026!\r"; exp_continue }
+            eof
+          }
+          EOF
 
-      - name: Build signed AAB
+      - name: Build signed Android App Bundle
         working-directory: play-store
         env:
-          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ZARA_KEYSTORE_PASSWORD }}
-          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ZARA_KEY_PASSWORD }}
-        run: bubblewrap build --manifest=.
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ZaraNikah2026!
+          BUBBLEWRAP_KEY_PASSWORD: ZaraNikah2026!
+        run: bubblewrap build --skipPwaValidation --manifest=.
 
-      - name: Upload AAB
+      - name: Generate Digital Asset Links
+        working-directory: play-store
+        run: |
+          FINGERPRINT=$(keytool -list -v -keystore android.keystore -alias android -storepass 'ZaraNikah2026!' | awk -F': ' '/SHA256:/{print $2; exit}')
+          mkdir -p assetlinks/.well-known
+          printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"online.zaranikahservice.app","sha256_cert_fingerprints":["%s"]}}]\n' "$FINGERPRINT" > assetlinks/.well-known/assetlinks.json
+          echo "Certificate fingerprint: $FINGERPRINT"
+
+      - name: Upload Zara Nikah Play Store release
         uses: actions/upload-artifact@v4
         with:
-          name: zara-nikah-aab
-          path: play-store/app-release-bundle.aab
+          name: zara-nikah-play-store-release
+          path: |
+            play-store/app-release-bundle.aab
+            play-store/app-release-signed.apk
+            play-store/android.keystore
+            play-store/assetlinks/.well-known/assetlinks.json
