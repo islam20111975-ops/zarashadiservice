@@ -20,8 +20,17 @@ const events=[
 const parseEventDate=(value)=>{
  const [d,m,y]=value.split(" ");
  const months={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
- return new Date(Number(y),months[m],Number(d));
+ return new Date(Number(y),months[m],Number(d),12);
 };
+
+const getIndiaToday=()=>{
+ const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
+ const year=Number(parts.find(p=>p.type==="year")?.value);
+ const month=Number(parts.find(p=>p.type==="month")?.value)-1;
+ const day=Number(parts.find(p=>p.type==="day")?.value);
+ return new Date(year,month,day,12);
+};
+
 const sameDay=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
 
 const formatHijri=(date)=>{
@@ -35,18 +44,18 @@ const formatHijri=(date)=>{
 
 export default function IslamicCalendar(){
  const [showEvents,setShowEvents]=useState(true);
- const [today]=useState(()=>new Date());
+ const today=getIndiaToday();
  const todayHijri=formatHijri(today);
  const todayText=today.toLocaleDateString("en-IN",{day:"2-digit",month:"long",year:"numeric"});
  const currentMonth=today.getMonth();
 
  const months=useMemo(()=>Array.from({length:12},(_,i)=>{
-   const first=new Date(2026,i,1);
-   const last=new Date(2026,i+1,0);
+   const first=new Date(2026,i,1,12);
+   const last=new Date(2026,i+1,0,12);
    return [first.toLocaleDateString("en-IN",{month:"long"}),formatHijri(first).month+" "+formatHijri(first).year+" / "+formatHijri(last).month+" "+formatHijri(last).year];
  }),[]);
 
- const upcoming=useMemo(()=>events.filter(e=>parseEventDate(e.date)>=new Date(today.getFullYear(),today.getMonth(),today.getDate())).slice(0,8),[today]);
+ const upcoming=useMemo(()=>events.filter(e=>parseEventDate(e.date)>=today).slice(0,8),[today]);
 
  return <main className="calendarPage">
   <header className="calendarHero">
@@ -59,7 +68,7 @@ export default function IslamicCalendar(){
     <div><small>आज की तारीख</small><strong>{todayText}</strong></div>
     <div><small>आज की हिजरी तारीख</small><strong>{todayHijri.text}</strong></div>
    </div>
-   <div className="calendarNote">🌙 हिजरी तारीख कैलेंडर के अनुसार दिखाई जाती है। भारत में स्थानीय चाँद देखने के कारण Ramadan, Eid और अन्य तारीखों में 1 दिन का अंतर हो सकता है।</div>
+   <div className="calendarNote">🌙 यह तारीख India Standard Time (IST) के अनुसार हर बार page/app खोलने पर दिखाई जाएगी। भारत में स्थानीय चाँद देखने के कारण Ramadan, Eid और अन्य तारीखों में 1 दिन का अंतर हो सकता है।</div>
   </header>
   <section className="calendarBody">
    <div className="calendarSectionTitle"><span>📅</span><div><h2>2026 के 12 महीने</h2><small>Hijri + Gregorian calendar</small></div></div>
