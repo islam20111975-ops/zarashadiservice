@@ -1,169 +1,45 @@
-// Install gate + installed-PWA splash for Zara Nikah Service.
 "use client";
-
 import {useEffect,useState} from "react";
 import {usePathname} from "next/navigation";
-
 const ADMIN_PATH="/admin";
-const INSTALLED_KEY="zaraAppInstalledV4";
 const ICON="/api/pwa-icon?size=512";
-
-function isStandalone(){
-  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
-}
-
-function hasInstalledMark(){
-  try{return localStorage.getItem(INSTALLED_KEY)==="1"}catch(e){return false}
-}
-
-function markInstalled(){
-  try{localStorage.setItem(INSTALLED_KEY,"1")}catch(e){}
-}
-
-function clearInstalledMark(){
-  try{localStorage.removeItem(INSTALLED_KEY)}catch(e){}
-}
-
+function isStandalone(){return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;}
 export default function AppAccessGate({children}){
-  const pathname=usePathname();
-  const admin=pathname===ADMIN_PATH || pathname.startsWith(ADMIN_PATH+"/");
-  const [checking,setChecking]=useState(true);
-  const [standalone,setStandalone]=useState(false);
-  const [installed,setInstalled]=useState(false);
-  const [prompt,setPrompt]=useState(null);
-  const [splash,setSplash]=useState(false);
-  const [icon,setIcon]=useState(ICON);
-  const [ios,setIos]=useState(false);
-  const [canInstall,setCanInstall]=useState(false);
-
-  useEffect(()=>{
-    if(admin){setChecking(false);return;}
-
-    const standaloneNow=isStandalone();
-    const remembered=hasInstalledMark();
-    setStandalone(standaloneNow);
-    setInstalled(remembered);
-    setChecking(false);
-
-    const ua=navigator.userAgent||"";
-    setIos(/iphone|ipad|ipod/i.test(ua) && !standaloneNow);
-
-    try{
-      const cached=JSON.parse(localStorage.getItem("zaraBrandingCache")||"null");
-      if(cached?.appIcon) setIcon(cached.appIcon);
-    }catch(e){}
-
-    const applyIcon=()=>{
-      try{
-        const cached=JSON.parse(localStorage.getItem("zaraBrandingCache")||"null");
-        if(cached?.appIcon)setIcon(cached.appIcon);
-      }catch(e){}
-    };
-
-    const before=e=>{
-      e.preventDefault();
-      // If the browser can offer installation again, the previous PWA was
-      // removed. Clear the remembered install state so the gate returns.
-      clearInstalledMark();
-      setInstalled(false);
-      window.__zaraInstallPrompt=e;
-      setPrompt(e);
-      setCanInstall(true);
-    };
-
-    const ready=()=>{
-      if(window.__zaraInstallPrompt){
-        setPrompt(window.__zaraInstallPrompt);
-        setCanInstall(true);
-      }
-    };
-
-    const onInstalled=()=>{
-      markInstalled();
-      setInstalled(true);
-      window.__zaraInstallPrompt=null;
-      setPrompt(null);
-      setCanInstall(false);
-      setStandalone(isStandalone());
-      setSplash(true);
-      setTimeout(()=>setSplash(false),3000);
-    };
-
-    window.addEventListener("beforeinstallprompt",before);
-    window.addEventListener("zara-install-ready",ready);
-    window.addEventListener("zara-branding-updated",applyIcon);
-    window.addEventListener("appinstalled",onInstalled);
-
-    ready();
-    applyIcon();
-
-    return()=>{
-      window.removeEventListener("beforeinstallprompt",before);
-      window.removeEventListener("zara-install-ready",ready);
-      window.removeEventListener("zara-branding-updated",applyIcon);
-      window.removeEventListener("appinstalled",onInstalled);
-    };
-  },[admin]);
-
-  useEffect(()=>{
-    if(admin || !standalone) return;
-    setSplash(true);
-    const timer=setTimeout(()=>setSplash(false),3000);
-    return()=>clearTimeout(timer);
-  },[admin,standalone]);
-
-  async function install(){
-    const event=prompt||window.__zaraInstallPrompt;
-    if(!event){
-      if(ios){
-        alert("iPhone/iPad par Safari me neeche Share (□↑) दबाएँ → Add to Home Screen चुनें → Add दबाएँ। फिर Zara Nikah App खोलें।");
-        return;
-      }
-      alert("Browser ke ⋮ menu me “Install Zara Nikah Service” ya “Add to Home screen” चुनें. Install ke baad app kholen.");
-      return;
-    }
-
-    try{
-      event.prompt();
-      const choice=await event.userChoice;
-      window.__zaraInstallPrompt=null;
-      setPrompt(null);
-      setCanInstall(false);
-
-      if(choice?.outcome==="accepted"){
-        markInstalled();
-        setInstalled(true);
-        setStandalone(true);
-        setSplash(true);
-        setTimeout(()=>setSplash(false),3000);
-      }
-    }catch(e){}
-  }
-
-  if(admin) return <>{children}</>;
-  if(checking) return <div className="zaraBootScreen" aria-hidden="true"/>;
-
-  // Installed app OR browser that has already completed installation:
-  // refreshing the normal website must not show the install gate.
-  if(!standalone && !installed) return (
-    <div className="zaraInstallGate" role="dialog" aria-modal="true" aria-labelledby="zaraInstallTitle">
-      <div className="zaraInstallGlow zaraGlowOne"/><div className="zaraInstallGlow zaraGlowTwo"/>
-      <div className="zaraInstallCard">
-        <div className="zaraInstallLogo"><img src={icon||ICON} alt="Zara Nikah App"/></div>
-        <div className="zaraInstallBrand">ZARA NIKAH <small>SERVICE</small></div>
-        <div className="zaraInstallBadge">✓ VERIFIED NIKAH SERVICE</div>
-        <h1 id="zaraInstallTitle">📲 पहले App Install करें</h1>
-        <p className="zaraInstallLead">Website के किसी भी page को खोलने के लिए पहले <b>Zara Nikah App</b> Install करें।</p>
-        <div className="zaraInstallSteps">
-          <div><b>1</b><span><strong>Install App</strong><small>नीचे दिए बटन पर क्लिक करें</small></span></div>
-          <div><b>2</b><span><strong>App Install होने दें</strong><small>Browser का install prompt पूरा करें</small></span></div>
-          <div><b>3</b><span><strong>Website खोलें</strong><small>Install के बाद यही page अपने-आप खुलेगा</small></span></div>
-        </div>
-        <button className="zaraInstallMainBtn" onClick={install}>📲 {canInstall ? "APP INSTALL करें" : ios ? "iPhone में INSTALL कैसे करें" : "APP INSTALL करें"} <span>→</span></button>
-        <p className="zaraInstallNote">🔒 बिना install किए public website pages और profiles नहीं खुलेंगे।</p>
-      </div>
-    </div>
-  );
-
-  return <>{splash&&<div className="zaraPwaSplash"><img src="/api/app-splash" alt="" className="zaraPwaSplashBg"/><div className="zaraPwaSplashShade"/></div>}{children}</>;
+ const pathname=usePathname();
+ const admin=pathname===ADMIN_PATH || pathname.startsWith(ADMIN_PATH+"/");
+ const [checking,setChecking]=useState(true);
+ const [standalone,setStandalone]=useState(false);
+ const [prompt,setPrompt]=useState(null);
+ const [splash,setSplash]=useState(false);
+ const [ios,setIos]=useState(false);
+ const [canInstall,setCanInstall]=useState(false);
+ const [hideButton,setHideButton]=useState(false);
+ useEffect(()=>{
+  if(admin){setChecking(false);return;}
+  const checkInstalled=async()=>{
+   const stand=isStandalone(); setStandalone(stand);
+   if(stand){setHideButton(true);return;}
+   try{if(navigator.getInstalledRelatedApps){const apps=await navigator.getInstalledRelatedApps();setHideButton(apps.some(a=>a.platform==="webapp"));return;}}catch(e){}
+   setHideButton(false);
+  };
+  const ua=navigator.userAgent||"";setIos(/iphone|ipad|ipod/i.test(ua)&&!isStandalone());
+  checkInstalled();setChecking(false);
+  const before=e=>{e.preventDefault();window.__zaraInstallPrompt=e;setPrompt(e);setCanInstall(true);setHideButton(false);};
+  const ready=()=>{if(window.__zaraInstallPrompt){setPrompt(window.__zaraInstallPrompt);setCanInstall(true);}};
+  const onInstalled=()=>{window.__zaraInstallPrompt=null;setPrompt(null);setCanInstall(false);setHideButton(true);};
+  const onMode=()=>{checkInstalled();};
+  const mode=window.matchMedia("(display-mode: standalone)");mode.addEventListener?.("change",onMode);
+  window.addEventListener("beforeinstallprompt",before);window.addEventListener("zara-install-ready",ready);window.addEventListener("appinstalled",onInstalled);window.addEventListener("pageshow",checkInstalled);window.addEventListener("zara-branding-updated",checkInstalled);
+  document.addEventListener("visibilitychange",onMode);ready();
+  return()=>{window.removeEventListener("beforeinstallprompt",before);window.removeEventListener("zara-install-ready",ready);window.removeEventListener("appinstalled",onInstalled);window.removeEventListener("pageshow",checkInstalled);window.removeEventListener("zara-branding-updated",checkInstalled);mode.removeEventListener?.("change",onMode);document.removeEventListener("visibilitychange",onMode);};
+ },[admin]);
+ useEffect(()=>{if(admin||!standalone)return;setSplash(true);const t=setTimeout(()=>setSplash(false),2500);return()=>clearTimeout(t);},[admin,standalone]);
+ async function install(){
+  const event=prompt||window.__zaraInstallPrompt;
+  if(!event){if(ios){alert("Safari me Share (□↑) dabayein → Add to Home Screen → Add.");return;}alert("Chrome ke ⋮ menu me Install app ya Add to Home screen chunein.");return;}
+  try{event.prompt();const choice=await event.userChoice;window.__zaraInstallPrompt=null;setPrompt(null);setCanInstall(false);if(choice?.outcome==="accepted"){setHideButton(true);}}catch(e){}
+ }
+ if(admin)return <>{children}</>;
+ if(checking)return <div className="zaraBootScreen" aria-hidden="true"/>;
+ return <>{children}{!standalone&&!hideButton&&<button className="zaraFloatingInstall" onClick={install} aria-label="Zara Nikah App install karein"><span className="zaraFloatingInstallIcon">📲</span><span className="zaraFloatingInstallText"><strong>APP INSTALL</strong><small>Zara Nikah Service</small></span><span className="zaraFloatingInstallArrow">↓</span></button>}{splash&&standalone&&<div className="zaraPwaSplash"><img src="/api/app-splash" alt="" className="zaraPwaSplashBg"/><div className="zaraPwaSplashShade"/></div>}</>;
 }
