@@ -6,7 +6,7 @@ import {GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged
 import {collection,doc,getDoc,onSnapshot,setDoc,serverTimestamp,updateDoc,runTransaction} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
-const ADMIN="ngogrant454@gmail.com";
+const ADMINS=["ngogrant454@gmail.com","islam20111975@gmail.com"];
 
 export default function Admin(){
   const router=useRouter();
@@ -47,7 +47,7 @@ export default function Admin(){
   }
 
   useEffect(()=>{
-    if(user?.email?.toLowerCase()!==ADMIN)return;
+    if(!ADMINS.includes(user?.email?.toLowerCase()))return;
     const unsubs=[];
     const watch=(path,setter,ordered=false)=>{
       const q=collection(db,path);
@@ -398,7 +398,7 @@ export default function Admin(){
 
   if(user===undefined)return <main><section className="admin cardPage"><h1>Loading...</h1></section></main>;
   if(!user)return <main><section className="admin cardPage"><div className="adminIcon">🔐</div><h1>Admin Login</h1><button className="primaryAction" onClick={login}>Google Login →</button>{error&&<div className="errorBox">{error}</div>}</section></main>;
-  if(user.email?.toLowerCase()!==ADMIN)return <main><section className="admin cardPage"><div className="adminIcon">🚫</div><h1>Access Denied</h1><button className="backAction" onClick={logout}>Logout</button></section></main>;
+  if(!ADMINS.includes(user.email?.toLowerCase()))return <main><section className="admin cardPage"><div className="adminIcon">🚫</div><h1>Access Denied</h1><button className="backAction" onClick={logout}>Logout</button></section></main>;
 
   const nav=[["dashboard","🏠 Dashboard"],["users","👥 All Users"],["biodata","📋 Biodata"],["access100","₹100 Biodata Payments"],["access500","₹500 Mobile Payments"],["wallet","💰 Wallet / Recharge"],["transactions","🧾 Transactions"],["settings","⚙️ Settings"]];
 
