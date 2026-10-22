@@ -162,12 +162,23 @@ service cloud.firestore {
             && lockId == accessLockId(request.auth.uid, request.resource.data.profileId, request.resource.data.type)
           )
         );
+      // Owner may clear a lock only after its matching request is absent or no longer pending.
+      // Check the correct request collection for each lock kind (access vs recharge).
       allow delete: if isAdmin() || (signedIn()
         && resource.data.uid == request.auth.uid
         && resource.data.requestId is string
         && (
-          !exists(/databases/$(database)/documents/paidAccessRequests/$(resource.data.requestId))
-          || get(/databases/$(database)/documents/paidAccessRequests/$(resource.data.requestId)).data.status != "pending"
+          (resource.data.kind == "access"
+            && (
+              !exists(/databases/$(database)/documents/paidAccessRequests/$(resource.data.requestId))
+              || get(/databases/$(database)/documents/paidAccessRequests/$(resource.data.requestId)).data.status != "pending"
+            ))
+          ||
+          (resource.data.kind == "recharge"
+            && (
+              !exists(/databases/$(database)/documents/walletRechargeRequests/$(resource.data.requestId))
+              || get(/databases/$(database)/documents/walletRechargeRequests/$(resource.data.requestId)).data.status != "pending"
+            ))
         ));
       allow update: if isAdmin();
     }
@@ -219,7 +230,7 @@ service cloud.firestore {
         && ((request.resource.data.type == "biodata" && request.resource.data.amount == 100)
           || (request.resource.data.type == "mobile" && request.resource.data.amount == 500))
         && request.resource.data.status == "pending"
-        && (!request.resource.data.keys().hasAny(["lockId"])
+        && (request.resource.data.paymentMethod == "wallet"
           || (request.resource.data.lockId is string
               && request.resource.data.lockId == accessLockId(request.auth.uid, request.resource.data.profileId, request.resource.data.type)))
         && (request.resource.data.paymentMethod == "wallet" || request.resource.data.paymentMethod == "upi" || request.resource.data.paymentMethod == "qr")
@@ -231,7 +242,9 @@ service cloud.firestore {
           ||
           (request.resource.data.paymentMethod != "wallet"
             && validUtr(request.resource.data.utr)
-            && (!request.resource.data.keys().hasAny(["utrClaimId"]) || request.resource.data.utrClaimId is string))
+            && request.resource.data.utrClaimId is string
+            && request.resource.data.utrClaimId == request.resource.data.utr.lower()
+            && request.resource.data.lockId is string)
         );
 
       allow update, delete: if isAdmin();
