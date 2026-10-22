@@ -5,23 +5,10 @@ import {useEffect,useState} from "react";
 import {usePathname} from "next/navigation";
 
 const ADMIN_PATH="/admin";
-const INSTALLED_KEY="zaraAppInstalledV4";
 const ICON="/api/pwa-icon?size=512";
 
 function isStandalone(){
   return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
-}
-
-function hasInstalledMark(){
-  try{return localStorage.getItem(INSTALLED_KEY)==="1"}catch(e){return false}
-}
-
-function markInstalled(){
-  try{localStorage.setItem(INSTALLED_KEY,"1")}catch(e){}
-}
-
-function clearInstalledMark(){
-  try{localStorage.removeItem(INSTALLED_KEY)}catch(e){}
 }
 
 export default function AppAccessGate({children}){
@@ -29,7 +16,6 @@ export default function AppAccessGate({children}){
   const admin=pathname===ADMIN_PATH || pathname.startsWith(ADMIN_PATH+"/");
   const [checking,setChecking]=useState(true);
   const [standalone,setStandalone]=useState(false);
-  const [installed,setInstalled]=useState(false);
   const [prompt,setPrompt]=useState(null);
   const [splash,setSplash]=useState(false);
   const [icon,setIcon]=useState(ICON);
@@ -40,9 +26,7 @@ export default function AppAccessGate({children}){
     if(admin){setChecking(false);return;}
 
     const standaloneNow=isStandalone();
-    const remembered=hasInstalledMark();
     setStandalone(standaloneNow);
-    setInstalled(remembered);
     setChecking(false);
 
     const ua=navigator.userAgent||"";
@@ -62,10 +46,6 @@ export default function AppAccessGate({children}){
 
     const before=e=>{
       e.preventDefault();
-      // If the browser can offer installation again, the previous PWA was
-      // removed. Clear the remembered install state so the gate returns.
-      clearInstalledMark();
-      setInstalled(false);
       window.__zaraInstallPrompt=e;
       setPrompt(e);
       setCanInstall(true);
@@ -79,14 +59,11 @@ export default function AppAccessGate({children}){
     };
 
     const onInstalled=()=>{
-      markInstalled();
-      setInstalled(true);
+      // Do not unlock the ordinary browser tab: localStorage is shared with
+      // the installed PWA and cannot reliably prove that the app is installed.
       window.__zaraInstallPrompt=null;
       setPrompt(null);
       setCanInstall(false);
-      setStandalone(isStandalone());
-      setSplash(true);
-      setTimeout(()=>setSplash(false),3000);
     };
 
     window.addEventListener("beforeinstallprompt",before);
@@ -131,11 +108,7 @@ export default function AppAccessGate({children}){
       setCanInstall(false);
 
       if(choice?.outcome==="accepted"){
-        markInstalled();
-        setInstalled(true);
-        setStandalone(true);
-        setSplash(true);
-        setTimeout(()=>setSplash(false),3000);
+        // Keep the browser tab gated; open Zara Nikah from the Home Screen/app launcher.
       }
     }catch(e){}
   }
@@ -143,9 +116,9 @@ export default function AppAccessGate({children}){
   if(admin) return <>{children}</>;
   if(checking) return <div className="zaraBootScreen" aria-hidden="true"/>;
 
-  // Installed app OR browser that has already completed installation:
-  // refreshing the normal website must not show the install gate.
-  if(!standalone && !installed) return (
+  // Only a genuine standalone PWA session bypasses the install gate.
+  // localStorage cannot reliably detect uninstall because it may be shared.
+  if(!standalone) return (
     <div className="zaraInstallGate" role="dialog" aria-modal="true" aria-labelledby="zaraInstallTitle">
       <div className="zaraInstallGlow zaraGlowOne"/><div className="zaraInstallGlow zaraGlowTwo"/>
       <div className="zaraInstallCard">
