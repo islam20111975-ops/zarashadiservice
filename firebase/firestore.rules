@@ -3,7 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function isAdmin() { return signedIn() && request.auth.token.email == "ngogrant454@gmail.com"; }
+    function isAdmin() { return signedIn() && request.auth.token.email in ["ngogrant454@gmail.com", "islam20111975@gmail.com"]; }
     function owner(uid) { return signedIn() && request.auth.uid == uid; }
     function validUtr(v) { return v is string && v.matches("^[A-Za-z0-9]{6,40}$"); }
 
