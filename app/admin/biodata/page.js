@@ -7,7 +7,7 @@ import {GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signInWithRedirect
 import {collection,doc,getDoc,onSnapshot,setDoc,serverTimestamp,writeBatch} from "firebase/firestore";
 import {auth,db} from "../../../lib/firebase";
 
-const ADMIN="ngogrant454@gmail.com";
+const ADMINS=["ngogrant454@gmail.com","islam20111975@gmail.com"];
 const empty={id:"",gender:"",name:"",address:"",phone:"",age:"",income:"",description:"",
  maritalStatus:"",height:"",dob:"",birthPlace:"",education:"",occupation:"",company:"",city:"",district:"",state:"",nativePlace:"",
  religion:"",caste:"",language:"",fatherName:"",motherName:"",brothers:"",sisters:"",familyDetails:"",expectations:"",
@@ -58,7 +58,7 @@ function BiodataAdminPage(){
 
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
   useEffect(()=>{
-    if(user?.email?.toLowerCase()!==ADMIN)return;
+    if(!ADMINS.includes(user?.email?.toLowerCase()))return;
     return onSnapshot(collection(db,"profiles"),s=>setProfiles(s.docs.map(d=>({id:d.id,...d.data()}))),e=>setError(e.message));
   },[user]);
 
@@ -104,7 +104,7 @@ function BiodataAdminPage(){
       setError("❌ Admin login session nahi hai. Pehle Admin login karein.");
       return;
     }
-    if((currentUser.email||"").toLowerCase()!==ADMIN){
+    if(!ADMINS.includes((currentUser.email||"").toLowerCase())){
       setError("❌ Sirf Admin account se Biodata save ho sakta hai.");
       return;
     }
@@ -320,7 +320,7 @@ function BiodataAdminPage(){
   const filtered=profiles.filter(p=>(p.id+" "+p.gender+" "+(p.name||"")).toLowerCase().includes(search.toLowerCase())).sort((a,b)=>a.id.localeCompare(b.id));
   if(user===undefined)return <main><section className="admin cardPage"><h1>Loading...</h1></section></main>;
   if(!user)return <main><section className="admin cardPage"><div className="adminIcon">🔐</div><h1>Admin Login</h1><p>Google se Admin login karein.</p><button className="primaryAction" onClick={login}>Google Login →</button>{error&&<div className="errorBox">{error}</div>}{success&&<div className="successBox" style={{marginBottom:14,fontWeight:800}}>🎉 {success}</div>}</section></main>;
-  if(user.email?.toLowerCase()!==ADMIN)return <main><section className="admin cardPage"><div className="adminIcon">🚫</div><h1>Access Denied</h1><button className="backAction" onClick={()=>auth.signOut()}>Logout</button></section></main>;
+  if(!ADMINS.includes(user.email?.toLowerCase()))return <main><section className="admin cardPage"><div className="adminIcon">🚫</div><h1>Access Denied</h1><button className="backAction" onClick={()=>auth.signOut()}>Logout</button></section></main>;
 
   return <main><section className="admin dashboardPage">
     <div className="dashTop"><div><span className="eyebrow">ZARA NIKAH SERVICE</span><h1>📋 Biodata Management</h1><p>Har person ka biodata, photo aur description alag record rahega.</p></div><button className="logout" onClick={()=>router.push("/admin")}>← Admin Board</button></div>
