@@ -12,7 +12,6 @@ export default function sitemap(){
   ];
   return pages.map(([path,priority,changeFrequency])=>({
     url:base+path,
-    lastModified:new Date(),
     changeFrequency,
     priority
   }));
