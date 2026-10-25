@@ -3,6 +3,7 @@ import AppAccessGate from "./components/AppAccessGate";
 
 export const metadata={
  metadataBase:new URL("https://zarashadiservice.vercel.app"),
+ alternates:{canonical:"/"},
  title:{default:"Zara Nikah Service | Nikah & Rishta Profiles",template:"%s | Zara Nikah Service"},
  description:"Zara Nikah Service par nikah aur rishta profiles ko privacy aur safety ko dhyan mein rakh kar explore karein. Profile access, payment help aur safe rishta search guidance.",
  applicationName:"Zara Nikah Service",
