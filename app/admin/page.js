@@ -246,6 +246,48 @@ export default function Admin(){
   }
   async function rejectAccess(x){if(!confirm("Request reject karein?"))return;try{await runTransaction(db,async t=>{const ref=doc(db,"paidAccessRequests",x.id);const s=await t.get(ref);if(!s.exists()||s.data().status!=="pending")throw new Error("Request already process ho chuki hai.");t.update(ref,{status:"rejected",rejectedAt:serverTimestamp()});if(s.data().lockId)t.delete(doc(db,"pendingPaymentLocks",s.data().lockId));});}catch(e){setError("Access reject nahi hua: "+e.message)}}
   async function deleteAccessRequest(x){if(!confirm("Is payment request ko delete karein? UTR record duplicate payment rokne ke liye safe rakha jayega."))return;try{await runTransaction(db,async t=>{const ref=doc(db,"paidAccessRequests",x.id);const s=await t.get(ref);if(!s.exists())return;const req=s.data();if(req.status==="approved")throw new Error("Approved request delete nahi kar sakte. Payment record aur access history safe rakhein.");if(req.lockId)t.delete(doc(db,"pendingPaymentLocks",req.lockId));t.delete(ref);});setError("Request delete kar di gayi. UTR claim safety ke liye rakha gaya hai.");}catch(e){setError("Request delete nahi hui: "+e.message)}}
+  async function rejectTransaction(x){
+    if(!confirm("Is payment ko REJECT karke user ka biodata/mobile access band karein? Wallet refund apne-aap nahi hoga."))return;
+    try{
+      const reqId=x.requestId;
+      if(!reqId)throw new Error("Request ID nahi hai; is transaction se access request identify nahi ho rahi.");
+      const reqRef=doc(db,"paidAccessRequests",reqId);
+      const unlockPath=x.type==="biodata_unlock"?"biodataUnlocks":x.type==="mobile_access"?"mobileAccess":null;
+      if(!unlockPath)throw new Error("Reject sirf biodata/mobile access payment par available hai.");
+      const unlockRef=doc(db,unlockPath,(x.uid||"")+"_"+(x.profileId||""));
+      await runTransaction(db,async t=>{
+        const rs=await t.get(reqRef);
+        const us=await t.get(unlockRef);
+        if(!rs.exists())throw new Error("Related payment request nahi mili. Access ko safely verify nahi kar sakte.");
+        if(rs.data().uid!==x.uid||rs.data().profileId!==x.profileId)throw new Error("Transaction aur request details match nahi karte.");
+        t.update(reqRef,{status:"rejected",rejectedAt:serverTimestamp(),rejectionReason:"admin_rejected_from_transactions"});
+        if(us.exists())t.update(unlockRef,{status:"revoked",revokedAt:serverTimestamp(),revokedBy:user.email});
+        t.update(doc(db,"walletTransactions",x.id),{status:"rejected",rejectedAt:serverTimestamp()});
+        if(rs.data().lockId)t.delete(doc(db,"pendingPaymentLocks",rs.data().lockId));
+      });
+      setError("Payment rejected. Related biodata/mobile access band kar diya gaya. Wallet refund nahi hua.");
+    }catch(e){setError("Payment reject nahi hua: "+e.message)}
+  }
+  async function deleteTransaction(x){
+    if(!confirm("Is transaction ko delete karne se transaction record, related payment request aur uska biodata/mobile access delete/revoke ho jayega. UTR claim duplicate-payment protection ke liye rahega. Wallet refund nahi hoga. Kya aap sure hain?"))return;
+    try{
+      const reqId=x.requestId;
+      const reqRef=reqId?doc(db,"paidAccessRequests",reqId):null;
+      const unlockPath=x.type==="biodata_unlock"?"biodataUnlocks":x.type==="mobile_access"?"mobileAccess":null;
+      const unlockRef=unlockPath&&x.uid&&x.profileId?doc(db,unlockPath,x.uid+"_"+x.profileId):null;
+      await runTransaction(db,async t=>{
+        const ts=await t.get(doc(db,"walletTransactions",x.id));
+        if(!ts.exists())return;
+        const rs=reqRef?await t.get(reqRef):null;
+        const us=unlockRef?await t.get(unlockRef):null;
+        if(rs?.exists()&&rs.data().lockId)t.delete(doc(db,"pendingPaymentLocks",rs.data().lockId));
+        if(rs?.exists())t.delete(reqRef);
+        if(us?.exists())t.delete(unlockRef);
+        t.delete(doc(db,"walletTransactions",x.id));
+      });
+      setError("Transaction, related request aur access record delete/revoke kar diya. UTR safety claim rakha gaya; wallet refund nahi hua.");
+    }catch(e){setError("Transaction delete nahi hua: "+e.message)}
+  }
 
   async function savePayment(e){
     e.preventDefault();try{
@@ -451,7 +493,7 @@ export default function Admin(){
 
     {tab==="wallet"&&<div className="adminList"><div className="listHead"><h3>💰 Wallet Recharge Requests</h3><span>{recharges.length}</span></div>{recharges.map(x=><div className="userAdminCard" key={x.id}><div><b>{x.name||"Name not set"}</b><small>📧 {x.email||"-"}</small><small>📱 {x.phone||"-"}</small><small>👤 UID: {x.uid}</small><small>💰 Recharge: ₹{x.amount}</small><small>🧾 UTR: {x.utr||"-"}</small><small>💳 Method: {(x.paymentMethod||"upi").toUpperCase()}</small><small>📌 Status: {x.status}</small><small>🔒 Lock: {x.lockId||"legacy request"}</small><small>🕒 {x.createdAt?.toDate?.()?.toLocaleString?.()||""}</small></div><div className="cardButtons">{x.status==="pending"&&<><button className="approve" onClick={()=>approveRecharge(x)}>✓ Approve & Credit ₹{x.amount}</button><button onClick={()=>rejectRecharge(x)}>✕ Reject</button></>}</div></div>)}</div>}
 
-    {tab==="transactions"&&<div className="adminList"><div className="listHead"><h3>🧾 All Wallet / Payment Transactions</h3><span>{transactions.length}</span></div>{transactions.map(x=><div className="adminRow" key={x.id}><span><b>{x.type} • ₹{x.amount}</b><small>👤 UID: {x.uid||"-"}</small><small>📋 Profile ID: {x.profileId||"-"}</small><small>🧾 UTR / Transaction ID: {x.utr||"-"}</small><small>💳 Method: {(x.paymentMethod||"-").toUpperCase()} • Status: {(x.status||"-").toUpperCase()}</small><small>↔️ Direction: {x.direction||"-"} • Balance After: {x.balanceAfter==null?"-":"₹"+x.balanceAfter}</small><small>🗂️ Request ID: {x.requestId||"-"}</small><small>🕒 Date/Time: {x.createdAt?.toDate?.()?.toLocaleString?.("en-IN")||"-"}</small></span></div>)}</div>}
+    {tab==="transactions"&&<div className="adminList"><div className="listHead"><h3>🧾 All Wallet / Payment Transactions</h3><span>{transactions.length}</span></div>{transactions.map(x=><div className="adminRow" key={x.id}><span><b>{x.type} • ₹{x.amount}</b><small>👤 UID: {x.uid||"-"}</small><small>📋 Profile ID: {x.profileId||"-"}</small><small>🧾 UTR / Transaction ID: {x.utr||"-"}</small><small>💳 Method: {(x.paymentMethod||"-").toUpperCase()} • Status: {(x.status||"-").toUpperCase()}</small><small>↔️ Direction: {x.direction||"-"} • Balance After: {x.balanceAfter==null?"-":"₹"+x.balanceAfter}</small><small>🗂️ Request ID: {x.requestId||"-"}</small><small>🕒 Date/Time: {x.createdAt?.toDate?.()?.toLocaleString?.("en-IN")||"-"}</small><div className="cardButtons" style={{marginTop:8}}>{["biodata_unlock","mobile_access"].includes(x.type)&&x.status!=="rejected"&&<button onClick={()=>rejectTransaction(x)}>✕ Reject / Block Access</button>}<button onClick={()=>deleteTransaction(x)} style={{color:"#b42318"}}>🗑️ Delete Full Record</button></div></span></div>)}</div>}
 
     {tab==="posts"&&<div className="adminList"><form className="adminBox" onSubmit={publishPost}><h3>📢 Website par nayi post likhein</h3><p>Yahan publish ki gayi post Male/Female buttons ke neeche sabhi visitors ko dikhegi. Aap jitni chahein alag-alag posts publish kar sakte hain.</p><textarea className="adminInput pageEditor" rows="5" maxLength={5000} placeholder="Apni announcement ya update yahan likhein..." value={postText} onChange={e=>setPostText(e.target.value)} required/><small>{postText.length}/5000 characters</small><button className="primaryAction" disabled={saving}>{saving?"Publishing...":"📢 Publish Post →"}</button></form><div className="listHead"><h3>Published Posts</h3><span>{posts.length}</span></div>{posts.map(p=><article className="userAdminCard" key={p.id}><div><b>📢 {p.createdAt?.toDate?.()?.toLocaleString?.("en-IN")||"Recent post"}</b><p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{p.text}</p><small>By: {p.createdBy||"Admin"}</small></div><div className="cardButtons"><button onClick={()=>removePost(p)}>🗑️ Delete</button></div></article>)}</div>}
 
