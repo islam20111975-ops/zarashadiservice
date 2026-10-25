@@ -1111,3 +1111,42 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 @media(max-width:700px){.headerInner{padding:10px 12px;gap:8px}.headerWeddingBrand{gap:7px!important}.headerWeddingBrand .logoMark{width:35px;height:35px;border-radius:11px;font-size:18px}.headerWeddingSlider{width:clamp(145px,43vw,230px);height:48px;border-radius:12px}.headerWeddingTitle{left:10px;font-size:14px}.headerWeddingTitle small{font-size:8px;letter-spacing:3px;margin-top:3px}.headerWeddingDots{right:7px;bottom:6px}}
 @media(max-width:420px){.headerInner{flex-wrap:wrap}.headerWeddingSlider{width:clamp(155px,54vw,230px)}.headerActions{margin-left:auto}.secureChip{display:none}.mainNav{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.headerWeddingImage{transition:none}}
+
+
+/* FULL-WIDTH WEDDING PHOTO SLIDER ACROSS THE ENTIRE HEADER */
+.siteHeader{position:sticky;top:0;isolation:isolate;min-height:92px;background:#24132f!important;overflow:hidden}
+.headerInner{position:relative;min-height:92px;width:100%;max-width:none;margin:0;padding:12px 22px}
+.headerWeddingBrand{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-width:0!important;margin:0!important;padding:0!important;display:block!important;z-index:0!important;pointer-events:none!important;border-radius:0!important}
+.headerWeddingSlider{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;border-radius:0!important;box-shadow:none!important;z-index:0!important;background:#24132f}
+.headerWeddingImage{object-position:center 42%;transform:scale(1.02)}
+.headerWeddingShade{background:linear-gradient(90deg,rgba(20,8,30,.70),rgba(20,8,30,.22) 52%,rgba(20,8,30,.48)),linear-gradient(0deg,rgba(20,8,30,.25),transparent 70%)!important}
+.headerWeddingTitle{left:82px!important;top:50%!important;font-size:clamp(17px,2vw,25px)!important;letter-spacing:1.5px!important}
+.headerWeddingTitle small{font-size:10px!important;letter-spacing:5px!important}
+.headerWeddingDots{right:22px!important;bottom:12px!important;gap:5px!important}
+.headerWeddingDots i{width:7px!important;height:7px!important}
+.headerWeddingDots i.active{width:18px!important}
+.headerWeddingBrand .logoMark{position:absolute;left:22px;top:50%;transform:translateY(-50%);z-index:2;width:48px;height:48px;border-radius:15px;border:1px solid #ffffffa8;box-shadow:0 5px 18px #0005}
+.mainNav,.headerActions{position:relative;z-index:2}
+.mainNav{margin-left:auto;margin-right:10px}
+.mainNav a{color:#fff!important;text-shadow:0 2px 6px #000b}
+.secureChip{background:#ecfdf5f2!important}
+.headerLogin{border:1px solid #ffffff80!important;box-shadow:0 6px 18px #0005!important}
+@media(max-width:700px){
+ .siteHeader,.headerInner{min-height:82px!important}
+ .headerInner{padding:9px 12px!important}
+ .headerWeddingBrand .logoMark{left:12px;width:38px;height:38px;border-radius:12px}
+ .headerWeddingTitle{left:60px!important;font-size:15px!important;letter-spacing:.7px!important}
+ .headerWeddingTitle small{font-size:8px!important;letter-spacing:3px!important}
+ .headerWeddingDots{right:12px!important;bottom:8px!important}
+ .mainNav{display:none}
+ .headerActions{margin-left:auto;gap:6px}
+ .headerLogin{padding:9px 10px!important;font-size:10px!important;white-space:nowrap}
+}
+@media(max-width:420px){
+ .siteHeader,.headerInner{min-height:76px!important}
+ .headerWeddingBrand .logoMark{left:9px;width:34px;height:34px;font-size:17px}
+ .headerWeddingTitle{left:51px!important;font-size:13px!important}
+ .headerWeddingTitle small{font-size:7px!important;letter-spacing:2.5px!important}
+ .headerActions .headerLogin{padding:8px!important;font-size:9px!important}
+ .headerWeddingDots{right:8px!important;bottom:6px!important}
+}
