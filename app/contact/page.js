@@ -3,8 +3,6 @@
 import Link from "next/link";
 import {useState} from "react";
 
-export const metadata={title:"Contact Us",description:"Zara Nikah Service se rabta karein aur help request bhejein"};
-
 export default function Contact(){
   const [name,setName]=useState("");
   const [replyEmail,setReplyEmail]=useState("");
