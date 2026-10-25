@@ -1,12 +1,18 @@
 "use client";
 import {useEffect,useState} from "react";
-import {usePathname} from "next/navigation";
+import {usePathname,useRouter} from "next/navigation";
+import {onAuthStateChanged,signOut} from "firebase/auth";
+import {doc,getDoc} from "firebase/firestore";
+import {auth,db} from "../../lib/firebase";
 const ADMIN_PATH="/admin";
+const ADMINS=["ngogrant454@gmail.com","islam20111975@gmail.com"];
 const ICON="/api/pwa-icon?size=512";
 function isStandalone(){return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;}
 export default function AppAccessGate({children}){
  const pathname=usePathname();
+ const router=useRouter();
  const admin=pathname===ADMIN_PATH || pathname.startsWith(ADMIN_PATH+"/");
+ const profileSetup=pathname==="/account";
  const [checking,setChecking]=useState(true);
  const [standalone,setStandalone]=useState(false);
  const [prompt,setPrompt]=useState(null);
@@ -14,6 +20,21 @@ export default function AppAccessGate({children}){
  const [ios,setIos]=useState(false);
  const [canInstall,setCanInstall]=useState(false);
  const [hideButton,setHideButton]=useState(false);
+ const [accessStatus,setAccessStatus]=useState("checking");
+ useEffect(()=>{
+  let alive=true;
+  const unsub=onAuthStateChanged(auth,async user=>{
+   if(!alive)return;
+   if(!user || ADMINS.includes(user.email?.toLowerCase()) || profileSetup){setAccessStatus("allowed");return;}
+   setAccessStatus("checking");
+   try{
+    const snap=await getDoc(doc(db,"users",user.uid));
+    if(!alive)return;
+    setAccessStatus(snap.exists()&&snap.data().status==="approved"?"approved":snap.exists()&&snap.data().status==="rejected"?"rejected":"pending");
+   }catch(e){if(alive)setAccessStatus("error")}
+  });
+  return()=>{alive=false;unsub()};
+ },[profileSetup]);
  useEffect(()=>{
   if(admin){setChecking(false);return;}
   const checkInstalled=async()=>{
@@ -43,6 +64,17 @@ export default function AppAccessGate({children}){
   try{event.prompt();const choice=await event.userChoice;window.__zaraInstallPrompt=null;setPrompt(null);setCanInstall(false);if(choice?.outcome==="accepted"){setHideButton(true);try{window.localStorage.setItem("zaraPwaInstalled","1");}catch(err){}}}catch(e){}
  }
  if(admin)return <>{children}</>;
- if(checking)return <div className="zaraBootScreen" aria-hidden="true"/>;
+ if(checking || accessStatus==="checking")return <div className="zaraBootScreen" aria-hidden="true"/>;
+ if(accessStatus==="pending"||accessStatus==="rejected"||accessStatus==="error"){
+  return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",padding:24,background:"linear-gradient(135deg,#fff7ed,#fdf2f8)"}}>
+   <section className="cardPage" style={{maxWidth:520,width:"100%",textAlign:"center"}}>
+    <div style={{fontSize:48,marginBottom:12}}>{accessStatus==="rejected"?"⛔":accessStatus==="error"?"⚠️":"⏳"}</div>
+    <h1>{accessStatus==="rejected"?"Access request rejected":accessStatus==="error"?"Approval status check nahi ho saka":"Admin approval pending"}</h1>
+    <p>{accessStatus==="rejected"?"Aapka account approve nahi hua. Zara Nikah Service Admin se sampark karein.":accessStatus==="error"?"Internet/Firebase Rules check karein, phir page refresh karein.":"Aapka Google account register ho gaya hai. Website aur paid features use karne se pehle Admin approval zaroori hai."}</p>
+    <button className="primaryAction" onClick={()=>router.push("/account")}>My Account / Profile</button>
+    <button className="backAction" style={{marginTop:10}} onClick={()=>signOut(auth).then(()=>router.push("/"))}>Logout</button>
+   </section>
+  </main>;
+ }
  return <>{children}{!standalone&&!hideButton&&<button className="zaraFloatingInstall" onClick={install} aria-label="Zara Nikah App install karein"><span className="zaraFloatingInstallIcon">📲</span><span className="zaraFloatingInstallText"><strong>APP INSTALL</strong><small>Zara Nikah Service</small></span><span className="zaraFloatingInstallArrow">↓</span></button>}{splash&&standalone&&<div className="zaraPwaSplash"><img src="/api/app-splash" alt="" className="zaraPwaSplashBg"/><div className="zaraPwaSplashShade"/></div>}</>;
 }
