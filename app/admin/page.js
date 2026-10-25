@@ -3,7 +3,7 @@
 import {useEffect,useState,useRef} from "react";
 import {useRouter} from "next/navigation";
 import {GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged,signOut} from "firebase/auth";
-import {collection,doc,getDoc,onSnapshot,setDoc,serverTimestamp,updateDoc,runTransaction} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,setDoc,serverTimestamp,updateDoc,runTransaction,addDoc,deleteDoc} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
 const ADMINS=["ngogrant454@gmail.com","islam20111975@gmail.com"];
@@ -12,6 +12,7 @@ export default function Admin(){
   const router=useRouter();
   const [user,setUser]=useState(undefined),[tab,setTab]=useState("dashboard"),[error,setError]=useState("");
   const [profiles,setProfiles]=useState([]),[users,setUsers]=useState([]);
+  const [posts,setPosts]=useState([]),[postText,setPostText]=useState("");
   const [recharges,setRecharges]=useState([]),[requests,setRequests]=useState([]),[transactions,setTransactions]=useState([]);
   const [social,setSocial]=useState({whatsapp:"",facebook:"",instagram:""}),[upi,setUpi]=useState(""),[qrFile,setQrFile]=useState(null),[qrPreview,setQrPreview]=useState("");
   const [wallFile,setWallFile]=useState(null),[wallPreview,setWallPreview]=useState("");
@@ -53,7 +54,7 @@ export default function Admin(){
       const q=collection(db,path);
       unsubs.push(onSnapshot(q,s=>{const rows=s.docs.map(d=>({id:d.id,...d.data()})); if(ordered) rows.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0)); setter(rows)},e=>setError(path+" load error: "+e.message)));
     };
-    watch("profiles",rows=>{
+    watch("homePosts",setPosts,true);watch("profiles",rows=>{
       setProfiles(rows);
       syncSliderImages(rows);
       const profileIds=rows.filter(p=>p.status!=="deleted"&&((Array.isArray(p.photos)&&p.photos[0])||p.photo)).sort((x,y)=>x.id.localeCompare(y.id)).map(p=>p.id);
@@ -67,6 +68,25 @@ export default function Admin(){
     getDoc(doc(db,"settings","legalPages")).then(s=>{if(s.exists())setPages(p=>({...p,about:s.data().about||"",contact:s.data().contact||"",privacy:s.data().privacy||"",terms:s.data().terms||""}))}).catch(e=>setError("Website pages load error: "+e.message));
     return()=>unsubs.forEach(x=>x());
   },[user]);
+
+  async function publishPost(e){
+    e.preventDefault();
+    const text=postText.trim();
+    if(!text){setError("Post ka text likhein.");return}
+    if(text.length>5000){setError("Post 5000 characters se chhoti rakhein.");return}
+    setSaving(true);setError("");
+    try{
+      await addDoc(collection(db,"homePosts"),{text,createdBy:user.email,createdAt:serverTimestamp(),status:"active"});
+      setPostText("");
+      setError("Post sabhi visitors ke liye publish ho gayi.");
+    }catch(e){setError("Post publish nahi hui: "+e.message)}
+    finally{setSaving(false)}
+  }
+  async function removePost(post){
+    if(!confirm("Is post ko website se delete karein?"))return;
+    try{await deleteDoc(doc(db,"homePosts",post.id));setError("Post delete kar di gayi.")}
+    catch(e){setError("Post delete nahi hui: "+e.message)}
+  }
 
   async function login(){
     setError("");const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
@@ -397,7 +417,7 @@ export default function Admin(){
   if(!user)return <main><section className="admin cardPage"><div className="adminIcon">🔐</div><h1>Admin Login</h1><button className="primaryAction" onClick={login}>Google Login →</button>{error&&<div className="errorBox">{error}</div>}</section></main>;
   if(!ADMINS.includes(user.email?.toLowerCase()))return <main><section className="admin cardPage"><div className="adminIcon">🚫</div><h1>Access Denied</h1><button className="backAction" onClick={logout}>Logout</button></section></main>;
 
-  const nav=[["dashboard","🏠 Dashboard"],["users","👥 All Users"],["biodata","📋 Biodata"],["access100","₹100 Biodata Payments"],["access500","₹500 Mobile Payments"],["wallet","💰 Wallet / Recharge"],["transactions","🧾 Transactions"],["settings","⚙️ Settings"]];
+  const nav=[["dashboard","🏠 Dashboard"],["users","👥 All Users"],["biodata","📋 Biodata"],["access100","₹100 Biodata Payments"],["access500","₹500 Mobile Payments"],["wallet","💰 Wallet / Recharge"],["transactions","🧾 Transactions"],["posts","📢 Admin Posts"],["settings","⚙️ Settings"]];
 
   return <main><section className="admin dashboardPage">
     <div className="dashTop"><div><span className="eyebrow">ZARA NIKAH SERVICE</span><h1>Central Admin Board</h1><p>Users, biodata, payments, wallet aur access sab ek jagah.</p></div><button className="logout" onClick={logout}>🚪 Logout</button></div>
@@ -420,6 +440,8 @@ export default function Admin(){
     {tab==="wallet"&&<div className="adminList"><div className="listHead"><h3>💰 Wallet Recharge Requests</h3><span>{recharges.length}</span></div>{recharges.map(x=><div className="userAdminCard" key={x.id}><div><b>{x.name||"Name not set"}</b><small>📧 {x.email||"-"}</small><small>📱 {x.phone||"-"}</small><small>👤 UID: {x.uid}</small><small>💰 Recharge: ₹{x.amount}</small><small>🧾 UTR: {x.utr||"-"}</small><small>💳 Method: {(x.paymentMethod||"upi").toUpperCase()}</small><small>📌 Status: {x.status}</small><small>🔒 Lock: {x.lockId||"legacy request"}</small><small>🕒 {x.createdAt?.toDate?.()?.toLocaleString?.()||""}</small></div><div className="cardButtons">{x.status==="pending"&&<><button className="approve" onClick={()=>approveRecharge(x)}>✓ Approve & Credit ₹{x.amount}</button><button onClick={()=>rejectRecharge(x)}>✕ Reject</button></>}</div></div>)}</div>}
 
     {tab==="transactions"&&<div className="adminList"><div className="listHead"><h3>🧾 All Wallet / Payment Transactions</h3><span>{transactions.length}</span></div>{transactions.map(x=><div className="adminRow" key={x.id}><span><b>{x.type} • ₹{x.amount}</b><small>UID: {x.uid}</small><small>Profile: {x.profileId||"-"} • UTR: {x.utr||"-"}</small><small>{x.createdAt?.toDate?.()?.toLocaleString?.()||""}</small></span></div>)}</div>}
+
+    {tab==="posts"&&<div className="adminList"><form className="adminBox" onSubmit={publishPost}><h3>📢 Website par nayi post likhein</h3><p>Yahan publish ki gayi post Male/Female buttons ke neeche sabhi visitors ko dikhegi. Aap jitni chahein alag-alag posts publish kar sakte hain.</p><textarea className="adminInput pageEditor" rows="5" maxLength={5000} placeholder="Apni announcement ya update yahan likhein..." value={postText} onChange={e=>setPostText(e.target.value)} required/><small>{postText.length}/5000 characters</small><button className="primaryAction" disabled={saving}>{saving?"Publishing...":"📢 Publish Post →"}</button></form><div className="listHead"><h3>Published Posts</h3><span>{posts.length}</span></div>{posts.map(p=><article className="userAdminCard" key={p.id}><div><b>📢 {p.createdAt?.toDate?.()?.toLocaleString?.("en-IN")||"Recent post"}</b><p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{p.text}</p><small>By: {p.createdBy||"Admin"}</small></div><div className="cardButtons"><button onClick={()=>removePost(p)}>🗑️ Delete</button></div></article>)}</div>}
 
     {tab==="settings"&&<><form className="adminBox" onSubmit={savePages}><h3>📄 Website Pages</h3><p>About, Contact, Privacy Policy aur Terms & Conditions ka text yahin se likhein/update karein.</p><label>About<textarea className="adminInput pageEditor" rows="7" value={pages.about} onChange={e=>setPages({...pages,about:e.target.value})}/></label><label>Contact<textarea className="adminInput pageEditor" rows="7" value={pages.contact} onChange={e=>setPages({...pages,contact:e.target.value})}/></label><label>Privacy Policy<textarea className="adminInput pageEditor" rows="9" value={pages.privacy} onChange={e=>setPages({...pages,privacy:e.target.value})}/></label><label>Terms & Conditions<textarea className="adminInput pageEditor" rows="9" value={pages.terms} onChange={e=>setPages({...pages,terms:e.target.value})}/></label><button className="primaryAction">💾 Website Pages Save →</button></form><form className="adminBox" onSubmit={savePayment}><h3>💳 UPI Payment Settings</h3><input className="adminInput" placeholder="UPI ID" value={upi} onChange={e=>setUpi(e.target.value)}/><label className="uploadBox">QR Image<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setQrFile(f);setQrPreview(URL.createObjectURL(f))}}}/></label>{qrPreview&&<div className="uploadPreview"><img src={qrPreview} alt="QR"/></div>}<button className="primaryAction">💾 Payment Save →</button></form><form className="adminBox" onSubmit={saveBranding}><h3>💍 Logo / App Icon</h3><p>Admin yahin se website logo aur App icon dono upload/change kar sakta hai.</p><label className="uploadBox">🌐 Website Logo<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setLogoFile(f);setLogoPreview(URL.createObjectURL(f))}}}/><small>Header mein dikhne wala logo. Image automatically compress hogi.</small></label>{logoPreview&&<div className="uploadPreview"><img src={logoPreview} alt="Website logo"/></div>}<label className="uploadBox">📲 App Logo / Icon<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setAppLogoFile(f);setAppLogoPreview(URL.createObjectURL(f))}}}/><small>Install screen aur app branding ke liye icon. Square image best rahegi.</small></label>{appLogoPreview&&<div className="uploadPreview"><img src={appLogoPreview} alt="App logo"/></div>}<label className="uploadBox">🖥️ App Opening Image / Splash<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setSplashFile(f);setSplashPreview(URL.createObjectURL(f))}}}/><small>Kisi bhi size ya ratio ki image upload karein. System use automatically full-screen 1080×1920 format me resize aur compress karega.</small></label>{splashPreview&&<div className="uploadPreview"><img src={splashPreview} alt="App opening image"/></div>}<button className="primaryAction">💾 Logo & Opening Image Save →</button></form><form className="adminBox" onSubmit={saveAppearance}><h3>🖼️ Website Appearance</h3><label className="uploadBox">Wallpaper / Background<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setWallFile(f);setWallPreview(URL.createObjectURL(f))}}}/><small>Image automatically compress hogi.</small></label>{wallPreview&&<div className="uploadPreview"><img src={wallPreview} alt="Website wallpaper"/></div>}<div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
   <button className="primaryAction" style={{flex:"1 1 220px"}}>💾 Appearance Save →</button>
