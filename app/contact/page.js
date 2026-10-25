@@ -29,7 +29,6 @@ export default function Contact(){
   return <main><section className="cardPage siteState"><div className="siteStateIcon">📩</div><h1>Contact Zara Nikah Service</h1><div className="pageContent">
     <p>Profile, registration, payment, biodata access ya mobile-number access se related help ke liye neeche form bharein.</p>
     <h2>Email support</h2><p><strong>Email:</strong> <a href="mailto:ngogrant454@gmail.com">ngogrant454@gmail.com</a></p>
-    <p><strong>WhatsApp support:</strong> <a href="https://wa.me/917378342192" target="_blank" rel="noreferrer">7378342192 par WhatsApp message bhejein</a>.</p>
     <h2>Help request form</h2>
     <form onSubmit={submitHelp} style={{display:"grid",gap:14,marginTop:16}}>
       <label style={{display:"grid",gap:6}}>Aapka naam
