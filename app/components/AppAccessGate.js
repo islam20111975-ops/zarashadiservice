@@ -2,7 +2,7 @@
 import {useEffect,useState} from "react";
 import {usePathname,useRouter} from "next/navigation";
 import {onAuthStateChanged,signOut} from "firebase/auth";
-import {doc,getDoc} from "firebase/firestore";
+import {doc,getDoc,setDoc,serverTimestamp} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 const ADMIN_PATH="/admin";
 const ADMINS=["ngogrant454@gmail.com","islam20111975@gmail.com"];
@@ -21,6 +21,30 @@ export default function AppAccessGate({children}){
  const [canInstall,setCanInstall]=useState(false);
  const [hideButton,setHideButton]=useState(false);
  const [accessStatus,setAccessStatus]=useState("checking");
+ useEffect(()=>{
+  let timer=null,activeUid=null;
+  const writePresence=(uid,isOnline)=>setDoc(doc(db,"userPresence",uid),{uid,isOnline,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+  const unsub=onAuthStateChanged(auth,user=>{
+   if(timer){clearInterval(timer);timer=null;}
+   if(activeUid){writePresence(activeUid,false);}
+   activeUid=user?.uid||null;
+   if(!user)return;
+   const uid=user.uid;
+   const heartbeat=()=>writePresence(uid,true);
+   heartbeat();
+   timer=setInterval(heartbeat,45000);
+   const onVisible=()=>{if(document.visibilityState==="visible")heartbeat();};
+   document.addEventListener("visibilitychange",onVisible);
+   // Keep cleanup for the currently active account.
+   const previousTimer=timer;
+   const originalClear=clearInterval;
+   // Listener is removed by auth callback replacement/unmount cleanup below.
+   userPresenceCleanup=()=>{originalClear(previousTimer);document.removeEventListener("visibilitychange",onVisible);writePresence(uid,false);};
+  });
+  let userPresenceCleanup=null;
+  return()=>{unsub();if(timer)clearInterval(timer);if(userPresenceCleanup)userPresenceCleanup();if(activeUid)writePresence(activeUid,false);};
+ },[]);
+
  useEffect(()=>{
   let alive=true;
   const unsub=onAuthStateChanged(auth,async user=>{
