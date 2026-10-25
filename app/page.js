@@ -30,8 +30,9 @@ export default function Home(){
     setUser(u);
     if(!u){setProfileAccess("login");return;}
     if(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(u.email?.toLowerCase())){setProfileAccess("approved");return;}
-    try{const s=await getDoc(doc(db,"users",u.uid));setProfileAccess(s.exists()&&s.data().status==="approved"?"approved":s.exists()&&s.data().status==="rejected"?"rejected":"pending");}
-    catch(e){setProfileAccess("pending");}
+    // Any Google-authenticated user can browse profile cards; payment unlocks
+    // continue to protect private biodata and mobile numbers.
+    setProfileAccess("approved");
   }),[]);
   useEffect(()=>onSnapshot(collection(db,"homePosts"),snap=>{const rows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted");rows.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));setHomePosts(rows)},()=>setHomePosts([])),[]);
   useEffect(()=>{const timer=setInterval(()=>setHeaderSlideIndex(i=>(i+1)%3),3500);return()=>clearInterval(timer)},[]);
