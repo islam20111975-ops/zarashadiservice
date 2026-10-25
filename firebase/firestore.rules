@@ -140,29 +140,9 @@ service cloud.firestore {
               || (request.resource.data.type == "mobile" && request.resource.data.amount == 500))
           )
         );
-      allow delete: if isAdmin()
-        || (
-          signedIn()
-          && resource.data.uid == request.auth.uid
-          && resource.data.requestId is string
-          && (
-            (
-              resource.data.kind == "access"
-              && (
-                !exists(/databases/$(database)/documents/paidAccessRequests/$(resource.data.requestId))
-                || get(/databases/$(database)/documents/paidAccessRequests/$(resource.data.requestId)).data.status != "pending"
-              )
-            )
-            ||
-            (
-              resource.data.kind == "recharge"
-              && (
-                !exists(/databases/$(database)/documents/walletRechargeRequests/$(resource.data.requestId))
-                || get(/databases/$(database)/documents/walletRechargeRequests/$(resource.data.requestId)).data.status != "pending"
-              )
-            )
-          )
-        );
+      // UTR claims are permanent duplicate-payment protection. Users must not
+      // delete their own claims after rejection/approval; only admins can clean them up.
+      allow delete: if isAdmin();
     }
 
     match /pendingPaymentLocks/{lockId} {
