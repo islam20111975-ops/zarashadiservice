@@ -1332,3 +1332,44 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
     display: none !important;
   }
 }
+
+
+/* Header: let wedding photos fill the empty header space, with a bridal maroon color */
+.siteHeader {
+  background: linear-gradient(110deg, #4c052d 0%, #861657 52%, #3b0a2d 100%) !important;
+  border-bottom: 2px solid #d99ab9 !important;
+  box-shadow: 0 6px 22px rgba(76, 5, 45, .28) !important;
+}
+.headerWeddingBrand {
+  background: transparent !important;
+}
+.headerWeddingSlider {
+  background: linear-gradient(110deg, #4c052d, #861657, #3b0a2d) !important;
+}
+.headerWeddingFrame {
+  background: transparent !important;
+}
+.headerWeddingBackdrop {
+  object-fit: cover !important;
+  object-position: center 42% !important;
+  transform: scale(1.04) !important;
+  filter: blur(10px) saturate(1.15) !important;
+  opacity: .78 !important;
+}
+.headerWeddingImage {
+  object-fit: cover !important;
+  object-position: center 42% !important;
+  transform: scale(1.02) !important;
+  background: transparent !important;
+}
+.headerWeddingImage.isActive {
+  transform: scale(1) !important;
+}
+.headerWeddingShade {
+  background: linear-gradient(90deg, rgba(40, 3, 25, .68), rgba(76, 5, 45, .16) 52%, rgba(40, 3, 25, .50)), linear-gradient(0deg, rgba(30, 2, 18, .24), transparent 70%) !important;
+}
+.headerWeddingTitle {
+  background: linear-gradient(135deg, rgba(76, 5, 45, .92), rgba(126, 34, 96, .82)) !important;
+  border: 1px solid rgba(255, 255, 255, .24) !important;
+  box-shadow: 0 4px 14px rgba(25, 0, 15, .28) !important;
+}
