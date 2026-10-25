@@ -192,6 +192,7 @@ export default function Account(){
         await setDoc(userRef,{
           uid:user.uid,
           email:user.email||"",
+          status:"pending",
           ...payload,
           createdAt:serverTimestamp()
         });
