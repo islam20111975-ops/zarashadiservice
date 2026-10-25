@@ -1427,3 +1427,61 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
   .mainNav { bottom: 4px !important; }
   .mainNav a { min-height: 25px !important; padding: 4px 10px !important; font-size: 10px !important; }
 }
+
+
+/* Mobile header spacing: keep site name clear of the Islamic Calendar button */
+@media (max-width: 700px) {
+  .siteHeader, .headerInner {
+    min-height: 124px !important;
+  }
+  .headerInner {
+    padding: 8px 10px !important;
+  }
+  .headerWeddingBrand .logoMark {
+    top: 16px !important;
+    transform: none !important;
+  }
+  .headerWeddingTitle {
+    top: 15px !important;
+    transform: none !important;
+    max-width: min(44%, 190px) !important;
+    padding: 5px 7px !important;
+  }
+  .headerActions {
+    top: 12px !important;
+    transform: none !important;
+  }
+  .mainNav {
+    left: 50% !important;
+    bottom: 7px !important;
+    top: auto !important;
+    transform: translateX(-50%) !important;
+    width: max-content !important;
+    max-width: calc(100% - 20px) !important;
+  }
+}
+@media (max-width: 420px) {
+  .siteHeader, .headerInner {
+    min-height: 120px !important;
+  }
+  .headerWeddingTitle {
+    top: 16px !important;
+    left: 51px !important;
+    max-width: 43% !important;
+  }
+  .headerWeddingTitle strong {
+    font-size: 12px !important;
+    letter-spacing: .4px !important;
+  }
+  .headerWeddingTitle small {
+    font-size: 7px !important;
+    letter-spacing: 2px !important;
+  }
+  .headerActions {
+    right: 8px !important;
+    top: 12px !important;
+  }
+  .mainNav {
+    bottom: 6px !important;
+  }
+}
