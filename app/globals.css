@@ -1589,3 +1589,42 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
     font-size: 11px !important;
   }
 }
+
+
+/* Public admin posts below the Male/Female rishta buttons */
+.homePosts {
+  width: min(100% - 28px, 920px);
+  margin: 18px auto 8px;
+  position: relative;
+  z-index: 2;
+  text-align: left;
+}
+.homePostsHeading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 15px 15px 0 0;
+  color: #fff;
+  background: linear-gradient(120deg, #6f123f, #a32365);
+}
+.homePostsHeading > span { font-size: 25px; }
+.homePostsHeading h2 { margin: 0; font-size: 17px; line-height: 1.25; }
+.homePostsHeading p { margin: 3px 0 0; font-size: 11px; opacity: .9; }
+.homePostsList { display: grid; gap: 9px; padding-top: 9px; }
+.homePostCard {
+  padding: 13px 15px;
+  border: 1px solid rgba(143, 28, 87, .2);
+  border-radius: 13px;
+  background: rgba(255,255,255,.96);
+  color: #30202a;
+  box-shadow: 0 4px 14px rgba(60, 10, 35, .08);
+}
+.homePostMeta { color: #8c1d56; font-size: 11px; font-weight: 800; margin-bottom: 7px; }
+.homePostCard p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.55; }
+@media (max-width: 420px) {
+  .homePosts { width: calc(100% - 20px); margin-top: 13px; }
+  .homePostsHeading { padding: 10px 12px; }
+  .homePostCard { padding: 11px 12px; }
+  .homePostCard p { font-size: 13px; }
+}
