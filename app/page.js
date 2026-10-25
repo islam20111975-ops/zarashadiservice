@@ -23,13 +23,21 @@ export default function Home(){
   const [branding,setBranding]=useState(()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");return cached&&typeof cached==="object"?{logo:cached.logo||"",appIcon:cached.appIcon||"/api/pwa-icon?size=512"}:{logo:"",appIcon:"/api/pwa-icon?size=512"}}catch(e){return {logo:"",appIcon:"/api/pwa-icon?size=512"}}});
   const [social,setSocial]=useState({whatsapp:"",facebook:"",instagram:""});
   const [user,setUser]=useState(null),[loginBusy,setLoginBusy]=useState(false),[loginError,setLoginError]=useState("");
+  const [profileAccess,setProfileAccess]=useState("checking");
   const router=useRouter();
 
-  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
+  useEffect(()=>onAuthStateChanged(auth,async u=>{
+    setUser(u);
+    if(!u){setProfileAccess("login");return;}
+    if(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(u.email?.toLowerCase())){setProfileAccess("approved");return;}
+    try{const s=await getDoc(doc(db,"users",u.uid));setProfileAccess(s.exists()&&s.data().status==="approved"?"approved":s.exists()&&s.data().status==="rejected"?"rejected":"pending");}
+    catch(e){setProfileAccess("pending");}
+  }),[]);
   useEffect(()=>onSnapshot(collection(db,"homePosts"),snap=>{const rows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted");rows.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));setHomePosts(rows)},()=>setHomePosts([])),[]);
   useEffect(()=>{const timer=setInterval(()=>setHeaderSlideIndex(i=>(i+1)%3),3500);return()=>clearInterval(timer)},[]);
   useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});(async()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");if(cached?.logo||cached?.appIcon){const b={logo:cached.logo||"",appIcon:cached.appIcon||"/api/pwa-icon?size=512"};setBranding(b);if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}catch(e){} getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){const b={logo:s.data().logo||"",appIcon:s.data().appIcon||"/api/pwa-icon?size=512"};setBranding(b);try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify(b))}catch(e){} if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}).catch(()=>{})})();getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
   useEffect(()=>{
+    if(profileAccess!=="approved"){setSliderIds([]);setAllProfiles([]);return;}
     let cancelled=false;
     async function loadSlider(){
       try{
@@ -43,7 +51,7 @@ export default function Home(){
     }
     loadSlider();
     return()=>{cancelled=true};
-  },[]);
+  },[profileAccess]);
   useEffect(()=>{
     if(!sliderIds.length)return;
     const indexes=[slideIndex,(slideIndex+1)%sliderIds.length];
@@ -61,11 +69,11 @@ export default function Home(){
     return()=>clearInterval(timer);
   },[sliderIds.length]);
   useEffect(()=>{
-    if(!r){setData([]);return}
+    if(!r||profileAccess!=="approved"){setData([]);setLoading(false);return}
     setLoading(true);
     const q=query(collection(db,"profiles"),where("gender","==",r));
     return onSnapshot(q,s=>{setData(s.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted"));setLoading(false)},e=>{setLoading(false);setLoginError(e?.message||"Profiles load nahi ho sake.")});
-  },[r]);
+  },[r,profileAccess]);
 
   const shown=data;
   const currentProfile=sliderIds.length?allProfiles.find(p=>p.id===sliderIds[slideIndex]):null;
@@ -94,7 +102,8 @@ export default function Home(){
           </div>
           {homePosts.length>0&&<section className="homePosts" aria-label="Admin announcements"><div className="homePostsHeading"><span>📢</span><div><h2>Admin Posts</h2><p>Zara Nikah Service ki latest updates</p></div></div><div className="homePostsList">{homePosts.map(p=><article className="homePostCard" key={p.id}><div className="homePostMeta">📌 Zara Nikah Service {p.createdAt?.toDate?.()?.toLocaleDateString?.("en-IN")||""}</div><p>{p.text}</p></article>)}</div></section>}
         </section>
-        {r&&<section className="profiles"><div className="sectionHead"><div><span className="eyebrow">AVAILABLE PROFILES</span><h2>{r==="male"?"Male":"Female"} Rishte</h2></div><span className="count">{loading?"Loading...":shown.length+" Profiles"}</span></div>
+        {r&&profileAccess!=="approved"&&<section className="profiles"><div className="adminList" style={{textAlign:"center"}}><h2>🔐 Admin Approval Zaroori Hai</h2><p>{profileAccess==="login"?"Rishte dekhne ke liye pehle Google se login karein.":"Aapka Google login ho gaya hai. Rishte dekhne ke liye Zara Nikah Service Admin ki approval ka intezar karein."}</p><button className="primaryAction" onClick={()=>router.push("/account")}>{profileAccess==="login"?"Google Login / My Account":"My Account / Profile"}</button></div></section>}
+        {r&&profileAccess==="approved"&&<section className="profiles"><div className="sectionHead"><div><span className="eyebrow">AVAILABLE PROFILES</span><h2>{r==="male"?"Male":"Female"} Rishte</h2></div><span className="count">{loading?"Loading...":shown.length+" Profiles"}</span></div>
           <div className="grid">{shown.map(p=><article className="profileCard" key={p.id}><div className="photoWrap" onClick={()=>router.push("/profile/"+p.id)} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")router.push("/profile/"+p.id)}}><img src={(Array.isArray(p.photos)&&p.photos[0])||p.photo||""} alt={"Marriage profile "+p.id} onError={e=>{e.currentTarget.style.display="none";e.currentTarget.parentElement?.classList.add("photoMissing")}}/><span className="verified">✓ Verified</span></div><div className="cardInfo"><span className="profileId">{p.id}</span></div></article>)}</div>
         </section>}
         <section className="trustStrip"><div><b>🔒 Privacy</b><small>Aapki details ko respect ke saath handle kiya jata hai</small></div><div><b>✓ Verified</b><small>Registered profiles ko manage kiya jata hai</small></div><div><b>💗 Nikah Focus</b><small>Serious rishta search ke liye simple process</small></div></section>
