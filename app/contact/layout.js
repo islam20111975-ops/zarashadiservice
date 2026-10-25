@@ -1,6 +1,7 @@
 export const metadata = {
-  title: "Contact Us",
-  description: "Contact Zara Nikah Service by email or use the help request form for profile, account, payment and privacy questions.",
+  title: "Contact Zara Nikah Service",
+  description: "Zara Nikah Service se profile, biodata access, login, payment ya privacy concern ke liye rabta karein.",
+  alternates: { canonical: "https://zarashadiservice.vercel.app/contact" },
 };
 
 export default function ContactLayout({ children }) {
