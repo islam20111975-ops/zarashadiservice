@@ -81,7 +81,7 @@ service cloud.firestore {
     }
 
     match /profileContact/{profileId} {
-      allow read: if isAdmin() || (signedIn()
+      allow read: if isAdmin() || (isApprovedUser()
         && profileNotDeleted(profileId)
         && exists(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + profileId))
         && get(/databases/$(database)/documents/mobileAccess/$(request.auth.uid + "_" + profileId)).data.status == "approved");
