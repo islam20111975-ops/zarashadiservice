@@ -21,6 +21,16 @@ service cloud.firestore {
       return uid + "_recharge_" + amount;
     }
 
+    // Online status heartbeat: users can update only their own presence; admins can read all.
+    match /userPresence/{userId} {
+      allow read: if isAdmin() || owner(userId);
+      allow create, update: if owner(userId)
+        && request.resource.data.keys().hasOnly(["uid","isOnline","lastSeen"])
+        && request.resource.data.uid == userId
+        && request.resource.data.isOnline is bool;
+      allow delete: if isAdmin();
+    }
+
     match /users/{userId} {
       allow read: if owner(userId) || isAdmin();
       allow create: if owner(userId)
