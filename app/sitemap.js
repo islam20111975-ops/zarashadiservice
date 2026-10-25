@@ -8,6 +8,7 @@ export default function sitemap(){
     ["/terms",0.4,"yearly"],
     ["/refund-policy",0.4,"yearly"],
     ["/nikah-guide",0.8,"monthly"],
+    ["/widow-widower-nikah-guide",0.8,"monthly"],
     ["/islamic-calendar",0.6,"monthly"]
   ];
   return pages.map(([path,priority,changeFrequency])=>({
