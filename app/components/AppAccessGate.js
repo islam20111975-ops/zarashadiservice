@@ -22,11 +22,12 @@ export default function AppAccessGate({children}){
  const [hideButton,setHideButton]=useState(false);
  const [accessStatus,setAccessStatus]=useState("checking");
  useEffect(()=>{
-  let timer=null,activeUid=null;
+  let timer=null,activeUid=null,removeVisibilityListener=null;
   const writePresence=(uid,isOnline)=>setDoc(doc(db,"userPresence",uid),{uid,isOnline,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
   const unsub=onAuthStateChanged(auth,user=>{
    if(timer){clearInterval(timer);timer=null;}
-   if(activeUid){writePresence(activeUid,false);}
+   if(removeVisibilityListener){removeVisibilityListener();removeVisibilityListener=null;}
+   if(activeUid)writePresence(activeUid,false);
    activeUid=user?.uid||null;
    if(!user)return;
    const uid=user.uid;
@@ -35,16 +36,15 @@ export default function AppAccessGate({children}){
    timer=setInterval(heartbeat,45000);
    const onVisible=()=>{if(document.visibilityState==="visible")heartbeat();};
    document.addEventListener("visibilitychange",onVisible);
-   // Keep cleanup for the currently active account.
-   const previousTimer=timer;
-   const originalClear=clearInterval;
-   // Listener is removed by auth callback replacement/unmount cleanup below.
-   userPresenceCleanup=()=>{originalClear(previousTimer);document.removeEventListener("visibilitychange",onVisible);writePresence(uid,false);};
+   removeVisibilityListener=()=>document.removeEventListener("visibilitychange",onVisible);
   });
-  let userPresenceCleanup=null;
-  return()=>{unsub();if(timer)clearInterval(timer);if(userPresenceCleanup)userPresenceCleanup();if(activeUid)writePresence(activeUid,false);};
+  return()=>{
+   unsub();
+   if(timer)clearInterval(timer);
+   if(removeVisibilityListener)removeVisibilityListener();
+   if(activeUid)writePresence(activeUid,false);
+  };
  },[]);
-
  useEffect(()=>{
   let alive=true;
   const unsub=onAuthStateChanged(auth,async user=>{
