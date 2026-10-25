@@ -26,14 +26,22 @@ export default function Home(){
   const [profileAccess,setProfileAccess]=useState("checking");
   const router=useRouter();
 
-  useEffect(()=>onAuthStateChanged(auth,async u=>{
-    setUser(u);
-    if(!u){setProfileAccess("login");return;}
-    if(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(u.email?.toLowerCase())){setProfileAccess("approved");return;}
-    // Any Google-authenticated user can browse profile cards; payment unlocks
-    // continue to protect private biodata and mobile numbers.
-    setProfileAccess("approved");
-  }),[]);
+  useEffect(()=>{
+    let userDocUnsubscribe=null;
+    const authUnsubscribe=onAuthStateChanged(auth,u=>{
+      setUser(u);
+      if(userDocUnsubscribe){userDocUnsubscribe();userDocUnsubscribe=null;}
+      if(!u){setProfileAccess("login");return;}
+      if(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(u.email?.toLowerCase())){setProfileAccess("approved");return;}
+      setProfileAccess("checking");
+      userDocUnsubscribe=onSnapshot(doc(db,"users",u.uid),snap=>{
+        if(!snap.exists()){setProfileAccess("pending");return;}
+        const status=snap.data().status;
+        setProfileAccess(status==="approved"?"approved":status==="rejected"?"rejected":"pending");
+      },()=>setProfileAccess("pending"));
+    });
+    return()=>{authUnsubscribe();if(userDocUnsubscribe)userDocUnsubscribe();};
+  },[]);
   useEffect(()=>onSnapshot(collection(db,"homePosts"),snap=>{const rows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted");rows.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));setHomePosts(rows)},()=>setHomePosts([])),[]);
   useEffect(()=>{const timer=setInterval(()=>setHeaderSlideIndex(i=>(i+1)%3),3500);return()=>clearInterval(timer)},[]);
   useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});(async()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");if(cached?.logo||cached?.appIcon){const b={logo:cached.logo||"",appIcon:cached.appIcon||"/api/pwa-icon?size=512"};setBranding(b);if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}catch(e){} getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){const b={logo:s.data().logo||"",appIcon:s.data().appIcon||"/api/pwa-icon?size=512"};setBranding(b);try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify(b))}catch(e){} if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}).catch(()=>{})})();getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
