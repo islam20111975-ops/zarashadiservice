@@ -1289,3 +1289,46 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
   .siteHeader,.headerInner{min-height:88px!important}
   .headerWeddingTitle{left:51px!important}
 }
+
+
+/* Mobile fix: keep Male/Female rishta buttons side-by-side */
+@media (max-width: 700px) {
+  .gender.genderPremium {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+  .gender.genderPremium > .genderCard {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    padding: 12px 9px !important;
+    gap: 7px !important;
+  }
+  .gender.genderPremium > .genderCard .cardIcon {
+    flex: 0 0 auto !important;
+    font-size: 22px !important;
+  }
+  .gender.genderPremium > .genderCard > div:not(.cardIcon) {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+  .gender.genderPremium > .genderCard b {
+    display: block !important;
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+  }
+  .gender.genderPremium > .genderCard small {
+    display: none !important;
+  }
+  .gender.genderPremium > .genderCard .arrow {
+    display: none !important;
+  }
+}
