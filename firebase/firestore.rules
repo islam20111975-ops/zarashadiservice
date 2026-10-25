@@ -87,6 +87,19 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Public announcements; only admins may publish or remove posts.
+    match /homePosts/{postId} {
+      allow read: if true;
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(["text","createdBy","createdAt","status"])
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 5000
+        && request.resource.data.createdBy == request.auth.token.email
+        && request.resource.data.status == "active";
+      allow update, delete: if isAdmin();
+    }
+
     match /registrations/{registrationId} { allow read, write: if false; }
     match /utrClaims/{utrId} { allow read, write: if false; }
 
