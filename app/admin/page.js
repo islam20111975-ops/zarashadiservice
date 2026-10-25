@@ -267,7 +267,28 @@ export default function Admin(){
       setError("Access band kar diya. Payment history safe rakhi gayi; wallet refund nahi hua.");
     }catch(e){setError("Access band nahi hua: "+e.message)}
   }
-  async function deleteAccessRequest(x){if(!confirm("Is payment request ko delete karein? UTR record duplicate payment rokne ke liye safe rakha jayega."))return;try{await runTransaction(db,async t=>{const ref=doc(db,"paidAccessRequests",x.id);const s=await t.get(ref);if(!s.exists())return;const req=s.data();if(req.status==="approved")throw new Error("Approved request delete nahi kar sakte. Payment record aur access history safe rakhein.");if(req.lockId)t.delete(doc(db,"pendingPaymentLocks",req.lockId));t.delete(ref);});setError("Request delete kar di gayi. UTR claim safety ke liye rakha gaya hai.");}catch(e){setError("Request delete nahi hui: "+e.message)}}
+  async function deleteAccessRequest(x){
+    if(!confirm("Is payment request ko delete karein? Agar approved hai to uska biodata/mobile access bhi band hoga aur linked payment transaction delete hogi. UTR claim duplicate payment rokne ke liye safe rakha jayega. Wallet refund nahi hoga."))return;
+    try{
+      const reqRef=doc(db,"paidAccessRequests",x.id);
+      const unlockPath=x.type==="biodata"?"biodataUnlocks":"mobileAccess";
+      const unlockRef=doc(db,unlockPath,(x.uid||"")+"_"+(x.profileId||""));
+      const txRef=doc(db,"walletTransactions",x.id+"_payment");
+      await runTransaction(db,async t=>{
+        const rs=await t.get(reqRef);
+        const us=await t.get(unlockRef);
+        const ts=await t.get(txRef);
+        if(!rs.exists())throw new Error("Payment request nahi mili. Page refresh karke dobara check karein.");
+        const req=rs.data();
+        if(req.uid!==x.uid||req.profileId!==x.profileId||req.type!==x.type)throw new Error("Request details match nahi karti; safety ke liye delete roka gaya.");
+        if(us.exists())t.delete(unlockRef);
+        if(ts.exists())t.delete(txRef);
+        if(req.lockId)t.delete(doc(db,"pendingPaymentLocks",req.lockId));
+        t.delete(reqRef);
+      });
+      setError("Payment request delete ho gayi aur related access band kar diya. UTR claim duplicate payment safety ke liye rakha gaya hai; wallet refund nahi hua.");
+    }catch(e){setError("Request delete nahi hui: "+e.message)}
+  }
   async function rejectTransaction(x){
     if(!confirm("Is payment ko REJECT karke user ka biodata/mobile access band karein? Wallet refund apne-aap nahi hoga."))return;
     try{
