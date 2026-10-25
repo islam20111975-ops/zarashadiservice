@@ -2,7 +2,8 @@ import Link from "next/link";
 
 export const metadata = {
   title: "Refund & Cancellation Policy",
-  description: "Zara Nikah Service ki paid profile access, cancellation aur no-refund policy",
+  description: "Zara Nikah Service ki paid profile access, cancellation, duplicate payment aur refund request policy.",
+  alternates: { canonical: "https://zarashadiservice.vercel.app/refund-policy" },
 };
 
 export default function RefundPolicy() {
