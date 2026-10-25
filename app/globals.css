@@ -1197,3 +1197,95 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
 @media(max-width:700px){
   .headerWeddingTitle{padding:5px 7px!important}
 }
+
+
+/* PREMIUM FILLED HEADER: full photo stays visible, blurred photo fills the sides */
+.siteHeader{
+  min-height:118px!important;
+  background:linear-gradient(115deg,#6d1748,#a52b68 48%,#f4c4d8)!important;
+  border-bottom:2px solid #f7d6e4!important;
+  box-shadow:0 6px 22px rgba(105,18,68,.22)!important;
+}
+.headerInner{min-height:118px!important}
+.headerWeddingSlider{
+  background:linear-gradient(120deg,#701a4d,#a52b68,#f8dce8)!important;
+  overflow:hidden!important;
+}
+.headerWeddingFrame{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:0;
+  transition:opacity .75s ease;
+  overflow:hidden;
+}
+.headerWeddingFrame.isActive{opacity:1}
+.headerWeddingBackdrop{
+  position:absolute;
+  inset:-12px;
+  width:calc(100% + 24px);
+  height:calc(100% + 24px);
+  object-fit:cover!important;
+  object-position:center!important;
+  filter:blur(10px) saturate(1.15);
+  opacity:.68;
+  transform:scale(1.04);
+}
+.headerWeddingFrame::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,rgba(65,8,42,.62),rgba(65,8,42,.12) 45%,rgba(65,8,42,.28));
+  pointer-events:none;
+}
+.headerWeddingImage{
+  position:relative!important;
+  z-index:1;
+  display:block;
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  background:transparent!important;
+  filter:drop-shadow(0 2px 8px rgba(30,0,18,.22));
+  opacity:1!important;
+  transform:none!important;
+}
+.headerWeddingShade{
+  z-index:2;
+  background:linear-gradient(90deg,rgba(60,5,37,.28),transparent 65%)!important;
+}
+.headerWeddingTitle{
+  z-index:3;
+  left:82px!important;
+  background:linear-gradient(135deg,rgba(90,12,55,.90),rgba(126,34,96,.76))!important;
+  border:1px solid rgba(255,255,255,.4);
+  box-shadow:0 4px 16px rgba(50,0,25,.24)!important;
+}
+.headerWeddingDots{z-index:4}
+.mainNav,.headerActions{z-index:5!important}
+.mainNav a{color:#fff!important;text-shadow:0 2px 7px rgba(50,0,25,.65)!important}
+.secureChip{
+  background:rgba(255,255,255,.92)!important;
+  color:#17643a!important;
+  box-shadow:0 3px 10px rgba(50,0,25,.12);
+}
+.headerLogin{
+  background:linear-gradient(135deg,#fff,#ffe4ef)!important;
+  color:#79194e!important;
+  border:1px solid #fff!important;
+  box-shadow:0 5px 14px rgba(50,0,25,.24)!important;
+}
+@media(max-width:700px){
+  .siteHeader,.headerInner{min-height:96px!important}
+  .headerInner{padding:8px 10px!important}
+  .headerWeddingTitle{left:60px!important;padding:5px 7px!important}
+  .headerWeddingBackdrop{filter:blur(8px) saturate(1.12);opacity:.75}
+  .headerActions{gap:5px}
+}
+@media(max-width:420px){
+  .siteHeader,.headerInner{min-height:88px!important}
+  .headerWeddingTitle{left:51px!important}
+}
