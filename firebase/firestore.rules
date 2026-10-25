@@ -5,6 +5,11 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function isAdmin() { return signedIn() && request.auth.token.email in ["ngogrant454@gmail.com", "islam20111975@gmail.com"]; }
     function owner(uid) { return signedIn() && request.auth.uid == uid; }
+    function isApprovedUser() {
+      return isAdmin() || (signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved");
+    }
     function validUtr(v) { return v is string && v.matches("^[A-Za-z0-9]{6,40}$"); }
 
     // Legacy profiles may not have a status field. Treat a missing status as active,
@@ -33,20 +38,19 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if owner(userId) || isAdmin();
+      // Google sign-in creates a minimal pending account automatically. Users may
+      // fill their profile later, but cannot self-approve.
       allow create: if owner(userId)
         && request.resource.data.keys().hasOnly(["uid","email","name","address","phone","age","income","photoURL","status","createdAt","updatedAt"])
         && request.resource.data.uid == userId
         && request.resource.data.email == request.auth.token.email
         && request.resource.data.status == "pending"
-        && request.resource.data.name is string
-        && request.resource.data.address is string
-        && request.resource.data.phone is string
-        && request.resource.data.phone.matches("^[6-9][0-9]{9}$")
-        && request.resource.data.age is number
-        && request.resource.data.age >= 18
-        && request.resource.data.age <= 100
-        && request.resource.data.income is string
-        && request.resource.data.photoURL is string;
+        && (!request.resource.data.keys().hasAny(["name"]) || request.resource.data.name is string)
+        && (!request.resource.data.keys().hasAny(["address"]) || request.resource.data.address is string)
+        && (!request.resource.data.keys().hasAny(["phone"]) || (request.resource.data.phone is string && request.resource.data.phone.matches("^[6-9][0-9]{9}$")))
+        && (!request.resource.data.keys().hasAny(["age"]) || (request.resource.data.age is number && request.resource.data.age >= 18 && request.resource.data.age <= 100))
+        && (!request.resource.data.keys().hasAny(["income"]) || request.resource.data.income is string)
+        && (!request.resource.data.keys().hasAny(["photoURL"]) || request.resource.data.photoURL is string);
       allow update: if isAdmin() || (owner(userId)
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.email == resource.data.email
@@ -64,12 +68,12 @@ service cloud.firestore {
     }
 
     match /profiles/{profileId} {
-      allow read: if true;
+      allow read: if isApprovedUser();
       allow create, update, delete: if isAdmin();
     }
 
     match /profileBiodataPrivate/{profileId} {
-      allow read: if isAdmin() || (signedIn()
+      allow read: if isAdmin() || (isApprovedUser()
         && profileNotDeleted(profileId)
         && exists(/databases/$(database)/documents/biodataUnlocks/$(request.auth.uid + "_" + profileId))
         && get(/databases/$(database)/documents/biodataUnlocks/$(request.auth.uid + "_" + profileId)).data.status == "approved");
@@ -94,7 +98,7 @@ service cloud.firestore {
     }
 
     match /homeSliderImages/{profileId} {
-      allow read: if true;
+      allow read: if isApprovedUser();
       allow write: if isAdmin();
     }
 
