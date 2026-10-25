@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata={title:"Terms & Conditions",description:"Zara Nikah Service use karne ki sharaait"};
+export const metadata={title:"Terms & Conditions",description:"Zara Nikah Service ke account, profile access, privacy, payments aur responsible use ki sharaait.",alternates:{canonical:"https://zarashadiservice.vercel.app/terms"}};
 
 export default function Terms(){
   return <main><section className="cardPage siteState"><div className="siteStateIcon">📋</div><h1>Terms &amp; Conditions</h1><div className="pageContent">
