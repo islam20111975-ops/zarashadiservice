@@ -1373,3 +1373,57 @@ html,body{min-height:100%;background:#f7f9fc!important}body{background-attachmen
   border: 1px solid rgba(255, 255, 255, .24) !important;
   box-shadow: 0 4px 14px rgba(25, 0, 15, .28) !important;
 }
+
+
+/* Mobile header: keep the Islamic Calendar button visible over the photo slider */
+@media (max-width: 700px) {
+  .siteHeader, .headerInner {
+    min-height: 96px !important;
+  }
+  .headerInner {
+    position: relative !important;
+    padding: 8px 10px !important;
+  }
+  .mainNav {
+    display: flex !important;
+    position: absolute !important;
+    left: 50% !important;
+    bottom: 5px !important;
+    transform: translateX(-50%) !important;
+    z-index: 5 !important;
+    margin: 0 !important;
+    width: max-content !important;
+    max-width: calc(100% - 18px) !important;
+  }
+  .mainNav a {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 27px !important;
+    padding: 5px 12px !important;
+    border-radius: 999px !important;
+    background: rgba(76, 5, 45, .88) !important;
+    border: 1px solid rgba(255,255,255,.58) !important;
+    color: #fff !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    text-shadow: none !important;
+    box-shadow: 0 3px 10px rgba(20,0,12,.22) !important;
+  }
+  .headerActions {
+    position: absolute !important;
+    right: 9px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+    z-index: 6 !important;
+  }
+}
+@media (max-width: 420px) {
+  .siteHeader, .headerInner { min-height: 91px !important; }
+  .headerWeddingTitle { max-width: 42% !important; }
+  .mainNav { bottom: 4px !important; }
+  .mainNav a { min-height: 25px !important; padding: 4px 10px !important; font-size: 10px !important; }
+}
