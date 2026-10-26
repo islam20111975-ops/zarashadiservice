@@ -189,7 +189,7 @@ export default function Admin(){
           const claimSnap=await t.get(doc(db,"paymentUtrClaims",req.utrClaimId));
           if(!claimSnap.exists())throw new Error("Access UTR claim nahi mila. Is request ko approve na karein.");
           const claim=claimSnap.data();
-          if(claim.uid!==req.uid || claim.kind!=="access" || claim.profileId!==req.profileId || claim.type!==req.type || Number(claim.amount)!==expectedReqAmount || claim.requestId!==x.id || claim.utr!==req.utr)throw new Error("Access UTR claim mismatch hai.");
+          if(claim.uid!==req.uid || claim.kind!=="access" || claim.profileId!==req.profileId || claim.type!==req.type || Number(claim.amount)!==Number(req.amount) || claim.requestId!==x.id || claim.utr!==req.utr)throw new Error("Access UTR claim mismatch hai.");
         }
 
         const profileSnap=await t.get(doc(db,"profiles",req.profileId));
