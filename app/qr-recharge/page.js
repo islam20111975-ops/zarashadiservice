@@ -11,7 +11,7 @@ function PageBody(){
  const profile=q.get("profile")||"";
  const type=q.get("type")==="mobile"?"mobile":"biodata";
  const amount=type==="mobile"?500:100;
- const [user,setUser]=useState(null),[qrUrl,setQrUrl]=useState(""),[upiId,setUpiId]=useState(""),[utr,setUtr]=useState(""),[copied,setCopied]=useState(false),[clickedButton,setClickedButton]=useState(""),[branding,setBranding]=useState({logo:"",appIcon:""});
+ const [user,setUser]=useState(null),[qrUrl,setQrUrl]=useState(""),[upiId,setUpiId]=useState(""),[utr,setUtr]=useState(""),[phone,setPhone]=useState(""),[copied,setCopied]=useState(false),[clickedButton,setClickedButton]=useState(""),[branding,setBranding]=useState({logo:"",appIcon:""});
  const [requests,setRequests]=useState([]),[profileData,setProfileData]=useState(null),[msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
  const redirected=useRef(false);
 
@@ -105,6 +105,10 @@ function PageBody(){
   if(!profile){setClickedButton("");return setMsg("❌ Profile ID missing hai.");}
   if(!profileData){setClickedButton("");return setMsg("❌ Ye profile available nahi hai.");}
   if(!qrUrl&&!upiId){setClickedButton("");return setMsg("❌ Admin ne UPI ID ya QR payment set nahi kiya hai.");}
+  const cleanPhone=phone.trim().replace(/[\s()-]/g,"");
+  const digitsPhone=cleanPhone.replace(/^\+?91/,"");
+  if(!digitsPhone){setClickedButton("");return setMsg("⚠️ Pehle apna mobile number bharein, phir UTR Send karein.");}
+  if(!/^\d{10}$/.test(digitsPhone)){setClickedButton("");return setMsg("⚠️ Sahi 10 digit mobile number bharein.");}
   const clean=utr.trim().replace(/\s+/g,"").toUpperCase();
   if(!clean){setClickedButton("");return setMsg("⚠️ Payment karne ke baad UTR / Transaction ID yahan zaroor bharein.");}
   if(!/^[A-Z0-9]{6,40}$/.test(clean)){setClickedButton("");return setMsg("⚠️ Sahi UTR / Transaction ID bhariye (6–40 letters/numbers).");}
@@ -135,7 +139,7 @@ function PageBody(){
 
    const requestData={
     uid:user.uid,profileId:profile,type,amount,status:"pending",
-    paymentMethod:"upi",utr:clean,utrClaimId:claimId,lockId,
+    paymentMethod:"upi",utr:clean,phone:digitsPhone,utrClaimId:claimId,lockId,
     createdAt:serverTimestamp()
    };
 
@@ -148,7 +152,7 @@ function PageBody(){
    }
 
    setUtr("");
-   setMsg("✅ UTR Send ho gaya. Payment request Admin ko bhej di gayi hai. UTR verify hone ke baad exact Profile "+profile+" ka access approve hoga.");
+   setMsg("✅ UTR aur mobile number ke saath request Admin ko bhej di gayi hai. UTR verify hone ke baad exact Profile "+profile+" ka access approve hoga.");
    setRequests(prev=>[{id:reqRef.id,...requestData},...prev]);
   }catch(e){
    const code=e?.code||"";
@@ -183,10 +187,14 @@ function PageBody(){
    {user&&!approved&&<>
     {pending&&<div className="notice">⏳ <b>Payment Pending</b><br/>Aapki request Admin verify kar rahe hain. Same profile ke liye dobara payment submit na karein.</div>}
     <div className="paymentForm">
-     <label>UTR / Transaction ID
-      <input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder={"₹"+amount+" payment ke baad UTR dalein"} autoComplete="off" inputMode="text"/>
+     <label>Mobile Number (जरूरी)
+      <input className="adminInput" type="tel" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="Apna 10 digit mobile number dalein" autoComplete="tel" inputMode="tel" maxLength={15} required/>
      </label>
-     <button type="button" className={"primaryAction"+(clickedButton==="submit"?" clickFeedback":"")} disabled={saving||!!pending} onClick={submit}>{saving?"✓ Sending…":pending?"Request Pending ⏳":clickedButton==="submit"?"✓ Clicked — Sending…":"UTR Send करके Access Request करें →"}</button>
+     <label>UTR / Transaction ID (जरूरी)
+      <input className="adminInput" value={utr} onChange={e=>setUtr(e.target.value)} placeholder={"₹"+amount+" payment ke baad pehle UTR dalein"} autoComplete="off" inputMode="text" required/>
+     </label>
+     <div className="notice">⚠️ Pehle apna mobile number aur payment ka UTR dono bharein. Dono ke bina Send nahi hoga.</div>
+     <button type="button" className={"primaryAction"+(clickedButton==="submit"?" clickFeedback":"")} disabled={saving||!!pending||!phone.trim()||!utr.trim()} onClick={submit}>{saving?"✓ Sending…":pending?"Request Pending ⏳":clickedButton==="submit"?"✓ Clicked — Sending…":"UTR Send करके Access Request करें →"}</button>
     </div>
     {requests.slice(0,5).map(x=><div className="notice" key={x.id}>₹{x.amount} — <b>{x.status}</b>{x.utr&&" — UTR "+x.utr}</div>)}
    </>}
