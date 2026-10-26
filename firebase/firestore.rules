@@ -65,8 +65,10 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Public cards use this collection only for profile ID, gender, photos and status.
+    // Never store private biodata or phone numbers in /profiles.
     match /profiles/{profileId} {
-      allow read: if isApprovedUser();
+      allow read: if true;
       allow create, update, delete: if isAdmin();
     }
 
