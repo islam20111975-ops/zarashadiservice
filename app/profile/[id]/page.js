@@ -71,7 +71,7 @@ export default function Profile(){
 
   <section className="detail cardPage">
    <div className="detailTop"><button className="miniBack" onClick={()=>router.push("/")}>← Profiles</button><span className="detailBadge">✓ Verified</span></div>
-   <div className="detailPhoto" onClick={()=>setLightbox(true)}>{photos[0]?<img src={photos[0]} alt="Marriage profile"/>:<div className="notFound">Photo not found</div>}</div>
+   <div className="detailPhoto" onClick={()=>setLightbox(true)} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")setLightbox(true)}} aria-label="सभी profile photos और biodata payment देखें">{photos[0]?<><img src={photos[0]} alt="Marriage profile"/>{photos.length>1&&<span className="detailPhotoCount">📷 {photos.length} Photos • सभी देखें</span>}</>:<div className="notFound">Photo not found</div>}</div>
 
    <div className="detailBody">
     <span className="profileId">{id}</span>
@@ -146,6 +146,6 @@ export default function Profile(){
    </div>
   </section>
 
-  {lightbox&&<div className="photoLightbox" onClick={()=>setLightbox(false)}><div className="galleryCard" onClick={e=>e.stopPropagation()}><button aria-label="Close" className="galleryClose" onClick={()=>setLightbox(false)}>✕</button><div className="galleryScroll">{photos.map((s,i)=><div className="galleryPhoto" key={i}><img src={s} alt={"Photo "+(i+1)}/></div>)}<div className="lightboxPayment"><b>Profile: {id}</b><span>ऊपर/नीचे swipe करके photos देखें</span></div></div></div></div>}
+  {lightbox&&<div className="photoLightbox" onClick={()=>setLightbox(false)}><div className="galleryCard" onClick={e=>e.stopPropagation()}><button aria-label="Close" className="galleryClose" onClick={()=>setLightbox(false)}>✕</button><div className="galleryScroll"><div className="galleryPaymentHeader"><b>Profile {id} • {photos.length} Photo{photos.length===1?"":"s"}</b><span>सभी फोटो देखने के लिए ऊपर/नीचे करें</span></div>{photos.map((s,i)=><div className="galleryPhoto" key={i}><img src={s} alt={"Profile "+id+" photo "+(i+1)}/><span className="galleryPhotoCount">{i+1} / {photos.length}</span></div>)}<div className="lightboxPayment"><b>💍 Profile {id} का पूरा Biodata</b><span>पूरी जानकारी देखने के लिए ₹100 भुगतान करें</span><button className="primaryAction" onClick={()=>{setLightbox(false);user?router.push("/payment?profile="+encodeURIComponent(id)+"&type=biodata"):login()}}>₹100 Biodata Unlock →</button></div></div></div></div>}
  </main>;
 }
