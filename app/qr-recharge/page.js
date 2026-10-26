@@ -178,12 +178,13 @@ function PageBody(){
     {photo&&<img src={photo} alt="" className="paymentProfilePhoto"/>}
     <p className="paymentLead">Profile <b>{profile}</b> ke liye exact ₹{amount} payment hai.</p>
    </div>
-   <div className="feeRow"><span><small>Exact Access Fee</small><b>₹{amount}</b></span><strong>UPI</strong></div>
-   <div className="notice" style={{textAlign:"left"}}><b>⚠️ Payment se pehle</b><br/>Sirf <b>₹{amount}</b> hi pay karein. Payment screen par receiver ka UPI ID/name aur amount check karke hi UPI PIN dalein. QR scan karke payment karte waqt hi PIN use hota hai; kisi ko receive karne ke liye PIN na dein.</div>
-   {upiId&&<div className="notice" style={{textAlign:"center"}}><b>1️⃣ UPI ID se Payment</b><br/><div style={{margin:"10px 0",fontSize:18,fontWeight:700,wordBreak:"break-all"}}>{upiId}</div><button type="button" className="primaryAction" onClick={async()=>{setClickedButton("copy");try{await navigator.clipboard.writeText(upiId);setCopied(true);setMsg("✅ UPI ID copy ho gayi. Ab exact ₹"+amount+" payment karein.");window.setTimeout(()=>{setCopied(false);setClickedButton("")},2500);}catch(e){setMsg("⚠️ UPI ID copy nahi ho saki. Manually copy karein.");}}}>{copied?"✓ UPI ID Copied":clickedButton==="copy"?"✓ Clicked":"📋 UPI ID Copy करें"}</button></div>}
-   {qrUrl&&<div className="qr"><p><b>2️⃣ QR Code se Payment</b></p><img src={qrUrl} alt="UPI QR"/><p><b>QR scan karke exact ₹{amount} pay karein.</b><br/><small>QR save karke doosre phone se bhi scan kar sakte hain.</small></p><button type="button" className={"primaryAction"+(clickedButton==="qr"?" clickFeedback":"")} onClick={downloadQr}>{clickedButton==="qr"?"✓ Downloading…":"⬇️ QR Download करें"}</button></div>}
-   {!upiId&&!qrUrl&&<div className="notice">Admin ne UPI ID aur QR payment set nahi kiya hai.</div>}
-   {!user&&<><div className="notice">Payment request bhejne ke liye Google Login zaroori hai. Payment ke baad UTR/Transaction ID submit karein.</div><button type="button" className={"primaryAction"+(clickedButton==="login"?" clickFeedback":"")} onClick={login}>{clickedButton==="login"?"✓ Clicked":"Google se Login →"}</button></>}
+   {!user&&<><div className="notice">🔐 Payment details dekhne aur payment request bhejne ke liye pehle Google Login zaroori hai. UPI ID text ke roop mein yahan public nahi dikhayi jayegi.</div><button type="button" className={"primaryAction"+(clickedButton==="login"?" clickFeedback":"")} onClick={login}>{clickedButton==="login"?"✓ Login khul raha hai…":"Google se Login →"}</button></>}
+   {user&&<>
+    <div className="feeRow"><span><small>Exact Access Fee</small><b>₹{amount}</b></span><strong>UPI QR</strong></div>
+    <div className="notice" style={{textAlign:"left"}}><b>⚠️ Payment se pehle</b><br/>Sirf <b>₹{amount}</b> hi pay karein. UPI app mein receiver ka naam aur amount check karke hi PIN dalein. Kisi ko UPI PIN/OTP na dein.</div>
+    {qrUrl&&<div className="qr"><p><b>1️⃣ QR Code se Payment</b></p><img src={qrUrl} alt="UPI payment QR"/><p><b>QR scan karke exact ₹{amount} pay karein.</b><br/><small>QR save karke doosre phone se bhi scan kar sakte hain.</small></p><button type="button" className={"primaryAction"+(clickedButton==="qr"?" clickFeedback":"")} onClick={downloadQr}>{clickedButton==="qr"?"✓ Download ho raha hai…":"⬇️ QR Download करें"}</button></div>}
+    {!qrUrl&&<div className="notice">Admin ne UPI QR payment set nahi kiya hai. Admin se sampark karein.</div>}
+   </>}
    {user&&!approved&&<>
     {pending&&<div className="notice">⏳ <b>Payment Pending</b><br/>Aapki request Admin verify kar rahe hain. Same profile ke liye dobara payment submit na karein.</div>}
     <div className="paymentForm">
