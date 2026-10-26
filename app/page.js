@@ -94,11 +94,21 @@ export default function Home(){
   },[r]);
 
   const shown=data;
+  const scrollToProfiles=()=>{
+    window.setTimeout(()=>{
+      const target=document.getElementById("profile-results");
+      if(target){
+        const top=target.getBoundingClientRect().top+window.scrollY-8;
+        window.scrollTo({top:Math.max(0,top),behavior:"smooth"});
+      }
+    },300);
+  };
   useEffect(()=>{
     if(!r)return;
     const timer=window.setTimeout(()=>{
-      document.getElementById("profile-results")?.scrollIntoView({behavior:"smooth",block:"start"});
-    },80);
+      const target=document.getElementById("profile-results");
+      if(target){window.scrollTo({top:Math.max(0,target.getBoundingClientRect().top+window.scrollY-8),behavior:"smooth"});}
+    },300);
     return()=>window.clearTimeout(timer);
   },[r]);
   const currentProfile=sliderIds.length?allProfiles.find(p=>p.id===sliderIds[slideIndex]):null;
@@ -122,8 +132,8 @@ export default function Home(){
             </div>
           </div>
           <div className="gender genderPremium">
-            <button className={r==="male"?"genderCard premiumCard maleCard active":"genderCard premiumCard maleCard"} onClick={()=>setR("male")}><div className="cardIcon">👨</div><div><b>Male Rishte</b><small>Rishta dekhne ke liye button par click karein</small></div><span className="arrow">→</span></button>
-            <button className={r==="female"?"genderCard premiumCard femaleCard active":"genderCard premiumCard femaleCard"} onClick={()=>setR("female")}><div className="cardIcon">👩</div><div><b>Female Rishte</b><small>Rishta dekhne ke liye button par click karein</small></div><span className="arrow">→</span></button>
+            <button className={r==="male"?"genderCard premiumCard maleCard active":"genderCard premiumCard maleCard"} onClick={()=>{setR("male");scrollToProfiles();}}><div className="cardIcon">👨</div><div><b>Male Rishte</b><small>Rishta dekhne ke liye button par click karein</small></div><span className="arrow">→</span></button>
+            <button className={r==="female"?"genderCard premiumCard femaleCard active":"genderCard premiumCard femaleCard"} onClick={()=>{setR("female");scrollToProfiles();}}><div className="cardIcon">👩</div><div><b>Female Rishte</b><small>Rishta dekhne ke liye button par click karein</small></div><span className="arrow">→</span></button>
           </div>
           {homePosts.length>0&&<section className="homePosts" aria-label="Admin announcements"><div className="homePostsHeading"><span>📢</span><div><h2>Admin Posts</h2><p>Zara Nikah Service ki latest updates</p></div></div><div className="homePostsList">{homePosts.map(p=><article className="homePostCard" key={p.id}><div className="homePostMeta">📌 Zara Nikah Service {p.createdAt?.toDate?.()?.toLocaleDateString?.("en-IN")||""}</div><p>{p.text}</p></article>)}</div></section>}
         </section>
