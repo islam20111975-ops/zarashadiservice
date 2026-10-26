@@ -50,6 +50,8 @@ export default function AppAccessGate({children}){
   let alive=true;
   const unsub=onAuthStateChanged(auth,async user=>{
    if(!alive)return;
+   // Public profile pages must be viewable without login or admin approval.
+   if(profilePage){setAccessStatus("allowed");return;}
    if(!user){setAccessStatus("login");return;}
    setAccessStatus("checking");
    const adminUser=ADMINS.includes(user.email?.toLowerCase());
@@ -72,7 +74,7 @@ export default function AppAccessGate({children}){
    }catch(e){if(alive)setAccessStatus(profileSetup?"allowed":"error")}
   });
   return()=>{alive=false;unsub()};
- },[profileSetup]);
+ },[profileSetup,profilePage]);
  useEffect(()=>{
   if(admin){setChecking(false);return;}
   const checkInstalled=async()=>{
@@ -102,17 +104,6 @@ export default function AppAccessGate({children}){
   try{event.prompt();const choice=await event.userChoice;window.__zaraInstallPrompt=null;setPrompt(null);setCanInstall(false);if(choice?.outcome==="accepted"){setHideButton(true);try{window.localStorage.setItem("zaraPwaInstalled","1");}catch(err){}}}catch(e){}
  }
  if(admin)return <>{children}</>;
- if(profilePage && (checking || accessStatus==="checking"))return <div className="zaraBootScreen" aria-hidden="true"/>;
- if(profilePage && (accessStatus==="login"||accessStatus==="pending"||accessStatus==="rejected"||accessStatus==="error")){
-  return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",padding:24,background:"linear-gradient(135deg,#fff7ed,#fdf2f8)"}}>
-   <section className="cardPage" style={{maxWidth:520,width:"100%",textAlign:"center"}}>
-    <div style={{fontSize:48,marginBottom:12}}>{accessStatus==="rejected"?"⛔":accessStatus==="error"?"⚠️":accessStatus==="login"?"🔐":"⏳"}</div>
-    <h1>{accessStatus==="login"?"Google Login zaroori hai":accessStatus==="rejected"?"Access request rejected":accessStatus==="error"?"Approval status check nahi ho saka":"Admin approval pending"}</h1>
-    <p>{accessStatus==="login"?"Rishte dekhne ke liye pehle Google se login karein.":accessStatus==="rejected"?"Aapka account approve nahi hua. Zara Nikah Service Admin se sampark karein.":accessStatus==="error"?"Approval status check nahi ho saka. Internet/Firebase Rules check karein, phir page refresh karein.":"Aapka Google account register ho gaya hai. Rishte dekhne se pehle Admin approval zaroori hai."}</p>
-    <button className="primaryAction" onClick={()=>router.push("/account")}>My Account / Profile</button>
-    <button className="backAction" style={{marginTop:10}} onClick={()=>signOut(auth).then(()=>router.push("/"))}>Logout</button>
-   </section>
-  </main>;
- }
+
  return <>{children}{!standalone&&!hideButton&&<button className="zaraFloatingInstall" onClick={install} aria-label="Zara Nikah App install karein"><span className="zaraFloatingInstallIcon">📲</span><span className="zaraFloatingInstallText"><strong>APP INSTALL</strong><small>Zara Nikah Service</small></span><span className="zaraFloatingInstallArrow">↓</span></button>}{splash&&standalone&&<div className="zaraPwaSplash"><img src="/api/app-splash" alt="" className="zaraPwaSplashBg"/><div className="zaraPwaSplashShade"/></div>}</>;
 }
