@@ -1,5 +1,6 @@
 import "./globals.css";
 import AppAccessGate from "./components/AppAccessGate";
+import Script from "next/script";
 
 export const metadata={
  metadataBase:new URL("https://zarashadiservice.vercel.app"),
@@ -16,4 +17,4 @@ export const metadata={
  manifest:"/manifest.webmanifest?v=20260929-3"
 };
 
-export default function RootLayout({children}){return <html lang="hi"><body><AppAccessGate>{children}</AppAccessGate><script dangerouslySetInnerHTML={{__html:`window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();window.__zaraInstallPrompt=e;window.dispatchEvent(new Event("zara-install-ready"))});if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").then(r=>r.update()).catch(()=>{}))}`}} /></body></html>}
+export default function RootLayout({children}){return <html lang="hi"><body><AppAccessGate>{children}</AppAccessGate><Script src="https://www.googletagmanager.com/gtag/js?id=G-N5V1PGKLWH" strategy="afterInteractive" /><Script id="google-analytics" strategy="afterInteractive">{`window.dataLayer = window.dataLayer || []; function gtag(){window.dataLayer.push(arguments);} gtag("js", new Date()); gtag("config", "G-N5V1PGKLWH");`}</Script><script dangerouslySetInnerHTML={{__html:`window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();window.__zaraInstallPrompt=e;window.dispatchEvent(new Event("zara-install-ready"))});if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").then(r=>r.update()).catch(()=>{}))}`}} /></body></html>}
