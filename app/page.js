@@ -94,6 +94,13 @@ export default function Home(){
   },[r]);
 
   const shown=data;
+  useEffect(()=>{
+    if(!r)return;
+    const timer=window.setTimeout(()=>{
+      document.getElementById("profile-results")?.scrollIntoView({behavior:"smooth",block:"start"});
+    },80);
+    return()=>window.clearTimeout(timer);
+  },[r]);
   const currentProfile=sliderIds.length?allProfiles.find(p=>p.id===sliderIds[slideIndex]):null;
   return (
     <>
@@ -120,7 +127,7 @@ export default function Home(){
           </div>
           {homePosts.length>0&&<section className="homePosts" aria-label="Admin announcements"><div className="homePostsHeading"><span>📢</span><div><h2>Admin Posts</h2><p>Zara Nikah Service ki latest updates</p></div></div><div className="homePostsList">{homePosts.map(p=><article className="homePostCard" key={p.id}><div className="homePostMeta">📌 Zara Nikah Service {p.createdAt?.toDate?.()?.toLocaleDateString?.("en-IN")||""}</div><p>{p.text}</p></article>)}</div></section>}
         </section>
-        {r&&<section className="profiles"><div className="sectionHead"><div><span className="eyebrow">AVAILABLE PROFILES</span><h2>{r==="male"?"Male":"Female"} Rishte</h2></div><span className="count">{loading?"Loading...":shown.length+" Profiles"}</span></div>
+        {r&&<section className="profiles" id="profile-results" style={{scrollMarginTop:12}}><div className="sectionHead"><div><span className="eyebrow">AVAILABLE PROFILES</span><h2>{r==="male"?"Male":"Female"} Rishte</h2></div><span className="count">{loading?"Loading...":shown.length+" Profiles"}</span></div>
           <div className="grid">{shown.map(p=><article className="profileCard" key={p.id}><div className="photoWrap" onClick={()=>router.push("/profile/"+p.id)} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")router.push("/profile/"+p.id)}}><img src={getProfileImage(p)} alt={"Marriage profile "+p.id} onError={e=>{e.currentTarget.style.display="none";e.currentTarget.parentElement?.classList.add("photoMissing")}}/><span className="verified">✓ Verified</span></div><div className="cardInfo"><span className="profileId">{p.id}</span></div></article>)}</div>
         </section>}
         <section className="profiles" aria-labelledby="nikah-guide-title" style={{maxWidth:1180,margin:"0 auto",padding:"24px 22px 48px"}}>
