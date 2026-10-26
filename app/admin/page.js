@@ -162,8 +162,8 @@ export default function Admin(){
     try{
       if(x.status!=="pending")return;
       const amount=Number(x.amount);
-      const expected=x.type==="biodata"?100:500;
-      if(amount!==expected)throw new Error("Access amount valid nahi hai.");
+      const allowedAmounts=x.type==="biodata"?[99,100]:[299,500];
+      if(!allowedAmounts.includes(amount))throw new Error("Access amount valid nahi hai.");
       const reqRef=doc(db,"paidAccessRequests",x.id);
       const unlockRef=doc(db,x.type==="biodata"?"biodataUnlocks":"mobileAccess",x.uid+"_"+x.profileId);
       const txRef=doc(db,"walletTransactions",x.id+"_payment");
@@ -175,8 +175,8 @@ export default function Admin(){
         const req=reqSnap.data();
         if(req.status!=="pending")throw new Error("Ye request already process ho chuki hai.");
         if(req.type!=="biodata" && req.type!=="mobile")throw new Error("Access type invalid hai.");
-        const expectedReqAmount=req.type==="biodata"?100:500;
-        if(Number(req.amount)!==expectedReqAmount)throw new Error("Access request amount mismatch hai.");
+        const allowedReqAmounts=req.type==="biodata"?[99,100]:[299,500];
+        if(!allowedReqAmounts.includes(Number(req.amount)))throw new Error("Access request amount mismatch hai.");
         if(req.profileId!==x.profileId || req.type!==x.type)throw new Error("Access request data mismatch hai.");
         if(!["wallet","upi","qr","upi_id_or_qr"].includes(req.paymentMethod))throw new Error("Payment method valid nahi hai.");
         if(req.paymentMethod==="wallet" && req.utr!=="")throw new Error("Wallet request me UTR nahi hona chahiye.");
