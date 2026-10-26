@@ -10,7 +10,7 @@ function Pay(){
  const q=useSearchParams(),router=useRouter();
  const profile=q.get("profile")||"";
  const type=q.get("type")==="mobile"?"mobile":"biodata";
- const amount=type==="mobile"?500:100;
+ const amount=type==="mobile"?299:99;
  const [user,setUser]=useState(null),[p,setP]=useState(null),[wallet,setWallet]=useState(0),[requests,setRequests]=useState([]),[branding,setBranding]=useState({logo:"",appIcon:""});
  const [msg,setMsg]=useState(""),[saving,setSaving]=useState(false);
 
