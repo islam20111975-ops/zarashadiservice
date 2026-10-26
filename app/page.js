@@ -80,8 +80,16 @@ export default function Home(){
   useEffect(()=>{
     if(!r||profileAccess!=="approved"){setData([]);setLoading(false);return}
     setLoading(true);
-    const q=query(collection(db,"profiles"),where("gender","==",r));
-    return onSnapshot(q,s=>{setData(s.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted"));setLoading(false)},e=>{setLoading(false);setLoginError(e?.message||"Profiles load nahi ho sake.")});
+    return onSnapshot(collection(db,"profiles"),s=>{
+      const wanted=String(r).trim().toLowerCase();
+      const rows=s.docs.map(d=>({id:d.id,...d.data()})).filter(p=>{
+        if(p.status==="deleted")return false;
+        const g=String(p.gender||p.sex||"").trim().toLowerCase();
+        if(wanted==="male")return ["male","m","man","boy","पुरुष","लड़का","ladka"].includes(g);
+        return ["female","f","woman","girl","महिला","लड़की","ladki"].includes(g);
+      });
+      setData(rows.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})));setLoading(false);
+    },e=>{setLoading(false);setLoginError(e?.message||"Profiles load nahi ho sake.")});
   },[r,profileAccess]);
 
   const shown=data;
