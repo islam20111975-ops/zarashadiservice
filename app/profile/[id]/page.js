@@ -77,7 +77,7 @@ export default function Profile(){
     <span className="profileId">{id}</span>
     <h1>{unlocked&&biodataAvailable?(d.name||"Biodata"):"Marriage Profile"}</h1>
 
-    {!unlocked?<><p className="detailLead">Complete biodata ke liye ₹100 payment required hai.</p><div className="notice">Pay ₹100 to view the complete biodata</div><button className="primaryAction" onClick={()=>user?router.push("/payment?profile="+encodeURIComponent(id)+"&type=biodata"):login()}>₹100 Biodata Unlock →</button></>:
+    {!unlocked?<><p className="detailLead">Complete biodata ke liye ₹99 payment required hai.</p><div className="notice">Pay ₹99 to view the complete biodata</div><button className="primaryAction" onClick={()=>user?router.push("/payment?profile="+encodeURIComponent(id)+"&type=biodata"):login()}>₹99 Biodata Unlock →</button></>:
     <div className="biodataBox">
       {biodataAvailable&&<div className="biodataTitle">💍 Complete Biodata</div>}
 
@@ -137,7 +137,7 @@ export default function Profile(){
       </Section>
 
       {mobile&&<div className="notice">📱 Mobile Number: {val(contact?.phone||contact?.mobile||contact?.mobileNumber)}</div>}
-      {!mobile&&<><div className="notice">📱 Pay ₹500 to view Mobile Number</div><button className="primaryAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(id)+"&type=mobile")}>₹500 Mobile Number Access →</button></>}
+      {!mobile&&<><div className="notice">📱 Pay ₹299 to view Mobile Number</div><button className="primaryAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(id)+"&type=mobile")}>₹299 Mobile Number Access →</button></>}
     </div>}
 
     {!user&&<><p className="small">Google login is required for payment/access.</p>{loginError&&<div className="errorBox">{loginError}</div>}</>}
@@ -146,6 +146,6 @@ export default function Profile(){
    </div>
   </section>
 
-  {lightbox&&<div className="photoLightbox" onClick={()=>setLightbox(false)}><div className="galleryCard" onClick={e=>e.stopPropagation()}><button aria-label="Close" className="galleryClose" onClick={()=>setLightbox(false)}>✕</button><div className="galleryScroll"><div className="galleryPaymentHeader"><b>Profile {id} • {photos.length} Photo{photos.length===1?"":"s"}</b><span>सभी फोटो देखने के लिए ऊपर/नीचे करें</span></div>{photos.map((s,i)=><div className="galleryPhoto" key={i}><img src={s} alt={"Profile "+id+" photo "+(i+1)}/><span className="galleryPhotoCount">{i+1} / {photos.length}</span></div>)}<div className="lightboxPayment"><b>💍 Profile {id} का पूरा Biodata</b><span>पूरी जानकारी देखने के लिए ₹100 भुगतान करें</span><button className="primaryAction" onClick={()=>{setLightbox(false);user?router.push("/payment?profile="+encodeURIComponent(id)+"&type=biodata"):login()}}>₹100 Biodata Unlock →</button></div></div></div></div>}
+  {lightbox&&<div className="photoLightbox" onClick={()=>setLightbox(false)}><div className="galleryCard" onClick={e=>e.stopPropagation()}><button aria-label="Close" className="galleryClose" onClick={()=>setLightbox(false)}>✕</button><div className="galleryScroll"><div className="galleryPaymentHeader"><b>Profile {id} • {photos.length} Photo{photos.length===1?"":"s"}</b><span>सभी फोटो देखने के लिए ऊपर/नीचे करें</span></div>{photos.map((s,i)=><div className="galleryPhoto" key={i}><img src={s} alt={"Profile "+id+" photo "+(i+1)}/><span className="galleryPhotoCount">{i+1} / {photos.length}</span></div>)}<div className="lightboxPayment"><b>💍 Profile {id} का पूरा Biodata</b><span>पूरी जानकारी देखने के लिए ₹99 भुगतान करें</span><button className="primaryAction" onClick={()=>{setLightbox(false);user?router.push("/payment?profile="+encodeURIComponent(id)+"&type=biodata"):login()}}>₹99 Biodata Unlock →</button></div></div></div></div>}
  </main>;
 }
