@@ -6,6 +6,14 @@ import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut} from "fir
 import {collection,doc,getDoc,getDocs,onSnapshot,query,where} from "firebase/firestore";
 import {auth,db} from "../lib/firebase";
 
+function getProfileImage(p){
+  const photos=Array.isArray(p?.photos)?p.photos:Array.isArray(p?.images)?p.images:[];
+  return photos.find(x=>typeof x==="string"&&x.trim())||p?.photo||p?.image||p?.imageUrl||p?.photoURL||p?.profilePhoto||p?.picture||"";
+}
+function getProfileGender(p){
+  return String(p?.gender||p?.sex||p?.profileGender||p?.category||p?.type||"").trim().toLowerCase();
+}
+
 export default function Home(){
   const [r,setR]=useState(null);
   const [data,setData]=useState([]);
@@ -53,11 +61,11 @@ export default function Home(){
       try{
         const snap=await getDocs(collection(db,"profiles"));
         const rows=snap.docs.map(d=>({id:d.id,...d.data()}))
-          .filter(p=>p.status!=="deleted" && ((Array.isArray(p.photos)&&p.photos[0])||p.photo))
+          .filter(p=>p.status!=="deleted" && getProfileImage(p))
           .sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
         if(cancelled)return;
         setSliderIds(rows.map(p=>p.id));
-        setAllProfiles(rows.map(p=>({id:p.id,image:(Array.isArray(p.photos)&&p.photos[0])||p.photo})));
+        setAllProfiles(rows.map(p=>({id:p.id,image:getProfileImage(p)})));
       }catch(e){if(!cancelled){setSliderIds([]);setAllProfiles([]);}}
     };
     loadSlider();
@@ -77,9 +85,9 @@ export default function Home(){
       const wanted=String(r).trim().toLowerCase();
       const rows=s.docs.map(d=>({id:d.id,...d.data()})).filter(p=>{
         if(p.status==="deleted")return false;
-        const g=String(p.gender||p.sex||"").trim().toLowerCase();
-        if(wanted==="male")return ["male","m","man","boy","पुरुष","लड़का","ladka"].includes(g);
-        return ["female","f","woman","girl","महिला","लड़की","ladki"].includes(g);
+        const g=getProfileGender(p);
+        if(wanted==="male")return ["male","m","man","boy","groom","male rishte","male profile","पुरुष","लड़का","लड़का","ladka","वर"].some(v=>g===v||g.includes(v));
+        return ["female","f","woman","girl","bride","female rishte","female profile","महिला","लड़की","लड़की","ladki","वधू"].some(v=>g===v||g.includes(v));
       });
       setData(rows.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})));setLoading(false);
     },e=>{setLoading(false);setLoginError(e?.message||"Profiles load nahi ho sake.")});
@@ -113,7 +121,7 @@ export default function Home(){
           {homePosts.length>0&&<section className="homePosts" aria-label="Admin announcements"><div className="homePostsHeading"><span>📢</span><div><h2>Admin Posts</h2><p>Zara Nikah Service ki latest updates</p></div></div><div className="homePostsList">{homePosts.map(p=><article className="homePostCard" key={p.id}><div className="homePostMeta">📌 Zara Nikah Service {p.createdAt?.toDate?.()?.toLocaleDateString?.("en-IN")||""}</div><p>{p.text}</p></article>)}</div></section>}
         </section>
         {r&&<section className="profiles"><div className="sectionHead"><div><span className="eyebrow">AVAILABLE PROFILES</span><h2>{r==="male"?"Male":"Female"} Rishte</h2></div><span className="count">{loading?"Loading...":shown.length+" Profiles"}</span></div>
-          <div className="grid">{shown.map(p=><article className="profileCard" key={p.id}><div className="photoWrap" onClick={()=>router.push("/profile/"+p.id)} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")router.push("/profile/"+p.id)}}><img src={(Array.isArray(p.photos)&&p.photos[0])||p.photo||""} alt={"Marriage profile "+p.id} onError={e=>{e.currentTarget.style.display="none";e.currentTarget.parentElement?.classList.add("photoMissing")}}/><span className="verified">✓ Verified</span></div><div className="cardInfo"><span className="profileId">{p.id}</span></div></article>)}</div>
+          <div className="grid">{shown.map(p=><article className="profileCard" key={p.id}><div className="photoWrap" onClick={()=>router.push("/profile/"+p.id)} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")router.push("/profile/"+p.id)}}><img src={getProfileImage(p)} alt={"Marriage profile "+p.id} onError={e=>{e.currentTarget.style.display="none";e.currentTarget.parentElement?.classList.add("photoMissing")}}/><span className="verified">✓ Verified</span></div><div className="cardInfo"><span className="profileId">{p.id}</span></div></article>)}</div>
         </section>}
         <section className="profiles" aria-labelledby="nikah-guide-title" style={{maxWidth:1180,margin:"0 auto",padding:"24px 22px 48px"}}>
           <div className="sectionHead"><div><span className="eyebrow">ZARA NIKAH SERVICE GUIDE</span><h2 id="nikah-guide-title">Nikah ke liye rishta dhoondhne ki rehnumai</h2></div></div>
