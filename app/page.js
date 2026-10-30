@@ -85,6 +85,7 @@ export default function Home(){
       const wanted=String(r).trim().toLowerCase();
       const rows=s.docs.map(d=>({id:d.id,...d.data()})).filter(p=>{
         if(p.status==="deleted")return false;
+        if(p.expiresAt && new Date(p.expiresAt?.toDate?.()||p.expiresAt).getTime()<=Date.now())return false;
         const g=getProfileGender(p);
         if(wanted==="male")return ["male","m","man","boy","groom","male rishte","male profile","पुरुष","लड़का","लड़का","ladka","वर"].some(v=>g===v||g.includes(v));
         return ["female","f","woman","girl","bride","female rishte","female profile","महिला","लड़की","लड़की","ladki","वधू"].some(v=>g===v||g.includes(v));
@@ -135,6 +136,7 @@ export default function Home(){
             <button className={r==="male"?"genderCard premiumCard maleCard active":"genderCard premiumCard maleCard"} onClick={()=>{setR("male");scrollToProfiles();}}><div className="cardIcon">👨</div><div><b>Male Rishte</b><small>Rishta dekhne ke liye button par click karein</small></div><span className="arrow">→</span></button>
             <button className={r==="female"?"genderCard premiumCard femaleCard active":"genderCard premiumCard femaleCard"} onClick={()=>{setR("female");scrollToProfiles();}}><div className="cardIcon">👩</div><div><b>Female Rishte</b><small>Rishta dekhne ke liye button par click karein</small></div><span className="arrow">→</span></button>
           </div>
+          <div style={{display:"flex",justifyContent:"center",margin:"16px auto 4px"}}><button onClick={()=>router.push("/add-profile")} style={{padding:"13px 22px",border:0,borderRadius:14,background:"linear-gradient(135deg,#087443,#10a36b)",color:"#fff",fontWeight:800,fontSize:16,boxShadow:"0 8px 20px #08744333",cursor:"pointer"}}>➕ अपना रिश्ता जोड़ें • ₹299 / 3 महीने</button></div>
           {homePosts.length>0&&<section className="homePosts" aria-label="Admin announcements"><div className="homePostsHeading"><span>📢</span><div><h2>Admin Posts</h2><p>Zara Nikah Service ki latest updates</p></div></div><div className="homePostsList">{homePosts.map(p=><article className="homePostCard" key={p.id}><div className="homePostMeta">📌 Zara Nikah Service {p.createdAt?.toDate?.()?.toLocaleDateString?.("en-IN")||""}</div>{p.image&&<img src={p.image} alt="Zara Nikah Service post" loading="lazy" style={{display:"block",width:"auto",maxWidth:"100%",maxHeight:240,objectFit:"contain",borderRadius:14,margin:"10px auto"}}/>}<p style={{whiteSpace:"pre-wrap"}}>{p.text}</p></article>)}</div></section>}
         </section>
         {r&&<section className="profiles" id="profile-results" style={{scrollMarginTop:12}}><div className="sectionHead"><div><span className="eyebrow">AVAILABLE PROFILES</span><h2>{r==="male"?"Male":"Female"} Rishte</h2></div><span className="count">{loading?"Loading...":shown.length+" Profiles"}</span></div>
