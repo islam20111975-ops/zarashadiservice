@@ -106,10 +106,13 @@ service cloud.firestore {
     match /homePosts/{postId} {
       allow read: if true;
       allow create: if isAdmin()
-        && request.resource.data.keys().hasOnly(["text","createdBy","createdAt","status"])
+        && request.resource.data.keys().hasOnly(["text","image","createdBy","createdAt","status"])
         && request.resource.data.text is string
-        && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 5000
+        && (request.resource.data.text.size() > 0
+          || (request.resource.data.image is string && request.resource.data.image.size() > 0))
+        && (!request.resource.data.keys().hasAny(["image"])
+          || (request.resource.data.image is string && request.resource.data.image.size() <= 500000))
         && request.resource.data.createdBy == request.auth.token.email
         && request.resource.data.status == "active";
       allow update, delete: if isAdmin();
