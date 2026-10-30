@@ -299,6 +299,43 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+
+    // Private customer support conversations. Only the customer who owns a thread
+    // and the admins can read its messages.
+    match /supportChats/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.uid == uid;
+      allow update: if isAdmin() || (signedIn() && request.auth.uid == uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["name","email","lastMessage","lastSender","updatedAt","unreadForAdmin","unreadForUser"]));
+      allow delete: if isAdmin();
+      match /messages/{messageId} {
+        allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+        allow create: if signedIn() && (isAdmin() || request.auth.uid == uid)
+          && request.resource.data.senderUid == request.auth.uid
+          && request.resource.data.senderRole == (isAdmin() ? "admin" : "customer")
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 3000;
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // Notifications are private to their recipient; only admins can create them.
+    match /notifications/{notificationId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isAdmin()
+        && request.resource.data.uid is string
+        && request.resource.data.title is string
+        && request.resource.data.message is string
+        && request.resource.data.read == false;
+      allow update: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read","readAt"])
+        && request.resource.data.read == true);
+      allow delete: if isAdmin();
+    }
+
     match /{document=**} { allow read, write: if false; }
   }
 }
