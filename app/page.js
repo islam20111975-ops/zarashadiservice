@@ -87,8 +87,8 @@ export default function Home(){
         if(p.status==="deleted")return false;
         if(p.expiresAt && new Date(p.expiresAt?.toDate?.()||p.expiresAt).getTime()<=Date.now())return false;
         const g=getProfileGender(p);
-        if(wanted==="male")return ["male","m","man","boy","groom","male rishte","male profile","पुरुष","लड़का","लड़का","ladka","वर"].some(v=>g===v||g.includes(v));
-        return ["female","f","woman","girl","bride","female rishte","female profile","महिला","लड़की","लड़की","ladki","वधू"].some(v=>g===v||g.includes(v));
+        if(wanted==="male")return ["male","m","man","boy","groom","male rishte","male profile","पुरुष","लड़का","लड़का","ladka","वर"].includes(g);
+        return ["female","f","woman","girl","bride","female rishte","female profile","महिला","लड़की","लड़की","ladki","वधू"].includes(g);
       });
       setData(rows.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})));setLoading(false);
     },e=>{setLoading(false);setLoginError(e?.message||"Profiles load nahi ho sake.")});
