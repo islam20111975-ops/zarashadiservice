@@ -4,7 +4,7 @@ import {useEffect,useState} from "react";
 import {Suspense} from "react";
 import {useRouter,useSearchParams} from "next/navigation";
 import {GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signInWithRedirect} from "firebase/auth";
-import {collection,doc,getDoc,onSnapshot,setDoc,serverTimestamp,writeBatch} from "firebase/firestore";
+import {collection,doc,getDoc,onSnapshot,setDoc,serverTimestamp,writeBatch,addDoc,getDocs} from "firebase/firestore";
 import {auth,db} from "../../../lib/firebase";
 
 const ADMINS=["ngogrant454@gmail.com","islam20111975@gmail.com"];
@@ -197,6 +197,20 @@ function BiodataAdminPage(){
       },{merge:true});
 
       await batch.commit();
+
+      if(!existing){
+        try{
+          const userSnap=await getDocs(collection(db,"users"));
+          for(const customer of userSnap.docs){
+            if(customer.id===currentUser.uid)continue;
+            await addDoc(collection(db,"notifications"),{
+              uid:customer.id,title:"नया रिश्ता आया है",
+              message:"Zara Nikah Service par naya profile "+id+" add hua hai. Male/Female Rishte dekhein.",
+              type:"new_profile",profileId:id,read:false,createdAt:serverTimestamp()
+            });
+          }
+        }catch(notificationError){console.warn("New profile notification failed:",notificationError)}
+      }
 
       // Photo slider optional hai; main biodata save ko kabhi block nahi karega.
       if(photos[0]){
