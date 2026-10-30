@@ -163,8 +163,19 @@ export default function Admin(){
         }finally{URL.revokeObjectURL(source)}
       }
       await addDoc(collection(db,"homePosts"),{text,image,createdBy:user.email,createdAt:serverTimestamp(),status:"active"});
+      // Notify every registered user about the new admin post.
+      const recipientUids=[...new Set(users.map(x=>x.uid||x.id).filter(uid=>uid&&uid!==user.uid))];
+      const notificationTitle="📢 Zara Nikah Service par nayi post";
+      const notificationMessage=text?text.slice(0,180):"Zara Nikah Service par admin ne nayi photo post ki hai. App kholkar dekhein.";
+      for(let i=0;i<recipientUids.length;i+=400){
+        const batch=recipientUids.slice(i,i+400);
+        await Promise.all(batch.map(uid=>addDoc(collection(db,"notifications"),{
+          uid,title:notificationTitle,message:notificationMessage,type:"admin_post",read:false,createdAt:serverTimestamp()
+        })));
+      }
+      if(recipientUids.length)await sendPushToUsers(recipientUids,notificationTitle,notificationMessage);
       setPostText("");setPostImageFile(null);setPostImagePreview("");
-      setError("Post sabhi visitors ke liye publish ho gayi.");
+      setError("Post publish ho gayi. "+recipientUids.length+" registered users ko notification bheji gayi.");
     }catch(e){setError("Post publish nahi hui: "+e.message)}
     finally{setSaving(false)}
   }
