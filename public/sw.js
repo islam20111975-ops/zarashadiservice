@@ -12,16 +12,21 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
+
+// Notification payloads are displayed automatically by the browser/FCM.
+// Keep showNotification as a fallback for data-only messages.
 messaging.onBackgroundMessage((payload) => {
+  if (payload.notification) return;
   const data = payload.data || {};
   const title = data.title || "Zara Nikah Service";
   const options = {
     body: data.body || "Aapke liye nayi update hai.",
     icon: "/api/pwa-icon?size=192",
     badge: "/api/pwa-icon?size=96",
-    data: { url: data.url || "/notifications" }
+    data: { url: data.url || "/notifications" },
+    tag: "zara-nikah-update"
   };
-  self.registration.showNotification(title, options);
+  return self.registration.showNotification(title, options);
 });
 
 self.addEventListener("install", (event) => self.skipWaiting());
