@@ -201,13 +201,28 @@ function BiodataAdminPage(){
       if(!existing){
         try{
           const userSnap=await getDocs(collection(db,"users"));
-          for(const customer of userSnap.docs){
-            if(customer.id===currentUser.uid)continue;
-            await addDoc(collection(db,"notifications"),{
-              uid:customer.id,title:"नया रिश्ता आया है",
-              message:"Zara Nikah Service par naya profile "+id+" add hua hai. Male/Female Rishte dekhein.",
-              type:"new_profile",profileId:id,read:false,createdAt:serverTimestamp()
+          const recipients=userSnap.docs.map(customer=>customer.id).filter(uid=>uid&&uid!==currentUser.uid);
+          const title="नया रिश्ता आया है";
+          const message="Zara Nikah Service par naya profile "+id+" add hua hai. Male/Female Rishte dekhein.";
+          for(let i=0;i<recipients.length;i+=400){
+            const notificationBatch=writeBatch(db);
+            recipients.slice(i,i+400).forEach(uid=>{
+              notificationBatch.set(doc(collection(db,"notifications")),{
+                uid,title,message,type:"new_profile",profileId:id,read:false,createdAt:serverTimestamp()
+              });
             });
+            await notificationBatch.commit();
+          }
+          if(recipients.length){
+            const idToken=await currentUser.getIdToken();
+            const pushResponse=await fetch("/api/push/send",{
+              method:"POST",
+              headers:{"Content-Type":"application/json","Authorization":"Bearer "+idToken},
+              body:JSON.stringify({uids:recipients,title,message})
+            });
+            const pushData=await pushResponse.json().catch(()=>({}));
+            if(!pushResponse.ok)throw new Error(pushData.error||("Push HTTP "+pushResponse.status));
+            console.info("New biodata notifications:",{inApp:recipients.length,pushSent:pushData.sent||0,pushFailed:pushData.failureCount||0});
           }
         }catch(notificationError){console.warn("New profile notification failed:",notificationError)}
       }
