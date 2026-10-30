@@ -48,6 +48,7 @@ export async function POST(request) {
     let sent = 0;
     let failureCount = 0;
     const errors = [];
+    const notificationTag = `zara-nikah-${Date.now()}`;
     for (let i = 0; i < tokens.length; i += 500) {
       const batch = tokens.slice(i, i + 500);
       const response = await getMessaging(app).sendEachForMulticast({
@@ -60,7 +61,11 @@ export async function POST(request) {
             body: message,
             icon: "/api/pwa-icon?size=192",
             badge: "/api/pwa-icon?size=96",
-            tag: "zara-nikah-update"
+            tag: notificationTag,
+            renotify: true,
+            requireInteraction: true,
+            silent: false,
+            vibrate: [200, 100, 200]
           },
           fcmOptions: { link: "https://zarashadiservice.vercel.app/notifications" }
         }
