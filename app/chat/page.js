@@ -7,7 +7,7 @@ import {auth,db} from "../../lib/firebase";
 const ADMINS=["ngogrant454@gmail.com","islam20111975@gmail.com"];
 async function startGoogleLogin(){const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});await signInWithRedirect(auth,provider);}
 export default function ChatPage(){
- const router=useRouter();const [user,setUser]=useState(undefined),[thread,setThread]=useState(null),[threads,setThreads]=useState([]),[selectedId,setSelectedId]=useState(""),[messages,setMessages]=useState([]),[value,setValue]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState("");
+ const router=useRouter();const [user,setUser]=useState(undefined),[thread,setThread]=useState(null),[threads,setThreads]=useState([]),[selectedId,setSelectedId]=useState(""),[messages,setMessages]=useState([]),[value,setValue]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState(""),[loginStarting,setLoginStarting]=useState(false);
  const admin=ADMINS.includes(user?.email?.toLowerCase());
  useEffect(()=>onAuthStateChanged(auth,u=>{setUser(u);if(u&&typeof window!=="undefined")window.sessionStorage.removeItem("zaraChatLoginRedirectStarted")}),[]);
  useEffect(()=>{if(user!==null)return;if(typeof window==="undefined")return;const started=window.sessionStorage.getItem("zaraChatLoginRedirectStarted");if(started)return;window.sessionStorage.setItem("zaraChatLoginRedirectStarted","1");setLoginStarting(true);startGoogleLogin().catch(e=>{window.sessionStorage.removeItem("zaraChatLoginRedirectStarted");setLoginStarting(false);setError("Google Login nahi khula: "+(e?.message||"Kripya dobara koshish karein."));});},[user]);
