@@ -47,7 +47,8 @@ export default function NotificationsPage(){
    if(!token)throw new Error("Notification token nahi mila.");
    const tokenId=encodeURIComponent(token).replaceAll("%","_");
    await setDoc(doc(db,"pushTokens",tokenId),{uid:user.uid,token,updatedAt:serverTimestamp()},{merge:true});
-   setPushEnabled(true);\n   setPushStatus("मोबाइल नोटिफिकेशन चालू हो गया है।");
+   setPushEnabled(true);
+   setPushStatus("मोबाइल नोटिफिकेशन चालू हो गया है।");
   }catch(e){setError("Push notification चालू नहीं हुई: "+e.message)}
   finally{setPushBusy(false)}
  }
