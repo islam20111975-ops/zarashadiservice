@@ -28,7 +28,7 @@ export default function Contact(){
   }
   return <main><section className="cardPage siteState"><div className="siteStateIcon">📩</div><h1>Contact Zara Nikah Service</h1><div className="pageContent">
     <p>Profile, registration, payment, biodata access ya mobile-number access se related help ke liye neeche form bharein.</p>
-    <h2>Email support</h2><p><strong>Email:</strong> <a href="mailto:ngogrant454@gmail.com">ngogrant454@gmail.com</a></p>
+    <h2>💬 Website Private Chat</h2><p>Ab aap website ke andar Admin ko private message bhej sakte hain. Admin ka jawab bhi isi chat mein milega.</p><p><Link className="primaryAction" href="/chat">💬 Private Chat kholein →</Link></p><h2>Email support</h2><p><strong>Email:</strong> <a href="mailto:ngogrant454@gmail.com">ngogrant454@gmail.com</a></p>
     <h2>Help request form</h2>
     <form onSubmit={submitHelp} style={{display:"grid",gap:14,marginTop:16}}>
       <label style={{display:"grid",gap:6}}>Aapka naam
