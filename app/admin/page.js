@@ -85,7 +85,7 @@ export default function Admin(){
     catch(e){setError("Notification save nahi hui: "+e.message)}
   }
   async function notifyNewProfile(profileId,ownerUid){
-    const recipients=users.filter(x=>(x.uid||x.id)&&((x.uid||x.id)!==ownerUid)).slice(0,400);
+    const recipients=users.filter(x=>(x.uid||x.id)&&((x.uid||x.id)!==ownerUid));
     for(const x of recipients){
       try{await addDoc(collection(db,"notifications"),{uid:x.uid||x.id,title:"नया रिश्ता आया है",message:"Zara Nikah Service par naya profile "+profileId+" add hua hai. Website par Male/Female Rishte dekhein.",type:"new_profile",profileId,read:false,createdAt:serverTimestamp()});}
       catch(e){setError("New profile notification nahi bheji gayi: "+e.message);break;}
@@ -240,7 +240,9 @@ export default function Admin(){
         const liveProfile={id:profileId,name:x.name||"",age:Number(x.age)||"",height:x.height||"",city:x.city||"",state:x.state||"",language:x.language||"",religion:x.religion||"Muslim",community:x.community||"",education:x.education||"",occupation:x.occupation||"",maritalStatus:x.maritalStatus||"",about:x.about||"",gender:x.gender||"female",photo:x.photo||"",photos:x.photo?[x.photo]:[],image:x.photo||"",status:"active",verified:true,ownerUid:x.uid||"",ownerEmail:x.email||"",registrationFee:299,createdAt:serverTimestamp(),approvedAt:serverTimestamp(),expiresAt:new Date(now+90*24*60*60*1000)};
         await setDoc(doc(db,"profiles",profileId),liveProfile);
         await updateDoc(subRef,{status:"approved",visibility:"public",profileId,approvedAt:serverTimestamp(),expiresAt:new Date(now+90*24*60*60*1000),approvedBy:user.email,publicProfile:true});
-        setError("✓ Profile "+profileId+" live kar di gayi.");
+        await notifyCustomer(x.uid,"आपका रिश्ता अप्रूव हो गया","Aapka profile "+profileId+" public website par approve ho gaya hai.","profile_approved");
+        await notifyNewProfile(profileId,x.uid);
+        setError("✓ Profile "+profileId+" live kar di gayi aur registered users ko notification bhej di gayi.");
       }
     }catch(e){setError("Profile approve nahi hui: "+e.message)}
     finally{setProcessingAccessId("")}
