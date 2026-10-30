@@ -97,23 +97,34 @@ export default function Admin(){
     }
   }
   async function notifyCustomer(uid,title,message,type="service"){
-    if(!uid)return;
+    if(!uid)return {saved:false,push:{ok:false,sent:0,failureCount:0,error:"User UID missing"}};
     try{
       await addDoc(collection(db,"notifications"),{uid,title,message,type,read:false,createdAt:serverTimestamp()});
-      await sendPushToUsers([uid],title,message);
-    }catch(e){setError("Notification save nahi hui: "+e.message)}
+      const push=await sendPushToUsers([uid],title,message);
+      return {saved:true,push};
+    }catch(e){
+      return {saved:false,push:{ok:false,sent:0,failureCount:1,error:e.message||"Notification save failed"}};
+    }
   }
   async function notifyNewProfile(profileId,ownerUid){
-    const recipients=users.filter(x=>(x.uid||x.id)&&((x.uid||x.id)!==ownerUid));
-    const recipientUids=[];
-    for(const x of recipients){
-      try{
-        const uid=x.uid||x.id;
-        await addDoc(collection(db,"notifications"),{uid,title:"नया रिश्ता आया है",message:"Zara Nikah Service par naya profile "+profileId+" add hua hai. Website par Male/Female Rishte dekhein.",type:"new_profile",profileId,read:false,createdAt:serverTimestamp()});
-        recipientUids.push(uid);
-      }catch(e){setError("New profile notification nahi bheji gayi: "+e.message);break;}
+    const message="Zara Nikah Service par naya profile "+profileId+" add hua hai. Website par Male/Female Rishte dekhein.";
+    const recipientUids=[...new Set(users.map(x=>x.uid||x.id).filter(uid=>uid&&uid!==ownerUid))];
+    const savedUids=[];
+    let saveFailures=0;
+    for(let i=0;i<recipientUids.length;i+=400){
+      const batch=recipientUids.slice(i,i+400);
+      const results=await Promise.allSettled(batch.map(uid=>addDoc(collection(db,"notifications"),{
+        uid,title:"नया रिश्ता आया है",message,type:"new_profile",profileId,read:false,createdAt:serverTimestamp()
+      })));
+      results.forEach((result,index)=>{
+        if(result.status==="fulfilled")savedUids.push(batch[index]);
+        else saveFailures++;
+      });
     }
-    if(recipientUids.length)await sendPushToUsers(recipientUids,"नया रिश्ता आया है","Zara Nikah Service par naya profile "+profileId+" add hua hai. Website par Male/Female Rishte dekhein.");
+    const push=savedUids.length
+      ?await sendPushToUsers(savedUids,"नया रिश्ता आया है",message)
+      :{ok:false,sent:0,failureCount:0,error:"Kisi recipient ki in-app notification save nahi hui."};
+    return {recipientCount:recipientUids.length,savedCount:savedUids.length,saveFailures,push};
   }
   async function sendAdminReply(e){
     e.preventDefault();const message=chatReply.trim();if(!message||!selectedChatId||chatSending)return;
@@ -258,7 +269,9 @@ export default function Admin(){
           lastRecharge:amount
         },{merge:true});
       });
-      await notifyCustomer(x.uid,"पेमेंट अप्रूव हो गया","₹"+amount+" Wallet Recharge approve ho gaya hai. Aapka wallet update kar diya gaya hai.","payment_approved");
+      const notice=await notifyCustomer(x.uid,"पेमेंट अप्रूव हो गया","₹"+amount+" Wallet Recharge approve ho gaya hai. Aapka wallet update kar diya gaya hai.","payment_approved");
+      const push=notice.push||{};
+      setError("✓ ₹"+amount+" Wallet recharge approve ho gaya. User in-app notification: "+(notice.saved?"saved":"failed")+" • Mobile push sent: "+(push.sent||0)+", failed: "+(push.failureCount||0)+(push.error?" • "+push.error:""));
     }catch(e){setError("Recharge approve nahi hua: "+e.message)}
   }
   async function rejectRecharge(x){if(!confirm("Recharge reject karein?"))return;try{await runTransaction(db,async t=>{const ref=doc(db,"walletRechargeRequests",x.id);const s=await t.get(ref);if(!s.exists()||s.data().status!=="pending")throw new Error("Request already process ho chuki hai.");t.update(ref,{status:"rejected",rejectedAt:serverTimestamp()});if(s.data().lockId)t.delete(doc(db,"pendingPaymentLocks",s.data().lockId));});}catch(e){setError("Recharge reject nahi hua: "+e.message)}}
@@ -274,17 +287,20 @@ export default function Admin(){
       const now=Date.now();
       if(x.visibility==="admin"){
         await updateDoc(subRef,{status:"approved",visibility:"admin",approvedAt:serverTimestamp(),expiresAt:new Date(now+90*24*60*60*1000),approvedBy:user.email,publicProfile:false});
-        setError("✓ Profile approve ho gayi. Yeh sirf Admin ko dikhegi, public website par nahi.");
-        await notifyCustomer(x.uid,"आपका रिश्ता अप्रूव हो गया","Aapka profile Admin-only mode mein approve ho gaya hai.","profile_approved");
+        const ownerNotice=await notifyCustomer(x.uid,"आपका रिश्ता अप्रूव हो गया","Aapka profile Admin-only mode mein approve ho gaya hai.","profile_approved");
+        const push=ownerNotice.push||{};
+        setError("✓ Profile Admin-only approve ho gayi. Owner in-app: "+(ownerNotice.saved?"saved":"failed")+" • Mobile push sent: "+(push.sent||0)+", failed: "+(push.failureCount||0)+(push.error?" • "+push.error:""));
       }else{
         const nextNum=profiles.reduce((m,p)=>Math.max(m,Number(String(p.id).replace(/\\D/g,""))||0),0)+1;
         const profileId=String(nextNum).padStart(3,"0");
         const liveProfile={id:profileId,name:x.name||"",age:Number(x.age)||"",height:x.height||"",city:x.city||"",state:x.state||"",language:x.language||"",religion:x.religion||"Muslim",community:x.community||"",education:x.education||"",occupation:x.occupation||"",maritalStatus:x.maritalStatus||"",about:x.about||"",gender:x.gender||"female",photo:x.photo||"",photos:x.photo?[x.photo]:[],image:x.photo||"",status:"active",verified:true,ownerUid:x.uid||"",ownerEmail:x.email||"",registrationFee:299,createdAt:serverTimestamp(),approvedAt:serverTimestamp(),expiresAt:new Date(now+90*24*60*60*1000)};
         await setDoc(doc(db,"profiles",profileId),liveProfile);
         await updateDoc(subRef,{status:"approved",visibility:"public",profileId,approvedAt:serverTimestamp(),expiresAt:new Date(now+90*24*60*60*1000),approvedBy:user.email,publicProfile:true});
-        await notifyCustomer(x.uid,"आपका रिश्ता अप्रूव हो गया","Aapka profile "+profileId+" public website par approve ho gaya hai.","profile_approved");
-        await notifyNewProfile(profileId,x.uid);
-        setError("✓ Profile "+profileId+" live kar di gayi aur registered users ko notification bhej di gayi.");
+        const ownerNotice=await notifyCustomer(x.uid,"आपका रिश्ता अप्रूव हो गया","Aapka profile "+profileId+" public website par approve ho gaya hai.","profile_approved");
+        const audienceNotice=await notifyNewProfile(profileId,x.uid);
+        const ownerPush=ownerNotice.push||{};
+        const audiencePush=audienceNotice.push||{};
+        setError("✓ Profile "+profileId+" live ho gayi. Owner in-app: "+(ownerNotice.saved?"saved":"failed")+", push: "+(ownerPush.sent||0)+" sent. Other registered users: "+audienceNotice.savedCount+"/"+audienceNotice.recipientCount+" in-app saved; mobile push "+(audiencePush.sent||0)+" sent, "+(audiencePush.failureCount||0)+" failed; no push token/device: "+Math.max(0,audienceNotice.savedCount-(audiencePush.sent||0)-(audiencePush.failureCount||0))+".");
       }
     }catch(e){setError("Profile approve nahi hui: "+e.message)}
     finally{setProcessingAccessId("")}
@@ -382,8 +398,13 @@ export default function Admin(){
         },{merge:true});
       });
       const finalReq=await getDoc(reqRef);
-      if(finalReq.exists()&&finalReq.data().status==="approved")await notifyCustomer(x.uid,"पेमेंट अप्रूव हो गया","Profile "+x.profileId+" ka "+(x.type==="biodata"?"₹99 Biodata":"₹299 Mobile Number")+" access approve ho gaya hai.","payment_approved");
-      setError("✓ Request process ho gayi. Status update check karein; agar Pending rahe to page refresh karke dekhein.");
+      if(finalReq.exists()&&finalReq.data().status==="approved"){
+        const notice=await notifyCustomer(x.uid,"पेमेंट अप्रूव हो गया","Profile "+x.profileId+" ka "+(x.type==="biodata"?"Biodata":"Mobile Number")+" access approve ho gaya hai.","payment_approved");
+        const push=notice.push||{};
+        setError("✓ Payment aur access approve ho gaya. User in-app notification: "+(notice.saved?"saved":"failed")+" • Mobile push sent: "+(push.sent||0)+", failed: "+(push.failureCount||0)+(push.error?" • "+push.error:""));
+      }else{
+        setError("Request process hui, lekin status approved nahi mila. Refresh karke check karein.");
+      }
     }catch(e){setError("✕ Approve button click hua, lekin approval fail hua: "+e.message)}
     finally{setProcessingAccessId("");}
   }
