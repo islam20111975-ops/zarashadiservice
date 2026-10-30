@@ -13,7 +13,9 @@ export default function NotificationsPage(){
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
  useEffect(()=>{
-  if(!user || typeof window==="undefined" || !("Notification" in window) || Notification.permission!=="granted" || !("serviceWorker" in navigator))return;
+  if(!user || typeof window==="undefined" || !("Notification" in window) || !("serviceWorker" in navigator))return;
+  if(Notification.permission!=="granted"){setPushEnabled(false);setPushStatus("");return;}
+  setPushStatus("अनुमति पहले से मिली है, मोबाइल कनेक्शन जाँचा जा रहा है...");
   let cancelled=false;
   (async()=>{
    try{
@@ -26,8 +28,8 @@ export default function NotificationsPage(){
     if(!token || cancelled)return;
     const tokenId=encodeURIComponent(token).replaceAll("%","_");
     await setDoc(doc(db,"pushTokens",tokenId),{uid:user.uid,token,updatedAt:serverTimestamp()},{merge:true});
-    if(!cancelled){setPushEnabled(true);setPushStatus("मोबाइल नोटिफिकेशन पहले से चालू है।");}
-   }catch(e){console.warn("Push status check failed:",e);}
+    if(!cancelled){setPushEnabled(true);setPushStatus("मोबाइल नोटिफिकेशन की अनुमति और कनेक्शन चालू है।");}
+   }catch(e){console.warn("Push status check failed:",e);if(!cancelled){setPushEnabled(false);setPushStatus("अनुमति मिली है, लेकिन मोबाइल कनेक्शन नहीं जुड़ा: "+(e?.message||"कृपया दोबारा जाँचें"));}}
   })();
   return ()=>{cancelled=true;};
  },[user]);
@@ -57,6 +59,6 @@ export default function NotificationsPage(){
  if(user===undefined)return <main><section className="cardPage">Loading...</section></main>;
  if(!user)return <main><section className="cardPage"><h1>🔔 Notifications</h1><p>Pehle Google Login karein.</p><button className="primaryAction" onClick={()=>router.push("/")}>Home</button></section></main>;
  return <main><section className="cardPage" style={{maxWidth:760,textAlign:"left",padding:20}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}><div><span className="eyebrow">ZARA NIKAH SERVICE</span><h1>🔔 आपकी सूचनाएँ</h1></div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{items.some(x=>!x.read)&&<button className="primaryAction" style={{width:"auto",margin:0}} onClick={markAllRead}>सभी पढ़ लिया</button>}<button className="backAction" style={{width:"auto",margin:0}} onClick={()=>router.push("/")}>← Home</button></div></div>
- <div style={{marginTop:14,padding:14,border:"1px solid #e8dff0",borderRadius:14,background:"#faf7ff"}}><b>📲 मोबाइल पर नई सूचना पाएँ</b><p style={{margin:"6px 0 10px"}}>नई प्रोफाइल या एडमिन के जवाब की सूचना फोन पर पाने के लिए एक बार अनुमति दें।</p><button className="primaryAction" style={{width:"auto",margin:0}} disabled={pushBusy} onClick={enablePush}>{pushBusy?"जाँच हो रही है...":pushEnabled?"🔔 नोटिफिकेशन चालू है — दोबारा जाँचें":"🔔 मोबाइल नोटिफिकेशन चालू करें"}</button>{pushStatus&&<p style={{marginBottom:0}}>{pushStatus}</p>}</div>
+ <div style={{marginTop:14,padding:14,border:"1px solid #e8dff0",borderRadius:14,background:"#faf7ff"}}><b>📲 मोबाइल पर नई सूचना पाएँ</b><p style={{margin:"6px 0 10px"}}>नई प्रोफाइल या एडमिन के जवाब की सूचना फोन पर पाने के लिए एक बार अनुमति दें।</p><button className="primaryAction" style={{width:"auto",margin:0}} disabled={pushBusy} onClick={enablePush}>{pushBusy?"जाँच हो रही है...":pushEnabled?"🔔 नोटिफिकेशन चालू है — दोबारा जाँचें":typeof window!=="undefined" && "Notification" in window && Notification.permission==="granted"?"🔄 अनुमति मिल चुकी है — कनेक्शन जाँचें":"🔔 मोबाइल नोटिफिकेशन चालू करें"}</button>{pushStatus&&<p style={{marginBottom:0}}>{pushStatus}</p>}</div>
  {items.length?items.map(x=><article key={x.id} style={{padding:14,marginTop:12,borderRadius:14,border:"1px solid #e8dff0",background:x.read?"#fff":"#f5f0ff"}}><div style={{display:"flex",justifyContent:"space-between",gap:10}}><b>{x.title||"Zara Nikah Service"}</b>{!x.read&&<span style={{fontSize:11,color:"#7c3aed",fontWeight:800}}>NEW</span>}</div><p style={{margin:"8px 0",whiteSpace:"pre-wrap"}}>{x.message||""}</p><small style={{color:"#76687e"}}>{x.createdAt?.toDate?.()?.toLocaleString?.("en-IN")||"Just now"}</small>{!x.read&&<button className="backAction" style={{marginTop:8}} onClick={()=>markRead(x)}>पढ़ लिया</button>}</article>):<p>अभी कोई नई सूचना नहीं है।</p>}{error&&<div className="errorBox">{error}</div>}</section></main>;
 }
