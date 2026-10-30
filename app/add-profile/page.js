@@ -1,0 +1,38 @@
+"use client";
+import {useEffect,useState} from "react";
+import {useRouter} from "next/navigation";
+import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
+import {collection,doc,getDoc,onSnapshot,addDoc,serverTimestamp} from "firebase/firestore";
+import {auth,db} from "../../lib/firebase";
+
+export default function AddProfile(){
+ const router=useRouter();
+ const [user,setUser]=useState(null),[profile,setProfile]=useState({gender:"female",name:"",age:"",height:"",city:"",state:"",language:"",religion:"Muslim",community:"",education:"",occupation:"",maritalStatus:"",about:"",phone:""});
+ const [photo,setPhoto]=useState(""),[payment,setPayment]=useState({upiId:"",qrUrl:""}),[utr,setUtr]=useState("");
+ const [stage,setStage]=useState("form"),[busy,setBusy]=useState(false),[msg,setMsg]=useState("");
+ useEffect(()=>onAuthStateChanged(auth,setUser),[]);
+ useEffect(()=>{getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists())setPayment({upiId:s.data().upiId||"",qrUrl:s.data().qrUrl||""})}).catch(()=>{});},[]);
+ function set(k,v){setProfile(p=>({...p,[k]:v}))}
+ async function login(){try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setMsg(e.message||"Login nahi ho saka")}}
+ function readPhoto(file){if(!file)return;const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{const c=document.createElement("canvas"),scale=Math.min(1,700/Math.max(img.width,img.height));c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext("2d").drawImage(img,0,0,c.width,c.height);const data=c.toDataURL("image/jpeg",.72);if(data.length>850000){setMsg("Photo chhoti karein (1 MB se kam).");}else setPhoto(data);URL.revokeObjectURL(url)};img.src=url}
+ async function submit(e){e.preventDefault();if(!user){setMsg("Pehle Google Login karein.");return}if(!photo){setMsg("Profile photo zaroori hai.");return}if(Number(profile.age)<18){setMsg("Sirf 18 saal ya usse zyada umar ke liye.");return}setBusy(true);setMsg("");try{const ref=await addDoc(collection(db,"profileSubmissions"),{uid:user.uid,email:user.email||"",...profile,age:Number(profile.age),photo,photos:[photo],image:photo,utr:utr.trim(),amount:299,status:"pending",paymentStatus:"pending",createdAt:serverTimestamp(),expiresAt:null});setMsg("Profile aur UTR Admin ko bhej diye gaye hain. Admin payment verify karke approve karega. Request ID: "+ref.id);setStage("done")}catch(e){setMsg("Submit nahi hua: "+(e.message||"Dobara koshish karein"))}finally{setBusy(false)}}
+ return <main style={{maxWidth:820,margin:"24px auto",padding:16,color:"#241b35"}}><section style={{background:"white",padding:22,borderRadius:18,boxShadow:"0 8px 30px #0001"}}><button onClick={()=>router.push("/")} style={{padding:"9px 14px",borderRadius:9}}>← Home</button><h1>➕ Apna Rishta Jodein</h1><p>Profile listing fee ₹299 • 3 months. Payment Admin approve karne ke baad hi profile live hogi.</p>{!user&&<button onClick={login} style={{padding:12,background:"#6b21a8",color:"white",border:0,borderRadius:10}}>Google Login / Register</button>}
+ {stage==="done"?<div style={{padding:16,background:"#ecfdf3",borderRadius:12,marginTop:16}}><h3>Request submit ho gayi</h3><p>{msg}</p><p>Admin payment verify karke approve karega. Approval ke baad profile Male/Female list mein photo aur ID ke saath dikhegi.</p></div>:<form onSubmit={submit} style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:12,marginTop:18}}>
+ <label>Profile kis ke liye?<select required value={profile.gender} onChange={e=>set("gender",e.target.value)} style={input}><option value="male">Male Rishte</option><option value="female">Female Rishte</option></select></label>
+ <label>Poora naam *<input required value={profile.name} onChange={e=>set("name",e.target.value)} style={input}/></label>
+ <label>Umar (18+) *<input required type="number" min="18" max="100" value={profile.age} onChange={e=>set("age",e.target.value)} style={input}/></label>
+ <label>Height<input value={profile.height} onChange={e=>set("height",e.target.value)} style={input} placeholder="5 ft 4 in"/></label>
+ <label>City *<input required value={profile.city} onChange={e=>set("city",e.target.value)} style={input}/></label>
+ <label>State<input value={profile.state} onChange={e=>set("state",e.target.value)} style={input}/></label>
+ <label>Language<input value={profile.language} onChange={e=>set("language",e.target.value)} style={input}/></label>
+ <label>Community / Biradari<input value={profile.community} onChange={e=>set("community",e.target.value)} style={input}/></label>
+ <label>Education<input value={profile.education} onChange={e=>set("education",e.target.value)} style={input}/></label>
+ <label>Occupation<input value={profile.occupation} onChange={e=>set("occupation",e.target.value)} style={input}/></label>
+ <label>Marital status<select value={profile.maritalStatus} onChange={e=>set("maritalStatus",e.target.value)} style={input}><option value="">Select</option><option>Never Married</option><option>Divorced</option><option>Widowed</option></select></label>
+ <label>Mobile number (private)<input value={profile.phone} onChange={e=>set("phone",e.target.value)} style={input}/></label>
+ <label style={{gridColumn:"1/-1"}}>Apne baare mein<textarea value={profile.about} onChange={e=>set("about",e.target.value)} style={{...input,minHeight:90}}/></label>
+ <label style={{gridColumn:"1/-1"}}>Profile photo *<input required type="file" accept="image/*" onChange={e=>readPhoto(e.target.files?.[0])} style={input}/>{photo&&<img src={photo} alt="Preview" style={{width:120,height:140,objectFit:"cover",borderRadius:12,marginTop:8}}/>}</label>
+ <div style={{gridColumn:"1/-1",padding:14,border:"1px solid #ddd",borderRadius:12}}><h3>₹299 Payment (3 months)</h3>{payment.qrUrl&&<img src={payment.qrUrl} alt="Payment QR" style={{width:190,maxWidth:"100%",display:"block",marginBottom:10}}/>}{payment.upiId&&<p>UPI ID: <b>{payment.upiId}</b></p>}<p>₹299 pay karein, phir transaction ka UTR number yahan daalein. Admin verify karega.</p><label>Payment UTR *<input required value={utr} onChange={e=>setUtr(e.target.value.trim())} minLength={6} maxLength={40} style={input}/></label></div>
+ <button disabled={busy||!user} type="submit" style={{gridColumn:"1/-1",padding:14,background:"#087443",color:"white",border:0,borderRadius:10,fontWeight:700}}>{busy?"Submitting...":"Submit Profile + UTR"}</button></form>}{msg&&stage!=="done"&&<p style={{padding:12,background:"#fff7ed",borderRadius:10,overflowWrap:"anywhere"}}>{msg}</p>}</section></main>
+}
+const input={display:"block",width:"100%",padding:11,marginTop:5,border:"1px solid #d1d5db",borderRadius:9,boxSizing:"border-box"};
