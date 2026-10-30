@@ -24,7 +24,11 @@ messaging.onBackgroundMessage((payload) => {
     icon: "/api/pwa-icon?size=192",
     badge: "/api/pwa-icon?size=96",
     data: { url: data.url || "/notifications" },
-    tag: "zara-nikah-update"
+    tag: "zara-nikah-update",
+    renotify: true,
+    requireInteraction: true,
+    silent: false,
+    vibrate: [300, 150, 300, 150, 500]
   };
   return self.registration.showNotification(title, options);
 });
