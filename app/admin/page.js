@@ -14,7 +14,7 @@ export default function Admin(){
   const [profiles,setProfiles]=useState([]),[users,setUsers]=useState([]),[presence,setPresence]=useState([]);
   const [posts,setPosts]=useState([]),[postText,setPostText]=useState("");
   const [postImageFile,setPostImageFile]=useState(null),[postImagePreview,setPostImagePreview]=useState("");
-  const [recharges,setRecharges]=useState([]),[requests,setRequests]=useState([]),[transactions,setTransactions]=useState([]);
+  const [recharges,setRecharges]=useState([]),[requests,setRequests]=useState([]),[transactions,setTransactions]=useState([]),[profileSubmissions,setProfileSubmissions]=useState([]);
   const [social,setSocial]=useState({whatsapp:"",facebook:"",instagram:""}),[upi,setUpi]=useState(""),[qrFile,setQrFile]=useState(null),[qrPreview,setQrPreview]=useState("");
   const [wallFile,setWallFile]=useState(null),[wallPreview,setWallPreview]=useState("");
   const [logoFile,setLogoFile]=useState(null),[logoPreview,setLogoPreview]=useState("");
@@ -61,7 +61,7 @@ export default function Admin(){
       const profileIds=rows.filter(p=>p.status!=="deleted"&&((Array.isArray(p.photos)&&p.photos[0])||p.photo)).sort((x,y)=>x.id.localeCompare(y.id)).map(p=>p.id);
       setDoc(doc(db,"settings","homeSlider"),{profileIds,updatedAt:serverTimestamp()},{merge:true}).catch(()=>{});
     });watch("users",setUsers);
-    watch("walletRechargeRequests",setRecharges,true);watch("paidAccessRequests",setRequests,true);watch("walletTransactions",setTransactions,true);watch("userPresence",setPresence);
+    watch("walletRechargeRequests",setRecharges,true);watch("paidAccessRequests",setRequests,true);watch("profileSubmissions",setProfileSubmissions,true);watch("walletTransactions",setTransactions,true);watch("userPresence",setPresence);
     getDoc(doc(db,"settings","social")).then(s=>s.exists()&&setSocial({...{whatsapp:"",facebook:"",instagram:""},...s.data()})).catch(()=>{});
     getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists()){setUpi(s.data().upiId||"");setQrPreview(s.data().qrUrl||"")}}).catch(e=>setError("Payment settings load error: "+e.message));
     getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallPreview(s.data().wallpaper||"")}).catch(e=>setError("Appearance settings load error: "+e.message));
@@ -175,6 +175,29 @@ export default function Admin(){
     }catch(e){setError("Recharge approve nahi hua: "+e.message)}
   }
   async function rejectRecharge(x){if(!confirm("Recharge reject karein?"))return;try{await runTransaction(db,async t=>{const ref=doc(db,"walletRechargeRequests",x.id);const s=await t.get(ref);if(!s.exists()||s.data().status!=="pending")throw new Error("Request already process ho chuki hai.");t.update(ref,{status:"rejected",rejectedAt:serverTimestamp()});if(s.data().lockId)t.delete(doc(db,"pendingPaymentLocks",s.data().lockId));});}catch(e){setError("Recharge reject nahi hua: "+e.message)}}
+
+  async function approveProfileSubmission(x){
+    if(x.status!=="pending")return;
+    setProcessingAccessId(x.id);
+    try{
+      if(!x.utr||Number(x.amount)!==299)throw new Error("₹299 payment UTR missing hai.");
+      const subRef=doc(db,"profileSubmissions",x.id);
+      const subSnap=await getDoc(subRef);
+      if(!subSnap.exists()||subSnap.data().status!=="pending")throw new Error("Request already process ho chuki hai.");
+      const nextNum=profiles.reduce((m,p)=>Math.max(m,Number(String(p.id).replace(/\\D/g,""))||0),0)+1;
+      const profileId=String(nextNum).padStart(3,"0");
+      const now=Date.now();
+      const liveProfile={id:profileId,name:x.name||"",age:Number(x.age)||"",height:x.height||"",city:x.city||"",state:x.state||"",language:x.language||"",religion:x.religion||"Muslim",community:x.community||"",education:x.education||"",occupation:x.occupation||"",maritalStatus:x.maritalStatus||"",about:x.about||"",gender:x.gender||"female",photo:x.photo||"",photos:x.photo?[x.photo]:[],image:x.photo||"",status:"active",verified:true,ownerUid:x.uid||"",ownerEmail:x.email||"",registrationFee:299,createdAt:serverTimestamp(),approvedAt:serverTimestamp(),expiresAt:new Date(now+90*24*60*60*1000)};
+      await setDoc(doc(db,"profiles",profileId),liveProfile);
+      await updateDoc(subRef,{status:"approved",profileId,approvedAt:serverTimestamp(),expiresAt:new Date(now+90*24*60*60*1000),approvedBy:user.email});
+      setError("✓ Profile "+profileId+" live kar di gayi.");
+    }catch(e){setError("Profile approve nahi hui: "+e.message)}
+    finally{setProcessingAccessId("")}
+  }
+  async function rejectProfileSubmission(x){
+    try{await updateDoc(doc(db,"profileSubmissions",x.id),{status:"rejected",reviewedAt:serverTimestamp(),reviewedBy:user.email});setError("Profile submission reject kar di gayi.");}
+    catch(e){setError("Reject nahi hua: "+e.message)}
+  }
 
   async function approveAccess(x){
     if(processingAccessId)return;
@@ -537,7 +560,7 @@ export default function Admin(){
   const pendingBiodataCount=requests.filter(x=>x.type==="biodata"&&x.status==="pending"&&Number(x.amount)===100).length;
   const pendingMobileCount=requests.filter(x=>x.type==="mobile"&&x.status==="pending"&&Number(x.amount)===500).length;
   const pendingRechargeCount=recharges.filter(x=>x.status==="pending").length;
-  const nav=[["dashboard","🏠 Dashboard"],["users","👥 All Users"],["biodata","📋 Biodata"],["access100",`₹99 Biodata Payments${pendingBiodataCount?` • ${pendingBiodataCount} PENDING`:""}`],["access500",`₹299 Mobile Payments${pendingMobileCount?` • ${pendingMobileCount} PENDING`:""}`],["wallet",`💰 Wallet / Recharge${pendingRechargeCount?` • ${pendingRechargeCount} PENDING`:""}`],["transactions","🧾 Transactions"],["posts","📢 Admin Posts"],["settings","⚙️ Settings"]];
+  const nav=[["dashboard","🏠 Dashboard"],["users","👥 All Users"],["profileSubmissions",`➕ New Profiles${profileSubmissions.filter(x=>x.status==="pending").length?` • ${profileSubmissions.filter(x=>x.status==="pending").length} PENDING`:""}`],["biodata","📋 Biodata"],["access100",`₹99 Biodata Payments${pendingBiodataCount?` • ${pendingBiodataCount} PENDING`:""}`],["access500",`₹299 Mobile Payments${pendingMobileCount?` • ${pendingMobileCount} PENDING`:""}`],["wallet",`💰 Wallet / Recharge${pendingRechargeCount?` • ${pendingRechargeCount} PENDING`:""}`],["transactions","🧾 Transactions"],["posts","📢 Admin Posts"],["settings","⚙️ Settings"]];
 
   return <main><section className="admin dashboardPage">
     <div className="dashTop"><div><span className="eyebrow">ZARA NIKAH SERVICE</span><h1>Central Admin Board</h1><p>Users, biodata, payments, wallet aur access sab ek jagah.</p></div><button className="logout" onClick={logout}>🚪 Logout</button></div>
@@ -560,6 +583,8 @@ export default function Admin(){
     {tab==="wallet"&&<div className="adminList"><div className="listHead"><h3>💰 Wallet Recharge Requests</h3><span>{recharges.length}</span></div>{recharges.map(x=><div className="userAdminCard" key={x.id}><div><b>{x.name||"Name not set"}</b><small>📧 {x.email||"-"}</small><small>📱 {x.phone||"-"}</small><small>👤 UID: {x.uid}</small><small>💰 Recharge: ₹{x.amount}</small><small>🧾 UTR: {x.utr||"-"}</small><small>💳 Method: {(x.paymentMethod||"upi").toUpperCase()}</small><small>📌 Status: {x.status}</small><small>🔒 Lock: {x.lockId||"legacy request"}</small><small>🕒 {x.createdAt?.toDate?.()?.toLocaleString?.()||""}</small></div><div className="cardButtons">{x.status==="pending"&&<><button className="approve" onClick={()=>approveRecharge(x)}>✓ Approve & Credit ₹{x.amount}</button><button onClick={()=>rejectRecharge(x)}>✕ Reject</button></>}</div></div>)}</div>}
 
     {tab==="transactions"&&<div className="adminList"><div className="listHead"><h3>🧾 All Wallet / Payment Transactions</h3><span>{transactions.length}</span></div>{transactions.map(x=><div className="adminRow" key={x.id}><span><b>{x.type} • ₹{x.amount}</b><small>👤 UID: {x.uid||"-"}</small><small>📋 Profile ID: {x.profileId||"-"}</small><small>🧾 UTR / Transaction ID: {x.utr||"-"}</small><small>💳 Method: {(x.paymentMethod||"-").toUpperCase()} • Status: {(x.status||"-").toUpperCase()}</small><small>↔️ Direction: {x.direction||"-"} • Balance After: {x.balanceAfter==null?"-":"₹"+x.balanceAfter}</small><small>🗂️ Request ID: {x.requestId||"-"}</small><small>🕒 Date/Time: {x.createdAt?.toDate?.()?.toLocaleString?.("en-IN")||"-"}</small><div className="cardButtons" style={{marginTop:8}}>{["biodata_unlock","mobile_access"].includes(x.type)&&x.status!=="rejected"&&<button onClick={()=>rejectTransaction(x)}>✕ Reject / Block Access</button>}<button onClick={()=>deleteTransaction(x)} style={{color:"#b42318"}}>🗑️ Delete Full Record</button></div></span></div>)}</div>}
+
+    {tab==="profileSubmissions"&&<div className="adminList"><div className="listHead"><h3>➕ User Profile Submissions — ₹299 / 3 months</h3><span>{profileSubmissions.filter(x=>x.status==="pending").length} Pending</span></div>{profileSubmissions.slice().sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0)).map(x=><div className="userAdminCard" key={x.id} style={{marginBottom:12}}><div className="rowProfile">{x.photo?<img src={x.photo} alt="Profile photo"/>:<div className="rowPlaceholder">📷</div>}<div><b>{x.name||"New profile"} • {x.gender==="male"?"Male":"Female"}</b><small>Age: {x.age||"-"} • {x.city||"-"}, {x.state||""}</small><small>Education: {x.education||"-"} • Work: {x.occupation||"-"}</small><small>Email: {x.email||"-"} • UID: {x.uid||"-"}</small><small>UTR: {x.utr||"-"} • Fee: ₹{x.amount||299}</small><small>Status: {(x.status||"pending").toUpperCase()} • Submitted: {x.createdAt?.toDate?.()?.toLocaleString?.("en-IN")||"-"}</small><small>About: {x.about||"-"}</small></div></div><div className="cardButtons">{x.status==="pending"&&<><button className="approve" disabled={!!processingAccessId} onClick={()=>approveProfileSubmission(x)}>✓ Payment Verify & Approve</button><button onClick={()=>rejectProfileSubmission(x)}>✕ Reject</button></>}{x.status==="approved"&&<b>Live Profile ID: {x.profileId}</b>}</div></div>)}{!profileSubmissions.length&&<p>Abhi koi profile submission nahi aayi.</p>}</div>}
 
     {tab==="posts"&&<div className="adminList"><form className="adminBox" onSubmit={publishPost}><h3>📢 Website par nayi post likhein</h3><p>Text aur photo dono add kar sakte hain. Post Male/Female buttons ke neeche sabhi visitors ko dikhegi.</p><textarea className="adminInput pageEditor" rows="5" maxLength={5000} placeholder="Apni announcement ya update yahan likhein..." value={postText} onChange={e=>setPostText(e.target.value)}/><small>{postText.length}/5000 characters</small><label className="uploadBox" style={{display:"block",marginTop:12}}>🖼️ Post ki Photo / Image<input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f){setPostImageFile(f);setPostImagePreview(URL.createObjectURL(f))}}}/><small>JPG, PNG ya WebP. Image automatically compress hogi.</small></label>{postImagePreview&&<div className="uploadPreview"><img src={postImagePreview} alt="Post preview"/><button type="button" className="backAction" onClick={()=>{setPostImageFile(null);setPostImagePreview("")}}>❌ Image hataayein</button></div>}<button className="primaryAction" disabled={saving}>{saving?"Publishing...":"📢 Publish Post →"}</button></form><div className="listHead"><h3>Published Posts</h3><span>{posts.length}</span></div>{posts.map(p=><article className="userAdminCard" key={p.id}><div><b>📢 {p.createdAt?.toDate?.()?.toLocaleString?.("en-IN")||"Recent post"}</b>{p.image&&<img src={p.image} alt="Post image" style={{display:"block",width:"100%",maxWidth:520,maxHeight:360,objectFit:"contain",marginTop:10,borderRadius:12}}/>}<p style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{p.text}</p><small>By: {p.createdBy||"Admin"}</small></div><div className="cardButtons"><button onClick={()=>removePost(p)}>🗑️ Delete</button></div></article>)}</div>}
 
