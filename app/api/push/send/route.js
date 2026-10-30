@@ -33,7 +33,7 @@ export async function POST(request) {
     const uids = [...new Set((Array.isArray(body.uids) ? body.uids : []).filter(x => typeof x === "string" && x.length > 0))].slice(0, 500);
     const title = String(body.title || "Zara Nikah Service").slice(0, 100);
     const message = String(body.message || "Aapke liye nayi update hai.").slice(0, 240);
-    if (!uids.length) return NextResponse.json({ sent: 0, message: "No recipients" });
+    if (!uids.length) return NextResponse.json({ sent: 0, failureCount: 0, recipients: 0, registeredDevices: 0, message: "No recipients" });
 
     const db = getFirestore(app);
     const tokens = [];
@@ -46,15 +46,40 @@ export async function POST(request) {
     }
 
     let sent = 0;
+    let failureCount = 0;
+    const errors = [];
     for (let i = 0; i < tokens.length; i += 500) {
       const batch = tokens.slice(i, i + 500);
       const response = await getMessaging(app).sendEachForMulticast({
         tokens: batch,
-        data: { title, body: message, url: "/notifications" }
+        data: { title, body: message, url: "/notifications" },
+        webpush: {
+          headers: { TTL: "86400", Urgency: "high" },
+          notification: {
+            title,
+            body: message,
+            icon: "/api/pwa-icon?size=192",
+            badge: "/api/pwa-icon?size=96",
+            tag: "zara-nikah-update"
+          },
+          fcmOptions: { link: "https://zarashadiservice.vercel.app/notifications" }
+        }
       });
       sent += response.successCount;
+      failureCount += response.failureCount;
+      response.responses.forEach((item, index) => {
+        if (!item.success && errors.length < 5) {
+          errors.push({ code: item.error?.code || "unknown", message: item.error?.message || "Push failed" });
+        }
+      });
     }
-    return NextResponse.json({ sent, recipients: uids.length, registeredDevices: tokens.length });
+    return NextResponse.json({
+      sent,
+      failureCount,
+      recipients: uids.length,
+      registeredDevices: tokens.length,
+      errors
+    });
   } catch (error) {
     console.error("Push send failed:", error);
     return NextResponse.json({ error: error.message || "Push send failed" }, { status: 500 });
