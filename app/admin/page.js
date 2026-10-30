@@ -11,7 +11,8 @@ const ADMINS=["ngogrant454@gmail.com","islam20111975@gmail.com"];
 export default function Admin(){
   const router=useRouter();
   const [user,setUser]=useState(undefined),[tab,setTab]=useState("dashboard"),[error,setError]=useState("");
-  const [profiles,setProfiles]=useState([]),[users,setUsers]=useState([]),[presence,setPresence]=useState([]);\n  const [chats,setChats]=useState([]),[selectedChatId,setSelectedChatId]=useState(""),[chatMessages,setChatMessages]=useState([]),[chatReply,setChatReply]=useState(""),[chatSending,setChatSending]=useState(false);
+  const [profiles,setProfiles]=useState([]),[users,setUsers]=useState([]),[presence,setPresence]=useState([]);
+  const [chats,setChats]=useState([]),[selectedChatId,setSelectedChatId]=useState(""),[chatMessages,setChatMessages]=useState([]),[chatReply,setChatReply]=useState(""),[chatSending,setChatSending]=useState(false);
   const [posts,setPosts]=useState([]),[postText,setPostText]=useState("");
   const [postImageFile,setPostImageFile]=useState(null),[postImagePreview,setPostImagePreview]=useState("");
   const [recharges,setRecharges]=useState([]),[requests,setRequests]=useState([]),[transactions,setTransactions]=useState([]),[profileSubmissions,setProfileSubmissions]=useState([]);
@@ -217,7 +218,8 @@ export default function Admin(){
       const now=Date.now();
       if(x.visibility==="admin"){
         await updateDoc(subRef,{status:"approved",visibility:"admin",approvedAt:serverTimestamp(),expiresAt:new Date(now+90*24*60*60*1000),approvedBy:user.email,publicProfile:false});
-        setError("✓ Profile approve ho gayi. Yeh sirf Admin ko dikhegi, public website par nahi.");\n        await notifyCustomer(x.uid,"आपका रिश्ता अप्रूव हो गया","Aapka profile Admin-only mode mein approve ho gaya hai.","profile_approved");
+        setError("✓ Profile approve ho gayi. Yeh sirf Admin ko dikhegi, public website par nahi.");
+        await notifyCustomer(x.uid,"आपका रिश्ता अप्रूव हो गया","Aapka profile Admin-only mode mein approve ho gaya hai.","profile_approved");
       }else{
         const nextNum=profiles.reduce((m,p)=>Math.max(m,Number(String(p.id).replace(/\\D/g,""))||0),0)+1;
         const profileId=String(nextNum).padStart(3,"0");
@@ -321,7 +323,8 @@ export default function Admin(){
           createdAt:serverTimestamp()
         },{merge:true});
       });
-      const finalReq=await getDoc(reqRef);\n      if(finalReq.exists()&&finalReq.data().status==="approved")await notifyCustomer(x.uid,"पेमेंट अप्रूव हो गया","Profile "+x.profileId+" ka "+(x.type==="biodata"?"₹99 Biodata":"₹299 Mobile Number")+" access approve ho gaya hai.","payment_approved");\n      setError("✓ Request process ho gayi. Status update check karein; agar Pending rahe to page refresh karke dekhein.");
+      const finalReq=await getDoc(reqRef);\n      if(finalReq.exists()&&finalReq.data().status==="approved")await notifyCustomer(x.uid,"पेमेंट अप्रूव हो गया","Profile "+x.profileId+" ka "+(x.type==="biodata"?"₹99 Biodata":"₹299 Mobile Number")+" access approve ho gaya hai.","payment_approved");
+      setError("✓ Request process ho gayi. Status update check karein; agar Pending rahe to page refresh karke dekhein.");
     }catch(e){setError("✕ Approve button click hua, lekin approval fail hua: "+e.message)}
     finally{setProcessingAccessId("");}
   }
