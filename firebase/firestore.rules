@@ -65,6 +65,44 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Profile submissions contain private applicant data and are never public.
+    // Applicants may create only their own pending request; only admins can review it.
+    match /profileSubmissions/{submissionId} {
+      allow read: if isAdmin();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          "uid","email","gender","visibility","name","age","height","city","state",
+          "language","religion","community","education","occupation","maritalStatus",
+          "about","phone","photo","utr","amount","status","paymentStatus","createdAt","expiresAt"
+        ])
+        && request.resource.data.keys().hasAll([
+          "uid","email","gender","visibility","name","age","city","photo","utr",
+          "amount","status","paymentStatus","createdAt","expiresAt"
+        ])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.gender in ["male","female"]
+        && request.resource.data.visibility in ["public","admin"]
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.age is number
+        && request.resource.data.age >= 18
+        && request.resource.data.age <= 100
+        && request.resource.data.city is string
+        && request.resource.data.city.size() <= 120
+        && request.resource.data.photo is string
+        && request.resource.data.photo.size() <= 180000
+        && validUtr(request.resource.data.utr)
+        && request.resource.data.amount == 299
+        && request.resource.data.status == "pending"
+        && request.resource.data.paymentStatus == "pending"
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.expiresAt == null
+        && (!request.resource.data.keys().hasAny(["phone"]) || request.resource.data.phone is string);
+      allow update, delete: if isAdmin();
+    }
+
     // Public cards use this collection only for profile ID, gender, photos and status.
     // Never store private biodata or phone numbers in /profiles.
     match /profiles/{profileId} {
