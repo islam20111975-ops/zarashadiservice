@@ -324,7 +324,7 @@ export default function Account(){
           <div><small>Profiles Accessed</small><b>{profilesAccessed.length}</b></div>
         </div>
 
-        <p className="small">Wallet से ₹100 Biodata या ₹500 Mobile Access लिया जा सकता है.</p>
+        <p className="small">Wallet से ₹99 Biodata या ₹299 Mobile Number Access लिया जा सकता है.</p>
         <button type="button" className="primaryAction" onClick={()=>{window.location.href="/wallet-recharge"}}>💰 Wallet Recharge →</button>
       </div>
 
