@@ -330,6 +330,17 @@ service cloud.firestore {
       }
     }
 
+    // Push tokens are private to their owner; admins can read tokens for delivery.
+    match /pushTokens/{tokenId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create, update: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.token is string
+        && request.resource.data.token.size() > 20
+        && request.resource.data.token.size() <= 4096;
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+
     // Notifications are private to their recipient; only admins can create them.
     match /notifications/{notificationId} {
       allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
