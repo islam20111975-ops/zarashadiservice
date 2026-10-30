@@ -6,7 +6,7 @@ import {collection,doc,onSnapshot,addDoc,setDoc,updateDoc,serverTimestamp} from 
 import {auth,db} from "../../lib/firebase";
 const ADMINS=["ngogrant454@gmail.com","islam20111975@gmail.com"];
 export default function ChatPage(){
- const router=useRouter();const [user,setUser]=useState(undefined),[thread,setThread]=useState(null),[threads,setThreads]=useState([]),[selectedId,setSelectedId]=useState(""),[messages,setMessages]=useState([]),[value,setValue]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState(""),[loginStarting,setLoginStarting]=useState(false);
+ const router=useRouter();const [user,setUser]=useState(undefined),[thread,setThread]=useState(null),[threads,setThreads]=useState([]),[selectedId,setSelectedId]=useState(""),[messages,setMessages]=useState([]),[value,setValue]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState(""),[loginStarting,setLoginStarting]=useState(false),[faqs,setFaqs]=useState([]),[openFaqId,setOpenFaqId]=useState("");
  const admin=ADMINS.includes(user?.email?.toLowerCase());
  useEffect(()=>onAuthStateChanged(auth,u=>setUser(u)),[]);
  useEffect(()=>onSnapshot(collection(db,"faqItems"),s=>{const rows=s.docs.map(d=>({id:d.id,...d.data()}));rows.sort((a,b)=>(a.createdAt?.toMillis?.()||0)-(b.createdAt?.toMillis?.()||0));setFaqs(rows);},e=>setError("FAQ load nahi hue: "+e.message)),[]);
