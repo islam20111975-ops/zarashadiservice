@@ -5,11 +5,28 @@ import {GoogleAuthProvider,onAuthStateChanged,signInWithPopup} from "firebase/au
 import {collection,doc,onSnapshot,addDoc,setDoc,updateDoc,serverTimestamp} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 const ADMINS=["ngogrant454@gmail.com","islam20111975@gmail.com"];
+const DEFAULT_FAQS=[
+ {id:"default-01",question:"Zara Nikah Service par registration kaise karein?",answer:"Website par Apna Rishta Jodein par click karke form bharein. Sahi biodata, photo aur zaroori details submit karein. Registration/payment ki screen par dikhaye gaye nirdesh follow karein."},
+ {id:"default-02",question:"Biodata jodne ki fees kitni hai?",answer:"Biodata registration ki vartaman fees ₹99 hai. Payment karne se pehle website par dikhayi gayi amount zaroor check karein."},
+ {id:"default-03",question:"Mobile number dekhne ki fees kitni hai?",answer:"Kisi profile ka mobile number unlock karne ki vartaman fees ₹299 hai. Number tabhi milega jab us profile ke liye access uplabdh aur approved ho."},
+ {id:"default-04",question:"Biodata ke liye kaun-kaun si jankari deni hogi?",answer:"Naam, umar, shehar, taleem, kaam, family aur rishta preference jaisi sahi jankari dein. Form mein maangi gayi details hi bharein."},
+ {id:"default-05",question:"Kya photo lagana zaroori hai?",answer:"Photo lagana behtar hai, lekin form mein photo optional ho to bina photo bhi submit kar sakte hain. Kisi aur ki photo istemal na karein."},
+ {id:"default-06",question:"Kya mera biodata sabko dikhega ya sirf Admin ko?",answer:"Biodata form mein visibility ka option chun sakte hain: Public, ya Sirf Admin. Sirf Admin wala option chunne par profile public listing mein nahi dikhni chahiye."},
+ {id:"default-07",question:"Kya mera mobile number sabko dikhega?",answer:"Nahi. Apna mobile number public biodata mein share na karein. Number access website ke niyamon aur payment/approval ke mutabik diya jata hai."},
+ {id:"default-08",question:"Kya bina registration ke rishte dekh sakte hain?",answer:"Website par jo profiles public roop se dikhayi gayi hain, unhe dekh sakte hain. Private details aur mobile number par alag access niyam lagu hote hain."},
+ {id:"default-09",question:"Kya sabhi profiles verify hoti hain?",answer:"Admin jama ki gayi jankari aur dastavez ki jaanch kar sakta hai. Verification ka matlab shaadi, vyakti ki har jankari, ya kisi parivar ki guarantee nahi hai. Milne se pehle khud bhi jaanch karein."},
+ {id:"default-10",question:"Kya divorced aur widow/widower ke rishte bhi milte hain?",answer:"Haan, aise profiles bhi register kiye ja sakte hain. Uplabdh rishte shehar, umar aur pasand ke hisab se badalte hain."},
+ {id:"default-11",question:"Kya doosre shehar ya videsh ke rishte mil sakte hain?",answer:"Haan, doosre shehar aur overseas profiles bhi submit ho sakte hain. Lekin matching profile ki availability par nirbhar karti hai."},
+ {id:"default-12",question:"Mobile number milne ke baad baat kaise karein?",answer:"Access milne par profile mein diye gaye contact details ka istemal izzat aur zimmedari se karein. Bina razamandi baar-baar call ya message na karein."},
+ {id:"default-13",question:"Kya Zara Nikah Service shaadi ki guarantee deti hai?",answer:"Nahi. Zara Nikah Service rishta dhoondhne aur profiles tak pahunchne mein madad karti hai; shaadi tay hone ya hone ki guarantee nahi deti."},
+ {id:"default-14",question:"Kya registration ya access fee refund hoti hai?",answer:"Payment se pehle details aur amount check karein. Sirf payment fail hone ya ek hi payment do baar katne jaise technical mamle mein proof ke saath Admin se sampark karein. Refund automatic ya guaranteed nahi hai."},
+ {id:"default-15",question:"Admin se madad kaise lein? Kya call karna zaroori hai?",answer:"Nahi, call zaroori nahi hai. Private Chat page par Google Login karke apna sawal Admin ko bhejein. OTP, UPI PIN ya password kabhi share na karein."}
+];
 export default function ChatPage(){
  const router=useRouter();const [user,setUser]=useState(undefined),[thread,setThread]=useState(null),[threads,setThreads]=useState([]),[selectedId,setSelectedId]=useState(""),[messages,setMessages]=useState([]),[value,setValue]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState(""),[loginStarting,setLoginStarting]=useState(false),[faqs,setFaqs]=useState([]),[openFaqId,setOpenFaqId]=useState("");
  const admin=ADMINS.includes(user?.email?.toLowerCase());
  useEffect(()=>onAuthStateChanged(auth,u=>setUser(u)),[]);
- useEffect(()=>onSnapshot(collection(db,"faqItems"),s=>{const rows=s.docs.map(d=>({id:d.id,...d.data()}));rows.sort((a,b)=>(a.createdAt?.toMillis?.()||0)-(b.createdAt?.toMillis?.()||0));setFaqs(rows);},e=>setError("FAQ load nahi hue: "+e.message)),[]);
+ useEffect(()=>onSnapshot(collection(db,"faqItems"),s=>{const rows=s.docs.map(d=>({id:d.id,...d.data()}));rows.sort((a,b)=>(a.createdAt?.toMillis?.()||0)-(b.createdAt?.toMillis?.()||0));setFaqs([...DEFAULT_FAQS,...rows]);},e=>setError("FAQ load nahi hue: "+e.message)),[]);
  async function loginFromChat(){setError("");setLoginStarting(true);try{const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});await signInWithPopup(auth,provider);}catch(e){setError("Google Login nahi ho saka: "+(e?.message||"Kripya dobara koshish karein."));}finally{setLoginStarting(false);}}
  useEffect(()=>{if(!user||!admin)return;return onSnapshot(collection(db,"supportChats"),s=>{const rows=s.docs.map(d=>({id:d.id,...d.data()}));rows.sort((a,b)=>(b.updatedAt?.toMillis?.()||0)-(a.updatedAt?.toMillis?.()||0));setThreads(rows);setSelectedId(old=>old&&rows.some(x=>x.id===old)?old:(rows[0]?.id||""));},e=>setError("Chat list load nahi hui: "+e.message));},[user,admin]);
  const threadId=admin?selectedId:user?.uid;
@@ -30,6 +47,6 @@ function ChatConversation({messages,value,setValue,send,busy,error}){
 }
 
 function FaqPanel({faqs,openFaqId,setOpenFaqId}){
- if(!faqs.length)return null;
- return <div style={{marginTop:18,textAlign:"left",background:"#fff",border:"1px solid #eadff1",borderRadius:14,padding:14}}><h3 style={{margin:"0 0 10px"}}>❓ आम सवाल-जवाब (FAQ)</h3><p style={{margin:"0 0 10px",fontSize:13,color:"#76687e"}}>Apne sawal par click karein, jawab turant milega.</p>{faqs.map((f,i)=><div key={f.id} style={{borderTop:"1px solid #eee5f3",padding:"10px 0"}}><button type="button" onClick={()=>setOpenFaqId(openFaqId===f.id?"":f.id)} style={{width:"100%",border:0,background:"transparent",textAlign:"left",fontWeight:700,color:"#43245c",padding:0,cursor:"pointer"}}>{i+1}. {f.question} <span style={{float:"right"}}>{openFaqId===f.id?"−":"＋"}</span></button>{openFaqId===f.id&&<p style={{whiteSpace:"pre-wrap",margin:"9px 0 0",color:"#51445a",lineHeight:1.6}}>{f.answer}</p>}</div>)}</div>;
+ const visibleFaqs=faqs.length?faqs:DEFAULT_FAQS;
+ return <div style={{marginTop:18,textAlign:"left",background:"#fff",border:"1px solid #eadff1",borderRadius:14,padding:14}}><h3 style={{margin:"0 0 10px"}}>❓ आम सवाल-जवाब (FAQ)</h3><p style={{margin:"0 0 10px",fontSize:13,color:"#76687e"}}>Apne sawal par click karein, jawab turant milega.</p>{visibleFaqs.map((f,i)=><div key={f.id} style={{borderTop:"1px solid #eee5f3",padding:"10px 0"}}><button type="button" onClick={()=>setOpenFaqId(openFaqId===f.id?"":f.id)} style={{width:"100%",border:0,background:"transparent",textAlign:"left",fontWeight:700,color:"#43245c",padding:0,cursor:"pointer"}}>{i+1}. {f.question} <span style={{float:"right"}}>{openFaqId===f.id?"−":"＋"}</span></button>{openFaqId===f.id&&<p style={{whiteSpace:"pre-wrap",margin:"9px 0 0",color:"#51445a",lineHeight:1.6}}>{f.answer}</p>}</div>)}</div>;
 }
