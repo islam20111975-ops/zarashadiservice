@@ -81,12 +81,20 @@ export default function Admin(){
 
   async function sendPushToUsers(uids,title,message){
     const unique=[...new Set((uids||[]).filter(Boolean))];
-    if(!unique.length||!user)return;
+    if(!unique.length)return {ok:false,sent:0,failureCount:0,error:"Kisi user ka UID nahi mila."};
+    if(!user)return {ok:false,sent:0,failureCount:unique.length,error:"Admin login session nahi mila."};
     try{
       const idToken=await user.getIdToken();
       const response=await fetch("/api/push/send",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+idToken},body:JSON.stringify({uids:unique,title,message})});
-      if(!response.ok){const data=await response.json().catch(()=>({}));setError("Phone notification nahi bheji gayi: "+(data.error||response.status));}
-    }catch(e){setError("Phone notification error: "+e.message)}
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok){
+        const reason=data.error||("HTTP "+response.status);
+        return {ok:false,sent:Number(data.sent||0),failureCount:Number(data.failureCount??unique.length),error:reason};
+      }
+      return {ok:Number(data.failureCount||0)===0&&Number(data.sent||0)>0,sent:Number(data.sent||0),failureCount:Number(data.failureCount||0),registeredDevices:Number(data.registeredDevices||0),errors:Array.isArray(data.errors)?data.errors:[]};
+    }catch(e){
+      return {ok:false,sent:0,failureCount:unique.length,error:e.message||"Network error"};
+    }
   }
   async function notifyCustomer(uid,title,message,type="service"){
     if(!uid)return;
@@ -173,9 +181,16 @@ export default function Admin(){
           uid,title:notificationTitle,message:notificationMessage,type:"admin_post",read:false,createdAt:serverTimestamp()
         })));
       }
-      if(recipientUids.length)await sendPushToUsers(recipientUids,notificationTitle,notificationMessage);
+      const pushResult=recipientUids.length
+        ?await sendPushToUsers(recipientUids,notificationTitle,notificationMessage)
+        :{ok:false,sent:0,failureCount:0,error:"Koi registered user UID nahi mila."};
       setPostText("");setPostImageFile(null);setPostImagePreview("");
-      setError("Post publish ho gayi. "+recipientUids.length+" registered users ko notification bheji gayi.");
+      if(pushResult.ok){
+        setError("Post publish ho gayi. In-app notification "+recipientUids.length+" users ko save hui. Mobile push: "+pushResult.sent+" devices par bheji gayi.");
+      }else{
+        const reason=pushResult.error||((pushResult.failureCount||0)+" devices par push fail hua.");
+        setError("Post publish ho gayi, lekin mobile push poori tarah successful nahi hui. In-app notification "+recipientUids.length+" users ko save hui. Mobile push sent: "+pushResult.sent+", failed: "+pushResult.failureCount+". Reason: "+reason);
+      }
     }catch(e){setError("Post publish nahi hui: "+e.message)}
     finally{setSaving(false)}
   }
