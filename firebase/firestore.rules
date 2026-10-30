@@ -302,6 +302,11 @@ service cloud.firestore {
 
     // Private customer support conversations. Only the customer who owns a thread
     // and the admins can read its messages.
+    match /faqItems/{faqId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     match /supportChats/{uid} {
       allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
       allow create: if signedIn() && request.auth.uid == uid
