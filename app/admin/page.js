@@ -79,17 +79,33 @@ export default function Admin(){
     return()=>unsubs.forEach(x=>x());
   },[user]);
 
+  async function sendPushToUsers(uids,title,message){
+    const unique=[...new Set((uids||[]).filter(Boolean))];
+    if(!unique.length||!user)return;
+    try{
+      const idToken=await user.getIdToken();
+      const response=await fetch("/api/push/send",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+idToken},body:JSON.stringify({uids:unique,title,message})});
+      if(!response.ok){const data=await response.json().catch(()=>({}));setError("Phone notification nahi bheji gayi: "+(data.error||response.status));}
+    }catch(e){setError("Phone notification error: "+e.message)}
+  }
   async function notifyCustomer(uid,title,message,type="service"){
     if(!uid)return;
-    try{await addDoc(collection(db,"notifications"),{uid,title,message,type,read:false,createdAt:serverTimestamp()});}
-    catch(e){setError("Notification save nahi hui: "+e.message)}
+    try{
+      await addDoc(collection(db,"notifications"),{uid,title,message,type,read:false,createdAt:serverTimestamp()});
+      await sendPushToUsers([uid],title,message);
+    }catch(e){setError("Notification save nahi hui: "+e.message)}
   }
   async function notifyNewProfile(profileId,ownerUid){
     const recipients=users.filter(x=>(x.uid||x.id)&&((x.uid||x.id)!==ownerUid));
+    const recipientUids=[];
     for(const x of recipients){
-      try{await addDoc(collection(db,"notifications"),{uid:x.uid||x.id,title:"नया रिश्ता आया है",message:"Zara Nikah Service par naya profile "+profileId+" add hua hai. Website par Male/Female Rishte dekhein.",type:"new_profile",profileId,read:false,createdAt:serverTimestamp()});}
-      catch(e){setError("New profile notification nahi bheji gayi: "+e.message);break;}
+      try{
+        const uid=x.uid||x.id;
+        await addDoc(collection(db,"notifications"),{uid,title:"नया रिश्ता आया है",message:"Zara Nikah Service par naya profile "+profileId+" add hua hai. Website par Male/Female Rishte dekhein.",type:"new_profile",profileId,read:false,createdAt:serverTimestamp()});
+        recipientUids.push(uid);
+      }catch(e){setError("New profile notification nahi bheji gayi: "+e.message);break;}
     }
+    if(recipientUids.length)await sendPushToUsers(recipientUids,"नया रिश्ता आया है","Zara Nikah Service par naya profile "+profileId+" add hua hai. Website par Male/Female Rishte dekhein.");
   }
   async function sendAdminReply(e){
     e.preventDefault();const message=chatReply.trim();if(!message||!selectedChatId||chatSending)return;
