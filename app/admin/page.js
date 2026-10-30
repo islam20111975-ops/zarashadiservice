@@ -11,7 +11,7 @@ const ADMINS=["ngogrant454@gmail.com","islam20111975@gmail.com"];
 export default function Admin(){
   const router=useRouter();
   const [user,setUser]=useState(undefined),[tab,setTab]=useState("dashboard"),[error,setError]=useState("");
-  const [profiles,setProfiles]=useState([]),[users,setUsers]=useState([]),[presence,setPresence]=useState([]);
+  const [profiles,setProfiles]=useState([]),[users,setUsers]=useState([]),[presence,setPresence]=useState([]);\n  const [chats,setChats]=useState([]),[selectedChatId,setSelectedChatId]=useState(""),[chatMessages,setChatMessages]=useState([]),[chatReply,setChatReply]=useState(""),[chatSending,setChatSending]=useState(false);
   const [posts,setPosts]=useState([]),[postText,setPostText]=useState("");
   const [postImageFile,setPostImageFile]=useState(null),[postImagePreview,setPostImagePreview]=useState("");
   const [recharges,setRecharges]=useState([]),[requests,setRequests]=useState([]),[transactions,setTransactions]=useState([]),[profileSubmissions,setProfileSubmissions]=useState([]);
@@ -25,7 +25,13 @@ export default function Admin(){
   const [pages,setPages]=useState({about:"Zara Nikah Service ek online Nikah aur rishta profile service hai. Hamara maqsad serious rishta search karne wale users ko registered profiles ek simple aur organised platform par available karana hai.\n\nWebsite par profiles ko manage kiya jata hai aur users ko available service ke rules ke mutabik profile information ka access diya jata hai.\n\nZara Nikah Service ka focus simple process, privacy aur Nikah ke liye serious rishta search par hai.\n\nKisi bhi service, profile ya registration se related sawal ke liye Contact page par diye gaye madhyam se message karein.",contact:"Zara Nikah Service se contact karne ke liye website par diye gaye WhatsApp/social contact option ka use karein.\n\nMessage mein apna naam aur apni query ya zaroori details likhein, taaki aapki request ko samajhna aur jawab dena aasaan ho.\n\nProfile, registration, payment, biodata access ya mobile-number access se related sawal bhi message ke zariye bheje ja sakte hain.\n\nPlease bina zaroorat personal ya sensitive information share na karein.",privacy:"Zara Nikah Service users ki information ko service provide karne aur account/profile management ke liye use karta hai.\n\nGoogle login se milne wali basic account information aur user dwara submit ki gayi profile information ko service ke purpose ke liye process kiya ja sakta hai.\n\nPrivate biodata, contact/mobile number aur payment-related information ko public profile par bina authorised access ke display nahi kiya jata.\n\nPayment ke waqt diya gaya UTR/Transaction ID payment verification aur request processing ke liye use kiya ja sakta hai.\n\nUsers ko apni personal information sirf utni hi submit karni chahiye jitni service ke liye zaroori ho. Kisi privacy concern ke liye Contact page ke madhyam se message karein.",terms:"Zara Nikah Service par users registered rishta profiles dekhne aur website par available services ka use kar sakte hain.\n\nRegistration, profile information, payment aur access request ke waqt sahi information dena user ki responsibility hai.\n\nBiodata ya mobile-number access paid service ke roop mein available ho sakta hai. Payment request verification aur approval ke baad access diya jata hai.\n\nWebsite par kisi profile ki personal information ka misuse, unauthorised copying, sharing ya harassment ke liye use nahi kiya jana chahiye.\n\nZara Nikah Service par dikhayi gayi profile information ko users ko respect aur privacy ke saath use karna chahiye.\n\nService ke rules, fees aur available features ko zaroorat ke mutabik update kiya ja sakta hai. Website ka use karte rehne ka matlab updated terms ko follow karna hai."});
 
   useEffect(()=>onAuthStateChanged(auth,setUser),[]);
-  async function syncSliderImages(rows){
+  useEffect(()=>{
+    if(!ADMINS.includes(user?.email?.toLowerCase())||!selectedChatId){setChatMessages([]);return;}
+    return onSnapshot(collection(db,"supportChats",selectedChatId,"messages"),s=>{
+      const rows=s.docs.map(d=>({id:d.id,...d.data()}));rows.sort((a,b)=>(a.createdAt?.toMillis?.()||0)-(b.createdAt?.toMillis?.()||0));setChatMessages(rows);
+    },e=>setError("Chat messages load error: "+e.message));
+  },[user,selectedChatId]);
+\n  async function syncSliderImages(rows){
     if(sliderSyncDone.current)return;
     sliderSyncDone.current=true;
     try{
@@ -61,7 +67,7 @@ export default function Admin(){
       const profileIds=rows.filter(p=>p.status!=="deleted"&&((Array.isArray(p.photos)&&p.photos[0])||p.photo)).sort((x,y)=>x.id.localeCompare(y.id)).map(p=>p.id);
       setDoc(doc(db,"settings","homeSlider"),{profileIds,updatedAt:serverTimestamp()},{merge:true}).catch(()=>{});
     });watch("users",setUsers);
-    watch("walletRechargeRequests",setRecharges,true);watch("paidAccessRequests",setRequests,true);watch("profileSubmissions",setProfileSubmissions,true);watch("walletTransactions",setTransactions,true);watch("userPresence",setPresence);
+    watch("walletRechargeRequests",setRecharges,true);watch("paidAccessRequests",setRequests,true);watch("profileSubmissions",setProfileSubmissions,true);watch("walletTransactions",setTransactions,true);watch("userPresence",setPresence);watch("supportChats",rows=>{rows.sort((a,b)=>(b.updatedAt?.toMillis?.()||0)-(a.updatedAt?.toMillis?.()||0));setChats(rows);setSelectedChatId(old=>old&&rows.some(x=>x.id===old)?old:(rows[0]?.id||""));});
     getDoc(doc(db,"settings","social")).then(s=>s.exists()&&setSocial({...{whatsapp:"",facebook:"",instagram:""},...s.data()})).catch(()=>{});
     getDoc(doc(db,"settings","payment")).then(s=>{if(s.exists()){setUpi(s.data().upiId||"");setQrPreview(s.data().qrUrl||"")}}).catch(e=>setError("Payment settings load error: "+e.message));
     getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallPreview(s.data().wallpaper||"")}).catch(e=>setError("Appearance settings load error: "+e.message));
@@ -70,6 +76,30 @@ export default function Admin(){
     return()=>unsubs.forEach(x=>x());
   },[user]);
 
+  async function notifyCustomer(uid,title,message,type="service"){
+    if(!uid)return;
+    try{await addDoc(collection(db,"notifications"),{uid,title,message,type,read:false,createdAt:serverTimestamp()});}
+    catch(e){setError("Notification save nahi hui: "+e.message)}
+  }
+  async function notifyNewProfile(profileId,ownerUid){
+    const recipients=users.filter(x=>(x.uid||x.id)&&((x.uid||x.id)!==ownerUid)).slice(0,400);
+    for(const x of recipients){
+      try{await addDoc(collection(db,"notifications"),{uid:x.uid||x.id,title:"नया रिश्ता आया है",message:"Zara Nikah Service par naya profile "+profileId+" add hua hai. Website par Male/Female Rishte dekhein.",type:"new_profile",profileId,read:false,createdAt:serverTimestamp()});}
+      catch(e){setError("New profile notification nahi bheji gayi: "+e.message);break;}
+    }
+  }
+  async function sendAdminReply(e){
+    e.preventDefault();const message=chatReply.trim();if(!message||!selectedChatId||chatSending)return;
+    setChatSending(true);setError("");
+    try{
+      const x=chats.find(v=>v.id===selectedChatId);if(!x)throw new Error("Customer chat nahi mili.");
+      await addDoc(collection(db,"supportChats",selectedChatId,"messages"),{text:message,senderUid:user.uid,senderEmail:user.email||"",senderRole:"admin",createdAt:serverTimestamp()});
+      await updateDoc(doc(db,"supportChats",selectedChatId),{lastMessage:message,lastSender:"admin",updatedAt:serverTimestamp(),unreadForAdmin:false,unreadForUser:true});
+      await notifyCustomer(selectedChatId,"एडमिन का जवाब",message.slice(0,180),"chat_reply");
+      setChatReply("");
+    }catch(e){setError("Reply send nahi hua: "+e.message)}
+    finally{setChatSending(false)}
+  }
   async function setUserAccessStatus(x,status){
     try{
       if(!x?.id||!["approved","pending","rejected"].includes(status))return;
@@ -187,7 +217,7 @@ export default function Admin(){
       const now=Date.now();
       if(x.visibility==="admin"){
         await updateDoc(subRef,{status:"approved",visibility:"admin",approvedAt:serverTimestamp(),expiresAt:new Date(now+90*24*60*60*1000),approvedBy:user.email,publicProfile:false});
-        setError("✓ Profile approve ho gayi. Yeh sirf Admin ko dikhegi, public website par nahi.");
+        setError("✓ Profile approve ho gayi. Yeh sirf Admin ko dikhegi, public website par nahi.");\n        await notifyCustomer(x.uid,"आपका रिश्ता अप्रूव हो गया","Aapka profile Admin-only mode mein approve ho gaya hai.","profile_approved");
       }else{
         const nextNum=profiles.reduce((m,p)=>Math.max(m,Number(String(p.id).replace(/\\D/g,""))||0),0)+1;
         const profileId=String(nextNum).padStart(3,"0");
@@ -291,7 +321,7 @@ export default function Admin(){
           createdAt:serverTimestamp()
         },{merge:true});
       });
-      setError("✓ Request process ho gayi. Status update check karein; agar Pending rahe to page refresh karke dekhein.");
+      const finalReq=await getDoc(reqRef);\n      if(finalReq.exists()&&finalReq.data().status==="approved")await notifyCustomer(x.uid,"पेमेंट अप्रूव हो गया","Profile "+x.profileId+" ka "+(x.type==="biodata"?"₹99 Biodata":"₹299 Mobile Number")+" access approve ho gaya hai.","payment_approved");\n      setError("✓ Request process ho gayi. Status update check karein; agar Pending rahe to page refresh karke dekhein.");
     }catch(e){setError("✕ Approve button click hua, lekin approval fail hua: "+e.message)}
     finally{setProcessingAccessId("");}
   }
@@ -565,7 +595,7 @@ export default function Admin(){
   const pendingBiodataCount=requests.filter(x=>x.type==="biodata"&&x.status==="pending"&&Number(x.amount)===100).length;
   const pendingMobileCount=requests.filter(x=>x.type==="mobile"&&x.status==="pending"&&Number(x.amount)===500).length;
   const pendingRechargeCount=recharges.filter(x=>x.status==="pending").length;
-  const nav=[["dashboard","🏠 Dashboard"],["users","👥 All Users"],["profileSubmissions",`➕ New Profiles${profileSubmissions.filter(x=>x.status==="pending").length?` • ${profileSubmissions.filter(x=>x.status==="pending").length} PENDING`:""}`],["biodata","📋 Biodata"],["access100",`₹99 Biodata Payments${pendingBiodataCount?` • ${pendingBiodataCount} PENDING`:""}`],["access500",`₹299 Mobile Payments${pendingMobileCount?` • ${pendingMobileCount} PENDING`:""}`],["wallet",`💰 Wallet / Recharge${pendingRechargeCount?` • ${pendingRechargeCount} PENDING`:""}`],["transactions","🧾 Transactions"],["posts","📢 Admin Posts"],["settings","⚙️ Settings"]];
+  const nav=[["dashboard","🏠 Dashboard"],["users","👥 All Users"],["chats",`💬 Customer Chats${chats.filter(x=>x.unreadForAdmin).length?` • ${chats.filter(x=>x.unreadForAdmin).length} NEW`:""}`],["profileSubmissions",`➕ New Profiles${profileSubmissions.filter(x=>x.status==="pending").length?` • ${profileSubmissions.filter(x=>x.status==="pending").length} PENDING`:""}`],["biodata","📋 Biodata"],["access100",`₹99 Biodata Payments${pendingBiodataCount?` • ${pendingBiodataCount} PENDING`:""}`],["access500",`₹299 Mobile Payments${pendingMobileCount?` • ${pendingMobileCount} PENDING`:""}`],["wallet",`💰 Wallet / Recharge${pendingRechargeCount?` • ${pendingRechargeCount} PENDING`:""}`],["transactions","🧾 Transactions"],["posts","📢 Admin Posts"],["settings","⚙️ Settings"]];
 
   return <main><section className="admin dashboardPage">
     <div className="dashTop"><div><span className="eyebrow">ZARA NIKAH SERVICE</span><h1>Central Admin Board</h1><p>Users, biodata, payments, wallet aur access sab ek jagah.</p></div><button className="logout" onClick={logout}>🚪 Logout</button></div>
@@ -581,7 +611,8 @@ export default function Admin(){
       <div className="statCard" role="button" tabIndex={0} onClick={()=>setTab("wallet")} onKeyDown={e=>e.key==="Enter"&&setTab("wallet")}><span className="statIcon">💰</span><small>Pending Recharge</small><strong>{recharges.filter(x=>x.status==="pending").length}</strong><small>Click करके पूरी list देखें →</small></div>
     </div>}
 
-    {tab==="users"&&<div className="adminList"><div className="listHead"><h3>👥 All Google Login Users</h3><span>{users.length} accounts • {presence.filter(p=>p.isOnline&&p.lastSeen?.toMillis&&Date.now()-p.lastSeen.toMillis()<120000).length} online</span></div>{users.map(x=>{const live=presence.find(p=>p.id===(x.uid||x.id));const online=!!(live?.isOnline&&live.lastSeen?.toMillis&&Date.now()-live.lastSeen.toMillis()<120000);return <div className="userAdminCard" key={x.id}><div className="rowProfile">{x.photoURL?<img src={x.photoURL} alt=""/>:<div className="rowPlaceholder">👤</div>}<div><b>{x.name||"Name not set"}</b><small>{x.email||""}</small><small>UID: {x.uid||x.id}</small><small style={{fontWeight:700,color:online?"#16803d":"#777"}}>{online?"🟢 ONLINE NOW":"⚪ Offline"}{live?.lastSeen?.toDate?` • Last seen: ${live.lastSeen.toDate().toLocaleString("en-IN")}`:""}</small></div></div><div className="userDetails"><span>📍 {x.address||"-"}</span><span>📱 {x.phone||"-"}</span><span>🎂 {x.age||"-"}</span><span>💼 {x.income||"-"}</span><span>💰 Wallet: ₹{x.walletBalance||0}</span><span>🔐 Access: {x.status||"pending (not approved)"}</span></div><div className="cardButtons"></div></div>})}</div>}
+    {tab==="chats"&&<div className="adminList"><div className="listHead"><h3>💬 Private Customer Chats</h3><span>{chats.length} conversations</span></div><div style={{display:"grid",gridTemplateColumns:"minmax(190px,.8fr) minmax(0,1.5fr)",gap:14}}><div style={{display:"grid",gap:8,alignContent:"start"}}>{chats.map(x=><button type="button" key={x.id} onClick={()=>{setSelectedChatId(x.id);updateDoc(doc(db,"supportChats",x.id),{unreadForAdmin:false}).catch(()=>{});}} style={{textAlign:"left",padding:12,borderRadius:12,border:selectedChatId===x.id?"2px solid #7c3aed":"1px solid #e5d9ed",background:"#fff",overflowWrap:"anywhere"}}><b>{x.name||"Customer"}</b><small style={{display:"block"}}>{x.email||x.id}</small><small style={{display:"block",color:x.unreadForAdmin?"#b91c1c":"#76687e"}}>{x.unreadForAdmin?"● नया संदेश":x.lastMessage||"No messages"}</small></button>)}{!chats.length&&<p>Abhi koi customer chat nahi aayi.</p>}</div><div>{selectedChatId?<><div style={{background:"#f8f5fb",borderRadius:14,padding:12,height:360,overflowY:"auto",display:"flex",flexDirection:"column",gap:9}}>{chatMessages.map(m=><div key={m.id} style={{alignSelf:m.senderRole==="admin"?"flex-end":"flex-start",maxWidth:"88%",background:m.senderRole==="admin"?"#ede9fe":"#fff",border:"1px solid #e8dff0",borderRadius:12,padding:10}}><small>{m.senderRole==="admin"?"Admin":"Customer"} • {m.createdAt?.toDate?.()?.toLocaleString?.("en-IN")||""}</small><div style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{m.text}</div></div>)}{!chatMessages.length&&<p>Is customer ka pehla message abhi nahi aaya.</p>}</div><form className="adminBox" onSubmit={sendAdminReply}><textarea className="adminInput" rows="3" maxLength={3000} value={chatReply} onChange={e=>setChatReply(e.target.value)} placeholder="Customer ko jawab likhein..."/><button className="primaryAction" disabled={chatSending||!chatReply.trim()}>{chatSending?"Sending...":"📨 Reply Send karein"}</button></form></>:<p>Chat dekhne ke liye customer select karein.</p>}</div></div></div>}
+\n    {tab==="users"&&<div className="adminList"><div className="listHead"><h3>👥 All Google Login Users</h3><span>{users.length} accounts • {presence.filter(p=>p.isOnline&&p.lastSeen?.toMillis&&Date.now()-p.lastSeen.toMillis()<120000).length} online</span></div>{users.map(x=>{const live=presence.find(p=>p.id===(x.uid||x.id));const online=!!(live?.isOnline&&live.lastSeen?.toMillis&&Date.now()-live.lastSeen.toMillis()<120000);return <div className="userAdminCard" key={x.id}><div className="rowProfile">{x.photoURL?<img src={x.photoURL} alt=""/>:<div className="rowPlaceholder">👤</div>}<div><b>{x.name||"Name not set"}</b><small>{x.email||""}</small><small>UID: {x.uid||x.id}</small><small style={{fontWeight:700,color:online?"#16803d":"#777"}}>{online?"🟢 ONLINE NOW":"⚪ Offline"}{live?.lastSeen?.toDate?` • Last seen: ${live.lastSeen.toDate().toLocaleString("en-IN")}`:""}</small></div></div><div className="userDetails"><span>📍 {x.address||"-"}</span><span>📱 {x.phone||"-"}</span><span>🎂 {x.age||"-"}</span><span>💼 {x.income||"-"}</span><span>💰 Wallet: ₹{x.walletBalance||0}</span><span>🔐 Access: {x.status||"pending (not approved)"}</span></div><div className="cardButtons"></div></div>})}</div>}
 
     {(tab==="access100"||tab==="access500")&&<div className="adminList"><div className="filterBar" style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:10,marginBottom:12}}><select className="adminInput" value={requestFilter} onChange={e=>setRequestFilter(e.target.value)}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All Status</option></select><input className="adminInput" placeholder="🔎 Profile ID / User / UTR search..." value={requestSearch} onChange={e=>setRequestSearch(e.target.value)}/></div><div className="listHead"><h3>{tab==="access100"?"₹99 Paid Biodata":"₹299 Paid Mobile / Contact"} Requests</h3><span>{requests.filter(x=>x.type===(tab==="access100"?"biodata":"mobile")).length}</span></div>{requests.filter(x=>x.type===(tab==="access100"?"biodata":"mobile")&&(requestFilter==="all"||x.status===requestFilter)).filter(x=>{const p=profiles.find(p=>p.id===x.profileId);const u=users.find(u=>u.id===x.uid||u.uid===x.uid);const q=requestSearch.trim().toLowerCase();return !q||(x.profileId+" "+(u?.name||"")+" "+(u?.email||"")+" "+(x.utr||"")).toLowerCase().includes(q)}).map(x=>{const p=profiles.find(p=>p.id===x.profileId);const u=users.find(u=>u.id===x.uid||u.uid===x.uid);return <div className="userAdminCard" key={x.id}><div className="rowProfile">{p?.photos?.[0]?<img src={p.photos[0]} alt=""/>:<div className="rowPlaceholder">📷</div>}<div><b>Profile {x.profileId}</b><small>{p?.name||p?.title||"Profile"} • {x.type==="biodata"?"Biodata":"Mobile Number"}</small><small>👤 Name: {u?.name||x.name||"User"}</small><small>📧 Email: {u?.email||x.email||"-"}</small><small>🆔 UID: {x.uid||u?.uid||u?.id||"-"}</small><small>📱 Phone: {x.phone||u?.phone||"-"}</small><small>💰 Amount: ₹{x.amount} • 📌 Status: {(x.status||"-").toUpperCase()}</small><div style={{marginTop:6,padding:"8px 10px",borderRadius:8,border:"1px solid rgba(0,0,0,.12)",fontWeight:700,overflowWrap:"anywhere"}}>🧾 UTR / Transaction ID: {x.utr||x.transactionId||"-"}</div><small>💳 Payment Method: {(x.paymentMethod||"-").toUpperCase()}</small><small>🗂️ Request ID: {x.id}</small><small>🔒 Lock ID: {x.lockId||"-"}</small><small>🕒 Submitted: {x.createdAt?.toDate?.()?.toLocaleString?.("en-IN")||"-"}</small></div></div><div className="cardButtons">{x.status==="pending"&&<button className="approve" disabled={!!processingAccessId} onClick={()=>approveAccess(x)} style={{opacity:processingAccessId===x.id?0.7:processingAccessId?0.65:1,cursor:processingAccessId?"wait":"pointer",minWidth:115}}>{processingAccessId===x.id?"⏳ Approving...":"✓ Approve"}</button>}{x.status==="pending"&&<button onClick={()=>rejectAccess(x)}>✕ Reject</button>}{x.status==="approved"&&<button onClick={()=>revokeApprovedAccess(x)} style={{color:"#b42318"}}>🚫 Revoke / Block Access</button>}<button onClick={()=>deleteAccessRequest(x)} style={{color:"#b42318"}}>🗑️ Delete</button></div></div>})}</div>}
 
