@@ -170,7 +170,7 @@ export default function Profile(){
        <Row label="Other Important Information" value={d.otherInfo}/>
       </Section>
 
-      {mobile&&<><div className="notice">✅ ₹299 Mobile Access approve ho gaya hai. Ab WhatsApp par profile aur aapki jaankari ke saath message kholein. Message bhejne se pehle aap use dekh sakte hain.</div><button className="primaryAction" type="button" onClick={openWhatsAppRequest}>🟢 WhatsApp par baat karein →</button><p className="small">WhatsApp number: 9112170192. Aapka naam, mobile number, email aur User ID message mein shamil honge. WhatsApp khulne ke baad Send aap khud dabayenge.</p></>}
+      {mobile&&<><div className="notice">✅ ₹299 Mobile Access approve ho gaya hai. Ab WhatsApp par profile aur aapki jaankari ke saath message kholein. Message bhejne se pehle aap use dekh sakte hain.</div><button className="primaryAction" type="button" onClick={openWhatsAppRequest}>🟢 WhatsApp par baat karein →</button></>}
       {!mobile&&<><div className="notice">📱 Pay ₹299 to view Mobile Number</div><button className="primaryAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(id)+"&type=mobile")}>₹299 Mobile Number Access →</button></>}
     </div>}
 
