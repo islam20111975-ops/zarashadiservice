@@ -81,6 +81,12 @@ function Pay(){
  const photo=p?.photos?.[0]||p?.photo||"";
  const pending=requests.find(x=>x.status==="pending");
  const approved=requests.find(x=>x.status==="approved");
+
+ useEffect(()=>{
+  if(!user||!approved||!profile)return;
+  const timer=window.setTimeout(()=>router.replace("/profile/"+encodeURIComponent(profile)),700);
+  return()=>window.clearTimeout(timer);
+ },[user,approved,profile,router]);
  return <main className="paymentPage">
   <header className="siteHeader"><div className="headerInner"><button className="logo" type="button" onClick={()=>router.push("/")}><span className="logoMark">{branding.logo?<img src={branding.logo} alt="Zara Nikah logo"/>:"💍"}</span><span><strong>ZARA NIKAH</strong><small>Service</small></span></button></div></header>
   <section className="payment paymentPremium cardPage">
