@@ -152,22 +152,8 @@ function PageBody(){
    }
 
    setUtr("");
-   setMsg("✅ Payment request save ho gayi. WhatsApp khol rahe hain…");
+   setMsg("✅ Payment request Admin ko bhej di gayi hai. Admin payment verify karke approve karega. Approval se pehle biodata ya mobile access nahi milega.");
    setRequests(prev=>[{id:reqRef.id,...requestData},...prev]);
-   const waText=[
-    "ZARA NIKAH SERVICE - PAYMENT REQUEST",
-    "Profile ID: "+profile,
-    "Profile Name: "+(profileData?.name||profileData?.fullName||profileData?.displayName||"Not available"),
-    "Access Type: "+(type==="mobile"?"Mobile Number Access":"Biodata Access"),
-    "Amount: ₹"+amount,
-    "Customer Mobile: "+digitsPhone,
-    "UTR / Transaction ID: "+clean,
-    "Customer Name: "+(user.displayName||"Not available"),
-    "Customer Email: "+(user.email||"Not available"),
-    "Firebase Request ID: "+reqRef.id,
-    "Please verify the payment and approve this exact profile access."
-   ].join(String.fromCharCode(10));
-   window.location.href="https://wa.me/919112170192?text="+encodeURIComponent(waText);
   }catch(e){
    const code=e?.code||"";
    if(code==="already-exists")setMsg("❌ Ye UTR pehle hi use ho chuka hai. Page refresh karke status dekhein.");
