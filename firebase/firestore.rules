@@ -187,7 +187,10 @@ service cloud.firestore {
     }
 
     match /pendingPaymentLocks/{lockId} {
-      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      // Clients check a deterministic lock before creating it. Permit a get of a
+      // missing document, but never let users read another user's existing lock.
+      allow get: if isAdmin() || (signedIn() && (resource == null || resource.data.uid == request.auth.uid));
+      allow list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
 
       // One deterministic lock per user + target, so another pending request cannot be created
       // for the same recharge amount or the same profile/type.
@@ -233,7 +236,10 @@ service cloud.firestore {
     }
 
     match /walletRechargeRequests/{requestId} {
-      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      // A user may check a request ID stored in their own lock even if that
+      // request was never created; existing records remain owner/admin only.
+      allow get: if isAdmin() || (signedIn() && (resource == null || resource.data.uid == request.auth.uid));
+      allow list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
 
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
@@ -268,7 +274,10 @@ service cloud.firestore {
     }
 
     match /paidAccessRequests/{requestId} {
-      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      // A user may check a request ID stored in their own lock even if that
+      // request was never created; existing records remain owner/admin only.
+      allow get: if isAdmin() || (signedIn() && (resource == null || resource.data.uid == request.auth.uid));
+      allow list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
 
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
