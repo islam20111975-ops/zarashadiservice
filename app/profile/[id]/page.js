@@ -12,10 +12,18 @@ const Section=({title,children})=>{const items=Children.toArray(children).filter
 
 export default function Profile(){
  const {id}=useParams(),router=useRouter();
- const [p,setP]=useState(null),[privateData,setPrivateData]=useState(null),[contact,setContact]=useState(null),[user,setUser]=useState(null),[branding,setBranding]=useState({logo:"",appIcon:""});
+ const [p,setP]=useState(null),[privateData,setPrivateData]=useState(null),[contact,setContact]=useState(null),[user,setUser]=useState(null),[customerInfo,setCustomerInfo]=useState({}),[branding,setBranding]=useState({logo:"",appIcon:""});
  const [loading,setLoading]=useState(true),[unlocked,setUnlocked]=useState(false),[mobile,setMobile]=useState(false),[lightbox,setLightbox]=useState(false),[loadError,setLoadError]=useState(""),[loginError,setLoginError]=useState("");
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
+ useEffect(()=>{
+  let alive=true;
+  if(!user){setCustomerInfo({});return;}
+  getDoc(doc(db,"users",user.uid)).then(s=>{
+   if(alive)setCustomerInfo(s.exists()?s.data():{});
+  }).catch(()=>{if(alive)setCustomerInfo({});});
+  return()=>{alive=false};
+ },[user]);
  useEffect(()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");if(cached?.logo||cached?.appIcon)setBranding({logo:cached.logo||"",appIcon:cached.appIcon||""})}catch(e){} getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){const b={logo:s.data().logo||"",appIcon:s.data().appIcon||""};setBranding(b);try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify(b))}catch(e){}}}).catch(()=>{})},[]);
  useEffect(()=>{
   if(!id)return;
@@ -57,6 +65,32 @@ export default function Profile(){
  },[id,user]);
 
  async function login(){setLoginError("");try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}}
+ function openWhatsAppRequest(){
+  if(!mobile||!user)return;
+  const customerName=val(customerInfo.name||user.displayName)||"Not provided";
+  const customerPhone=val(customerInfo.phone||user.phoneNumber)||"Not provided";
+  const profileName=val(d.name||p?.name)||"Not provided";
+  const profileAge=val(d.age||p?.age)||"Not provided";
+  const profileCity=val(d.city||p?.city)||"Not provided";
+  const message=[
+   "Assalamu Alaikum, mujhe Zara Nikah Service par ye rishta pasand aaya hai.",
+   "",
+   "LADKI / PROFILE KI JAANKARI",
+   "Biodata ID: "+id,
+   "Naam: "+profileName,
+   "Umar: "+profileAge,
+   "Shehar: "+profileCity,
+   "",
+   "PAYMENT KARNE WALE USER KI JAANKARI",
+   "Naam: "+customerName,
+   "Mobile: "+customerPhone,
+   "Email: "+val(user.email),
+   "User ID: "+user.uid,
+   "",
+   "₹299 mobile access payment approve ho chuka hai. Kripya aage ki jaankari dein."
+  ].join("\n");
+  window.location.href="https://wa.me/919112170192?text="+encodeURIComponent(message);
+ }
  const photos=Array.isArray(p?.photos)&&p.photos.length?p.photos:(p?.photo?[p.photo]:[]);
  const d=privateData||{},biodataAvailable=hasBiodata(d);
 
@@ -136,7 +170,7 @@ export default function Profile(){
        <Row label="Other Important Information" value={d.otherInfo}/>
       </Section>
 
-      {mobile&&<div className="notice">📱 Mobile Number: {val(contact?.phone||contact?.mobile||contact?.mobileNumber)}</div>}
+      {mobile&&<><div className="notice">✅ ₹299 Mobile Access approve ho gaya hai. Ab WhatsApp par profile aur aapki jaankari ke saath message kholein. Message bhejne se pehle aap use dekh sakte hain.</div><button className="primaryAction" type="button" onClick={openWhatsAppRequest}>🟢 WhatsApp par baat karein →</button><p className="small">WhatsApp number: 9112170192. Aapka naam, mobile number, email aur User ID message mein shamil honge. WhatsApp khulne ke baad Send aap khud dabayenge.</p></>}
       {!mobile&&<><div className="notice">📱 Pay ₹299 to view Mobile Number</div><button className="primaryAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(id)+"&type=mobile")}>₹299 Mobile Number Access →</button></>}
     </div>}
 
