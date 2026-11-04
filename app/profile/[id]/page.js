@@ -12,7 +12,7 @@ const Section=({title,children})=>{const items=Children.toArray(children).filter
 
 export default function Profile(){
  const {id}=useParams(),router=useRouter();
- const [p,setP]=useState(null),[privateData,setPrivateData]=useState(null),[contact,setContact]=useState(null),[user,setUser]=useState(null),[customerInfo,setCustomerInfo]=useState({}),[branding,setBranding]=useState({logo:"",appIcon:""});
+ const [p,setP]=useState(null),[privateData,setPrivateData]=useState(null),[user,setUser]=useState(null),[customerInfo,setCustomerInfo]=useState({}),[branding,setBranding]=useState({logo:"",appIcon:""});
  const [loading,setLoading]=useState(true),[unlocked,setUnlocked]=useState(false),[mobile,setMobile]=useState(false),[lightbox,setLightbox]=useState(false),[loadError,setLoadError]=useState(""),[loginError,setLoginError]=useState("");
 
  useEffect(()=>onAuthStateChanged(auth,setUser),[]);
@@ -43,7 +43,7 @@ export default function Profile(){
  },[id]);
 
  useEffect(()=>{
-  if(!id||!user){setUnlocked(false);setMobile(false);setPrivateData(null);setContact(null);return;}
+  if(!id||!user){setUnlocked(false);setMobile(false);setPrivateData(null);return;}
   let alive=true,timer=null,privateUnsubscribe=null;
   const loadAccess=async()=>{
    try{
@@ -57,7 +57,7 @@ export default function Profile(){
     if(biodataOk){
       privateUnsubscribe=onSnapshot(doc(db,"profileBiodataPrivate",id),snap=>{if(!alive)return;if(snap.exists()){setPrivateData(snap.data()||{});setLoadError("")}else{setPrivateData({});setLoadError("")}},e=>{if(alive)setLoadError(e?.message||"Biodata load nahi ho saka.")});
     }else setPrivateData(null);
-    if(mobileOk){try{const cr=await getDoc(doc(db,"profileContact",id));if(alive&&cr.exists())setContact(cr.data())}catch(e){if(alive)setLoadError(e?.message||"Mobile number load nahi ho saka.")}}else setContact(null);
+    
    }catch(e){if(alive)setLoadError(e?.message||"Access status load nahi ho saka.")}
   };
   loadAccess();timer=setInterval(loadAccess,3000);
