@@ -131,7 +131,7 @@ service cloud.firestore {
     // Only these two settings documents are public because the customer-facing
     // pages need them. Never put secrets in /settings.
     match /settings/{settingId} {
-      allow read: if settingId == "payment" || settingId == "social" || settingId == "appearance" || settingId == "legalPages" || settingId == "homeSlider" || settingId == "branding";
+      allow read: if settingId == "payment" || settingId == "social" || settingId == "appearance" || settingId == "legalPages" || settingId == "homeSlider" || settingId == "branding" || settingId == "homeTicker";
       allow write: if isAdmin();
     }
 
