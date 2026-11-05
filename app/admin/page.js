@@ -8,6 +8,23 @@ import {auth,db} from "../../lib/firebase";
 
 const ADMINS=["ngogrant454@gmail.com","islam20111975@gmail.com"];
 
+function sanitizeAdminPostHtml(input){
+  let value=String(input||"").replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"");
+  value=value.replace(/<font\b([^>]*)>/gi,function(tag,attrs){
+    const color=(attrs.match(/color="(#[0-9a-fA-F]{3,8})"/)||[])[1];
+    const size=(attrs.match(/size="([1-7])"/)||[])[1];
+    const px={1:10,2:13,3:16,4:19,5:24,6:32,7:48};
+    const style=(color?"color:"+color+";":"")+(size?"font-size:"+px[size]+"px;":"");
+    return "<span"+(style?' style="'+style+'"':"")+">";
+  }).replace(/<\/font>/gi,"</span>");
+  value=value.replace(/<(?!\/?(?:b|strong|i|em|u|br|p|div|span)\b)[^>]*>/gi,"");
+  value=value.replace(/<(b|strong|i|em|u|br|p|div|span)\b[^>]*>/gi,function(tag){
+    const name=(tag.match(/^<([a-z]+)/i)||[])[1].toLowerCase();
+    return name==="br"?"<br>":"<"+name+">";
+  });
+  return value;
+}
+
 export default function Admin(){
   const router=useRouter();
   const [user,setUser]=useState(undefined),[tab,setTab]=useState("dashboard"),[error,setError]=useState("");
@@ -227,7 +244,7 @@ export default function Admin(){
       // Notify every registered user about the new admin post.
       const recipientUids=[...new Set(users.map(x=>x.uid||x.id).filter(uid=>uid&&uid!==user.uid))];
       const notificationTitle="📢 Zara Nikah Service par nayi post";
-      const notificationMessage=text?text.slice(0,180):"Zara Nikah Service par admin ne nayi photo post ki hai. App kholkar dekhein.";
+      const notificationMessage=plainText?plainText.slice(0,180):"Zara Nikah Service par admin ne nayi photo post ki hai. App kholkar dekhein.";
       for(let i=0;i<recipientUids.length;i+=400){
         const batch=recipientUids.slice(i,i+400);
         await Promise.all(batch.map(uid=>addDoc(collection(db,"notifications"),{
@@ -337,7 +354,7 @@ export default function Admin(){
         const push=ownerNotice.push||{};
         setError("✓ Profile Admin-only approve ho gayi. Owner in-app: "+(ownerNotice.saved?"saved":"failed")+" • Mobile push sent: "+(push.sent||0)+", failed: "+(push.failureCount||0)+(push.error?" • "+push.error:""));
       }else{
-        const nextNum=profiles.reduce((m,p)=>Math.max(m,Number(String(p.id).replace(/\\D/g,""))||0),0)+1;
+        const nextNum=profiles.reduce((m,p)=>Math.max(m,Number(String(p.id).replace(/\D/g,""))||0),0)+1;
         const profileId=String(nextNum).padStart(3,"0");
         const liveProfile={id:profileId,name:x.name||"",age:Number(x.age)||"",height:x.height||"",city:x.city||"",state:x.state||"",language:x.language||"",religion:x.religion||"Muslim",community:x.community||"",education:x.education||"",occupation:x.occupation||"",maritalStatus:x.maritalStatus||"",about:x.about||"",gender:x.gender||"female",photo:x.photo||"",photos:x.photo?[x.photo]:[],image:x.photo||"",status:"active",verified:true,ownerUid:x.uid||"",ownerEmail:x.email||"",registrationFee:299,createdAt:serverTimestamp(),approvedAt:serverTimestamp(),expiresAt:new Date(now+90*24*60*60*1000)};
         await setDoc(doc(db,"profiles",profileId),liveProfile);
