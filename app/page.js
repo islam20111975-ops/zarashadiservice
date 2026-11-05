@@ -15,16 +15,16 @@ function getProfileGender(p){
 }
 
 function sanitizeAdminPostHtml(input){
-  let value=String(input||"").replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi,"");
-  value=value.replace(/<font\\b([^>]*)>/gi,function(tag,attrs){
+  let value=String(input||"").replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"");
+  value=value.replace(/<font\b([^>]*)>/gi,function(tag,attrs){
     const color=(attrs.match(/color="(#[0-9a-fA-F]{3,8})"/)||[])[1];
     const size=(attrs.match(/size="([1-7])"/)||[])[1];
     const px={1:10,2:13,3:16,4:19,5:24,6:32,7:48};
     const style=(color?"color:"+color+";":"")+(size?"font-size:"+px[size]+"px;":"");
     return "<span"+(style?' style="'+style+'"':"")+">";
-  }).replace(/<\\/font>/gi,"</span>");
-  value=value.replace(/<(?!\\/?(?:b|strong|i|em|u|br|p|div|span)\\b)[^>]*>/gi,"");
-  value=value.replace(/<(b|strong|i|em|u|br|p|div|span)\\b[^>]*>/gi,function(tag){
+  }).replace(/<\/font>/gi,"</span>");
+  value=value.replace(/<(?!\/?(?:b|strong|i|em|u|br|p|div|span)\b)[^>]*>/gi,"");
+  value=value.replace(/<(b|strong|i|em|u|br|p|div|span)\b[^>]*>/gi,function(tag){
     const name=(tag.match(/^<([a-z]+)/i)||[])[1].toLowerCase();
     return name==="br"?"<br>":"<"+name+">";
   });
