@@ -15,18 +15,31 @@ function getProfileGender(p){
 }
 
 function sanitizeAdminPostHtml(input){
-  let value=String(input||"").replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"");
-  value=value.replace(/<font\b([^>]*)>/gi,function(tag,attrs){
-    const color=(attrs.match(/color="(#[0-9a-fA-F]{3,8})"/)||[])[1];
-    const size=(attrs.match(/size="([1-7])"/)||[])[1];
+  let value=String(input||"").replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi,"");
+  // Older posts were saved as Markdown/plain text. Convert common formatting safely.
+  if(!/<[a-z][^>]*>/i.test(value)){
+    value=value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    value=value.replace(/\\\\?\\*\\*(.+?)\\\\?\\*\\*/g,"<strong>$1</strong>");
+    value=value.replace(/\\\\?\\*(.+?)\\\\?\\*/g,"<em>$1</em>");
+    value=value.replace(/^### (.+)$/gm,"<strong>$1</strong>").replace(/^## (.+)$/gm,"<strong>$1</strong>").replace(/^# (.+)$/gm,"<strong>$1</strong>");
+    value=value.replace(/^[-•] (.+)$/gm,"• $1").replace(/\\n/g,"<br>");
+  }
+  value=value.replace(/<font\\b([^>]*)>/gi,function(tag,attrs){
+    const color=(attrs.match(/color=["']?(#[0-9a-fA-F]{3,8})["']?/i)||[])[1];
+    const size=(attrs.match(/size=["']?([1-7])["']?/i)||[])[1];
     const px={1:10,2:13,3:16,4:19,5:24,6:32,7:48};
     const style=(color?"color:"+color+";":"")+(size?"font-size:"+px[size]+"px;":"");
     return "<span"+(style?' style="'+style+'"':"")+">";
-  }).replace(/<\/font>/gi,"</span>");
-  value=value.replace(/<(?!\/?(?:b|strong|i|em|u|br|p|div|span)\b)[^>]*>/gi,"");
-  value=value.replace(/<(b|strong|i|em|u|br|p|div|span)\b[^>]*>/gi,function(tag){
-    const name=(tag.match(/^<([a-z]+)/i)||[])[1].toLowerCase();
-    return name==="br"?"<br>":"<"+name+">";
+  }).replace(/<\\/font>/gi,"</span>");
+  value=value.replace(/<(?!\\/?(?:b|strong|i|em|u|br|p|div|span)\\b)[^>]*>/gi,"");
+  value=value.replace(/<(b|strong|i|em|u|br|p|div|span)\\b([^>]*)>/gi,function(tag,name,attrs){
+    const safeName=name.toLowerCase();
+    if(safeName==="br")return "<br>";
+    if(safeName!=="span")return "<"+safeName+">";
+    const color=(attrs.match(/color\\s*:\\s*(#[0-9a-fA-F]{3,8})/i)||[])[1];
+    const size=(attrs.match(/font-size\\s*:\\s*(\\d{1,2}px)/i)||[])[1];
+    const safeStyle=(color?"color:"+color+";":"")+(size&&parseInt(size,10)>=8&&parseInt(size,10)<=64?"font-size:"+size+";":"");
+    return "<span"+(safeStyle?' style="'+safeStyle+'"':"")+">";
   });
   return value;
 }
