@@ -87,7 +87,7 @@ export default function Profile(){
    "Email: "+val(user.email),
    "User ID: "+user.uid,
    "",
-   "₹99 mobile access payment approve ho chuka hai. Kripya aage ki jaankari dein."
+   "₹299 mobile access payment approve ho chuka hai. Kripya aage ki jaankari dein."
   ].join("\n");
   window.location.href="https://wa.me/919112170192?text="+encodeURIComponent(message);
  }
@@ -170,8 +170,8 @@ export default function Profile(){
        <Row label="Other Important Information" value={d.otherInfo}/>
       </Section>
 
-      {mobile&&<><div className="notice">✅ ₹99 Mobile Access approve ho gaya hai. Ab WhatsApp par profile aur aapki jaankari ke saath message kholein. Message bhejne se pehle aap use dekh sakte hain.</div><button className="primaryAction" type="button" onClick={openWhatsAppRequest}>🟢 WhatsApp par baat karein →</button></>}
-      {!mobile&&<><div className="notice">📱 Pay ₹99 to view Mobile Number</div><button className="primaryAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(id)+"&type=mobile")}>₹99 Mobile Number Access →</button></>}
+      {mobile&&<><div className="notice">✅ ₹299 Mobile Access approve ho gaya hai. Ab WhatsApp par profile aur aapki jaankari ke saath message kholein. Message bhejne se pehle aap use dekh sakte hain.</div><button className="primaryAction" type="button" onClick={openWhatsAppRequest}>🟢 WhatsApp par baat karein →</button></>}
+      {!mobile&&<><div className="notice">📱 Pay ₹299 to view Mobile Number</div><button className="primaryAction" onClick={()=>router.push("/payment?profile="+encodeURIComponent(id)+"&type=mobile")}>₹299 Mobile Number Access →</button></>}
     </div>}
 
     {!user&&<><p className="small">Google login is required for payment/access.</p>{loginError&&<div className="errorBox">{loginError}</div>}</>}
