@@ -11,7 +11,9 @@ export default function sitemap(){
     ["/muslim-rishta-service",0.9,"monthly"],
     ["/online-rishta-safety-checklist",0.8,"monthly"],
     ["/widow-widower-nikah-guide",0.8,"monthly"],
-    ["/islamic-calendar",0.6,"monthly"]
+    ["/islamic-calendar",0.6,"monthly"],
+    ["/instructions",0.7,"monthly"],
+    ["/muslim-nikah-biodata-guide",0.8,"monthly"]
   ];
   return pages.map(([path,priority,changeFrequency])=>({
     url:base+path,
