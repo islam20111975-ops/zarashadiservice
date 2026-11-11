@@ -4,3 +4,7 @@ export const metadata = {
     follow: true,
   },
 };
+
+export default function Layout({ children }) {
+  return children;
+}
