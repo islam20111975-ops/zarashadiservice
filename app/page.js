@@ -162,6 +162,9 @@ export default function Home(){
         <section className="heroHome" id="profiles">
           <div className="heroGlow one"></div><div className="heroGlow two"></div>
           <div className="heroContent">
+            <h1 style={{fontSize:"clamp(24px,4vw,34px)",fontWeight:900,color:"#4c1d95",lineHeight:1.2,margin:"0 auto 18px",maxWidth:900}}>
+              Zara Nikah Service – Muslim Marriage &amp; Nikah Rishta Service
+            </h1>
             <div className="homeAutoSlider" aria-label="Nikah profiles automatic slideshow">
               {sliderIds.length && currentProfile ? <button className="homeSlide" onClick={()=>router.push("/profile/"+currentProfile.id)} aria-label={"Profile "+currentProfile.id+" dekhein"}>
                 <img key={currentProfile.id} src={currentProfile.image||""} alt={"Marriage profile "+currentProfile.id} loading="eager" decoding="async" fetchPriority="high"/>
@@ -198,7 +201,7 @@ export default function Home(){
             <p><strong>Kya har profile ki har detail public hoti hai?</strong><br/>Nahi. Kuch details login ya authorised access ke peeche ho sakti hain. Private information ko permission ke baghair share na karein.</p>
             <p><strong>Kya “verified” ka matlab shaadi ki guarantee hai?</strong><br/>Nahi. Website par verification label ko nikah, compatibility ya kisi shakhs ki tamam maloomat ki guarantee na samjhein. Apni independent verification zaroor karein.</p>
             <p><strong>Payment se pehle kya karna chahiye?</strong><br/>Amount, service ka purpose, access ki conditions aur refund/cancellation policy padhein; receipt aur UTR ko apne paas rakhein.</p>
-            <p style={{marginBottom:0}}>Mazeed tafseel ke liye <a href="/about">About Us</a>, <a href="/terms">Terms &amp; Conditions</a>, <a href="/privacy">Privacy Policy</a> aur <a href="/refund-policy">Refund &amp; Cancellation Policy</a> padhein.</p>
+            <p style={{marginBottom:0}}>Useful guides: <a href="/muslim-nikah-biodata-guide">Muslim marriage biodata guide</a>, <a href="/muslim-rishta-service">Muslim rishta service</a>, <a href="/online-rishta-safety-checklist">online rishta safety checklist</a>, <a href="/widow-widower-nikah-guide">widow and widower nikah guide</a>. Mazeed tafseel ke liye <a href="/about">About Us</a>, <a href="/terms">Terms &amp; Conditions</a>, <a href="/privacy">Privacy Policy</a> aur <a href="/refund-policy">Refund &amp; Cancellation Policy</a> padhein.</p>
             <p style={{fontSize:12,color:"#6b6174",marginBottom:0,marginTop:16}}>Yeh general information hai, legal advice ya kisi bhi rishtay ki guarantee nahi.</p>
           </div>
         </section>
