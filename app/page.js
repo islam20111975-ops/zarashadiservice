@@ -76,7 +76,7 @@ export default function Home(){
   },[]);
   useEffect(()=>{
     if(!user||user.isAnonymous){setUnreadNotifications(0);return;}
-    return onSnapshot(query(collection(db,"notifications"),where("uid","==",user.uid),where("read","==",false)),snap=>setUnreadNotifications(snap.size),()=>setUnreadNotifications(0));
+    return onSnapshot(query(collection(db,"notifications"),where("uid","==",user.uid)),snap=>setUnreadNotifications(snap.size),()=>setUnreadNotifications(0));
   },[user]);
   useEffect(()=>onSnapshot(collection(db,"homePosts"),snap=>{const rows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted");rows.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));setHomePosts(rows)},()=>setHomePosts([])),[]);
   useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});(async()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");if(cached?.logo||cached?.appIcon){const b={logo:cached.logo||"",appIcon:cached.appIcon||"/api/pwa-icon?size=512"};setBranding(b);if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}catch(e){} getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){const b={logo:s.data().logo||"",appIcon:s.data().appIcon||"/api/pwa-icon?size=512"};setBranding(b);try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify(b))}catch(e){} if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}).catch(()=>{})})();getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
@@ -120,12 +120,10 @@ export default function Home(){
   return (
     <>
       <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"url("+wallpaper+")","--site-wallpaper":"url("+wallpaper+")"}:undefined}>
-        <header className="siteHeader"><div className="headerInner">
-<button className="logo headerWeddingBrand" onClick={()=>router.push("/")} aria-label="Zara Nikah Service home"><span className="logoMark logoMarkBrand" aria-hidden="true">{branding.logo?<img src={branding.logo} alt="Zara Nikah logo" />:<><span className="logoZ">Z</span><span className="logoN">N</span></>}</span><span className="headerBrandText"><strong>ZARA NIKAH</strong><small>SERVICE</small></span></button>
-<div className="headerActions"><button className="headerMenuToggle" type="button" aria-label="Open menu" aria-expanded={headerMenuOpen} onClick={()=>setHeaderMenuOpen(v=>!v)}>{headerMenuOpen?"✕":"☰"} <span>MENU</span></button>
-<button className="headerLogin" disabled={loginBusy} onClick={async()=>{setLoginError("");if(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(user?.email?.toLowerCase())){router.push("/admin");return}setLoginBusy(true);try{if(user||auth.currentUser?.isAnonymous)await signOut(auth);const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});const result=await signInWithPopup(auth,p);router.push(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(result.user.email?.toLowerCase())?"/admin":"/")}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}finally{setLoginBusy(false)}}}>{loginBusy?"Login...":user?(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(user.email?.toLowerCase())?"🔐 Admin Dashboard":"👤 My Profile / Switch Account"):"🔐 Login"}</button>
-</div>
-{headerMenuOpen&&<nav className="headerMenuPanel" aria-label="Website menu">
+        <div className="homeTopControls">
+<button className="cornerIconButton cornerMenuButton" type="button" aria-label="Menu" aria-expanded={headerMenuOpen} onClick={()=>setHeaderMenuOpen(v=>!v)}>{headerMenuOpen?"✕":"☰"}</button>
+<button className="cornerIconButton cornerNotificationButton" type="button" aria-label="Notifications" onClick={()=>router.push("/notifications")}>🔔{unreadNotifications>0&&<span className="notificationCountBadge">{unreadNotifications>99?"99+":unreadNotifications}</span>}</button>
+{headerMenuOpen&&<nav className="headerMenuPanel cornerMenuPanel" aria-label="Website menu">
 <div className="headerMenuGroup"><span className="headerMenuLabel">रिश्ते देखें</span>
 <button type="button" onClick={()=>{setR("male");setHeaderMenuOpen(false);scrollToProfiles();}}>👨 <span>Male Rishte</span></button>
 <button type="button" onClick={()=>{setR("female");setHeaderMenuOpen(false);scrollToProfiles();}}>👩 <span>Female Rishte</span></button></div>
@@ -133,9 +131,13 @@ export default function Home(){
 <button type="button" onClick={()=>{setHeaderMenuOpen(false);router.push("/add-profile");}}>➕ <span>अपना रिश्ता जोड़ें • ₹299 / 3 महीने</span></button>
 <button type="button" onClick={()=>{setHeaderMenuOpen(false);router.push("/instructions");}}>📘 <span>पूरी जानकारी / इस्तेमाल कैसे करें</span></button>
 <button type="button" disabled={loginBusy} onClick={()=>{setHeaderMenuOpen(false);openPrivateChat();}}>💬 <span>Private Chat</span></button>
-{user&&!user.isAnonymous&&<button type="button" onClick={()=>{setHeaderMenuOpen(false);router.push("/notifications");}}>🔔 <span>Notifications{unreadNotifications>0?" ("+(unreadNotifications>99?"99+":unreadNotifications)+" नई)":""}</span></button>}
-<button type="button" onClick={()=>{setHeaderMenuOpen(false);router.push("/islamic-calendar");}}>🌙 <span>Islamic Calendar</span></button></div>
-</nav>}</div></header>{loginError&&<div className="errorBox homeLoginError">{loginError}</div>}
+<button type="button" onClick={()=>{setHeaderMenuOpen(false);router.push("/notifications");}}>🔔 <span>मेरी सूचनाएँ ({unreadNotifications})</span></button>
+<button type="button" onClick={()=>{setHeaderMenuOpen(false);router.push("/islamic-calendar");}}>🌙 <span>Islamic Calendar</span></button>
+<button type="button" disabled={loginBusy} onClick={async()=>{setLoginError("");if(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(user?.email?.toLowerCase())){router.push("/admin");return}setLoginBusy(true);try{if(user||auth.currentUser?.isAnonymous)await signOut(auth);const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});const result=await signInWithPopup(auth,p);router.push(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(result.user.email?.toLowerCase())?"/admin":"/")}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}finally{setLoginBusy(false)}}}>🔐 <span>{loginBusy?"Login...":user?"Profile / Account":"Login"}</span></button>
+</div>
+</nav>}
+</div>
+<div className="homeLogoTop"><button className="homeLogoOnly" onClick={()=>router.push("/")} aria-label="Home"><span className="logoMark logoMarkBrand">{branding.logo?<img src={branding.logo} alt="Zara Nikah logo"/>:<><span className="logoZ">Z</span><span className="logoN">N</span></>}</span></button></div>{loginError&&<div className="errorBox homeLoginError">{loginError}</div>}
         <section className="heroHome" id="profiles">
           <div className="heroGlow one"></div><div className="heroGlow two"></div>
           <div className="heroContent" aria-hidden="true"></div>
