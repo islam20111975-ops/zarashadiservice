@@ -2509,3 +2509,120 @@ body::after {
     box-shadow: inset 0 0 0 2px rgba(255,255,255,.72), inset 0 0 0 3.5px rgba(31,111,76,.35);
   }
 }
+
+
+/* Zara Nikah premium visual system: emerald, ivory and royal gold */
+:root {
+  --zara-emerald: #14583f;
+  --zara-emerald-deep: #103e30;
+  --zara-gold: #b58a3b;
+  --zara-ivory: #fffdf6;
+  --zara-ink: #243b30;
+}
+::selection { background: rgba(181,138,59,.25); color: var(--zara-emerald-deep); }
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid rgba(181,138,59,.72) !important;
+  outline-offset: 3px !important;
+}
+.siteHeader, .homeTopControls {
+  border-bottom: 1px solid rgba(181,138,59,.34) !important;
+}
+.siteHeader {
+  box-shadow: 0 8px 28px rgba(22,65,46,.09) !important;
+}
+main:has(.homeHeroPanel) .homeHeroPanel {
+  border: 1px solid rgba(210,177,111,.62) !important;
+  box-shadow: 0 22px 55px rgba(17,57,40,.22), inset 0 1px 0 rgba(255,255,255,.28) !important;
+}
+main:has(.homeHeroPanel) .homeHeroKicker {
+  color: #f2d99f !important;
+  letter-spacing: 2px !important;
+}
+main:has(.homeHeroPanel) .homeHeroPanel h1 {
+  text-wrap: balance;
+  text-shadow: 0 2px 18px rgba(0,0,0,.18);
+}
+main:has(.homeHeroPanel) .homeHeroMale {
+  color: #fffdf4 !important;
+  background: linear-gradient(135deg, #176344, #0d4935) !important;
+  border-color: #c9a65e !important;
+}
+main:has(.homeHeroPanel) .homeHeroFemale {
+  color: #fffaf5 !important;
+  background: linear-gradient(135deg, #a45d70, #77394f) !important;
+  border-color: #d9ad9a !important;
+}
+main:has(.homeHeroPanel) .homeHeroAdd {
+  color: #f9e8bc !important;
+  border: 1px solid rgba(224,194,132,.8) !important;
+  background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.035)) !important;
+}
+main:has(.heroHomePanel) .homeQuickCard,
+main:has(.heroHomePanel) .trustStrip > div,
+main:has(.heroHomePanel) .profileCard,
+main:has(.heroHomePanel) .homePostCard {
+  border: 1px solid rgba(181,138,59,.34) !important;
+  background: linear-gradient(145deg, #fffefa, #f5f8f1) !important;
+  box-shadow: 0 9px 24px rgba(24,65,46,.09), inset 0 1px 0 #fff !important;
+}
+main:has(.heroHomePanel) .homeQuickCard:hover,
+main:has(.heroHomePanel) .profileCard:hover {
+  border-color: rgba(181,138,59,.72) !important;
+  box-shadow: 0 15px 30px rgba(24,65,46,.14) !important;
+}
+main:has(.heroHomePanel) .homeQuickIcon {
+  color: var(--zara-emerald);
+  background: linear-gradient(145deg, #f9f0d9, #e7efe3) !important;
+  border: 1px solid rgba(181,138,59,.22);
+}
+main:has(.heroHomePanel) .cardInfo button,
+main:has(.heroHomePanel) .primaryAction {
+  background: linear-gradient(115deg, #14583f, #1e7653 55%, #a47a32) !important;
+  box-shadow: 0 7px 17px rgba(20,88,63,.2) !important;
+}
+main:not(:has(.homeHeroPanel)) {
+  color: var(--zara-ink);
+}
+main:not(:has(.homeHeroPanel)) :is(.cardPage, .dashboardPage, .admin, .payment, .profileCard, .statCard, .adminBox, .adminUser, .messageBox, .faqItem, .settingsCard, .contentCard, .formCard) {
+  border-color: rgba(181,138,59,.34) !important;
+  border-radius: 19px !important;
+  box-shadow: 0 10px 28px rgba(22,65,46,.085), inset 0 1px 0 rgba(255,255,255,.85) !important;
+}
+main:not(:has(.homeHeroPanel)) :is(h1, h2, h3, .sectionHead h2) {
+  color: var(--zara-emerald-deep);
+}
+main:not(:has(.homeHeroPanel)) :is(button, .primaryAction) {
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+main:not(:has(.homeHeroPanel)) :is(button:not(.miniBack):not(.cornerIconButton), .primaryAction) {
+  border-radius: 13px;
+}
+main:not(:has(.homeHeroPanel)) :is(input, select, textarea, .adminInput) {
+  border-color: rgba(181,138,59,.42) !important;
+  border-radius: 12px !important;
+  background-color: #fffefa !important;
+}
+main:not(:has(.homeHeroPanel)) :is(input, select, textarea, .adminInput):focus {
+  border-color: #1d7653 !important;
+  box-shadow: 0 0 0 3px rgba(29,118,83,.12) !important;
+}
+main:not(:has(.homeHeroPanel)) .primaryAction {
+  color: #fffdf4 !important;
+  background: linear-gradient(115deg, #14583f, #1e7653 55%, #a47a32) !important;
+  box-shadow: 0 8px 19px rgba(20,88,63,.2) !important;
+}
+main:not(:has(.homeHeroPanel)) .miniBack,
+main:not(:has(.homeHeroPanel)) .backAction {
+  color: #315541 !important;
+  background: linear-gradient(135deg, #f6f1e4, #eaf2e9) !important;
+  border: 1px solid rgba(181,138,59,.25) !important;
+}
+@media (hover:hover) {
+  main:not(:has(.homeHeroPanel)) :is(button, .primaryAction):hover {
+    transform: translateY(-1px);
+    filter: saturate(1.08);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
