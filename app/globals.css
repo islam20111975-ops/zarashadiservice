@@ -2393,3 +2393,45 @@ main:has(.heroHome) .footerNav a { color: #315a45 !important; }
   main:has(.heroHome) .homeQuickCard strong { font-size: 12px; }
   main:has(.heroHome) .homeQuickCard small { font-size: 10px; }
 }
+
+
+/* Site-wide soft premium background treatment */
+html { background: #f2f7f2 !important; }
+body {
+  background:
+    radial-gradient(ellipse at 8% 8%, rgba(198, 224, 202, .48), transparent 34%),
+    radial-gradient(ellipse at 92% 22%, rgba(230, 213, 174, .30), transparent 32%),
+    radial-gradient(ellipse at 50% 92%, rgba(206, 228, 216, .38), transparent 38%),
+    linear-gradient(145deg, #f7faf6 0%, #eef5ef 48%, #f8f5ec 100%) !important;
+  background-attachment: fixed !important;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .42;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(49, 104, 75, .075) 1px, transparent 0);
+  background-size: 26px 26px;
+}
+main {
+  background-color: transparent !important;
+}
+main:not(:has(.homeHeroPanel)) {
+  background-image:
+    radial-gradient(ellipse at 0% 0%, rgba(219, 237, 222, .30), transparent 42%),
+    radial-gradient(ellipse at 100% 55%, rgba(242, 227, 194, .20), transparent 38%) !important;
+}
+main:not(:has(.homeHeroPanel)) :is(.card, .panel, .formCard, .profileCard, .contentCard, .sectionCard, .postCard, .faqItem, .settingsCard) {
+  border-color: rgba(190, 211, 193, .78) !important;
+  box-shadow: 0 8px 24px rgba(38, 76, 53, .075) !important;
+}
+.siteHeader, header {
+  background-color: rgba(255, 255, 255, .88);
+  backdrop-filter: blur(14px);
+}
+@media (max-width: 700px) {
+  body { background-attachment: scroll !important; }
+}
