@@ -2648,3 +2648,53 @@ main:not(:has(.heroHome)) :is(.cardPage,.dashboardPage,.admin,.payment,.profileC
 main:not(:has(.heroHome)) :is(button,.primaryAction,.cardInfo button){background:linear-gradient(115deg,#103e30,#14583f 72%,#b58a3b)!important;color:#fffdf6!important;border:1px solid #b58a3b!important}
 main:not(:has(.heroHome)) :is(h1,h2,h3,.sectionHead h2){color:#103e30!important}
 body:after{border-color:rgba(181,138,59,.9)!important;box-shadow:inset 0 0 0 3px rgba(255,253,246,.9),inset 0 0 0 5px rgba(20,88,63,.45)!important}
+
+
+/* Zara Nikah — restrained editorial luxury homepage */
+html,body{background:#f7f6ef!important;color:#203b30!important}
+body{background:linear-gradient(180deg,#fbfaf5 0%,#f2f3eb 100%)!important}
+body:before{display:none!important}
+body:after{inset:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+main:has(.heroHome){max-width:none!important;background:#f7f6ef!important;color:#203b30!important}
+main:has(.heroHome) .homeTopControls{position:relative!important;max-width:1180px!important;margin:0 auto!important;min-height:66px!important;padding:9px 22px!important;border:0!important;background:transparent!important;box-shadow:none!important}
+main:has(.heroHome) .topCenterBrand{top:14px!important;font-family:Georgia,serif!important;font-size:clamp(24px,3vw,31px)!important;font-weight:700!important;letter-spacing:.4px!important;background:none!important;color:#174b38!important;-webkit-text-fill-color:#174b38!important;text-shadow:none!important}
+main:has(.heroHome) .cornerIconButton{position:absolute!important;top:10px!important;width:42px!important;height:42px!important;border-radius:50%!important;background:#fff!important;color:#174b38!important;border:1px solid #d8c18d!important;box-shadow:0 3px 12px rgba(26,60,43,.07)!important}
+main:has(.heroHome) .heroHome{max-width:1180px!important;margin:10px auto 0!important;padding:18px 24px 34px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+main:has(.heroHome) .homeHeroPanel{max-width:1080px!important;margin:0 auto!important;padding:clamp(30px,5vw,58px) clamp(20px,6vw,70px)!important;text-align:left!important;border:1px solid #c7a96a!important;border-radius:18px!important;background:linear-gradient(112deg,#123f30 0%,#174f3b 58%,#205d43 100%)!important;box-shadow:0 18px 40px rgba(22,59,42,.13)!important}
+main:has(.heroHome) .homeHeroKicker{display:inline-flex!important;align-items:center!important;gap:8px!important;padding:7px 12px!important;border:1px solid rgba(225,197,133,.45)!important;border-radius:30px!important;background:rgba(255,255,255,.08)!important;color:#ead7a7!important;font-size:11px!important;letter-spacing:1.6px!important}
+main:has(.heroHome) .homeHeroPanel h1{max-width:760px!important;margin:20px 0 12px!important;color:#fffdf6!important;font-family:Georgia,serif!important;font-size:clamp(30px,4.6vw,49px)!important;line-height:1.12!important;font-weight:600!important;letter-spacing:-.5px!important;text-shadow:none!important}
+main:has(.heroHome) .homeHeroLead{max-width:720px!important;margin:0!important;color:rgba(255,253,246,.83)!important;font-size:15px!important;line-height:1.8!important}
+main:has(.heroHome) .homeHeroActions{display:flex!important;flex-wrap:wrap!important;justify-content:flex-start!important;gap:11px!important;margin:27px 0 20px!important}
+main:has(.heroHome) .homeHeroActions button{min-height:48px!important;padding:12px 20px!important;border-radius:8px!important;font-size:13px!important;font-weight:700!important;box-shadow:none!important;transition:transform .18s ease,filter .18s ease!important}
+main:has(.heroHome) .homeHeroMale{background:#fffdf6!important;color:#174b38!important;border:1px solid #e0c987!important}
+main:has(.heroHome) .homeHeroFemale{background:#b58a3b!important;color:#fff!important;border:1px solid #d7b76d!important}
+main:has(.heroHome) .homeHeroAdd{background:transparent!important;color:#fffdf6!important;border:1px solid rgba(255,253,246,.55)!important}
+main:has(.heroHome) .homeHeroTrust{display:flex!important;flex-wrap:wrap!important;gap:10px 20px!important;justify-content:flex-start!important;color:#f4ead0!important;font-size:11px!important}
+main:has(.heroHome) .homeQuickLinks{max-width:1080px!important;margin:18px auto 0!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important}
+main:has(.heroHome) .homeQuickCard{display:flex!important;align-items:center!important;gap:13px!important;min-height:100px!important;padding:17px!important;border:1px solid #e5dcc7!important;border-radius:12px!important;background:#fffefa!important;box-shadow:0 5px 16px rgba(34,56,42,.045)!important;color:#254534!important;text-decoration:none!important}
+main:has(.heroHome) .homeQuickIcon{display:grid!important;place-items:center!important;flex:0 0 42px!important;width:42px!important;height:42px!important;border-radius:10px!important;background:#f3eddd!important;color:#174b38!important;font-size:20px!important}
+main:has(.heroHome) .homeQuickCard strong{display:block!important;color:#174b38!important;font-size:13px!important;font-weight:750!important}
+main:has(.heroHome) .homeQuickCard small{display:block!important;margin-top:5px!important;color:#68756b!important;font-size:11px!important;line-height:1.55!important}
+main:has(.heroHome) .homeQuickArrow{margin-left:auto!important;color:#b58a3b!important;font-size:22px!important}
+main:has(.heroHome) .homePosts{max-width:1080px!important;margin:22px auto!important;padding:0!important}
+main:has(.heroHome) .homePostsList{gap:14px!important}
+main:has(.heroHome) .homePostCard{padding:22px!important;border:1px solid #e7ddc9!important;border-radius:12px!important;background:#fffefa!important;color:#33463a!important;box-shadow:0 5px 18px rgba(34,56,42,.045)!important;line-height:1.8!important}
+main:has(.heroHome) .homePostMeta{padding-bottom:9px!important;margin-bottom:12px!important;border-bottom:1px solid #eee7d8!important;color:#9a762f!important;font-size:10px!important;letter-spacing:.5px!important}
+main:has(.heroHome) .homePostCard p{font-size:14px!important;line-height:1.8!important;color:#394b40!important}
+main:has(.heroHome) .homePostCard strong{color:#174b38!important}
+main:has(.heroHome) .profiles{max-width:1120px!important;margin:0 auto!important}
+main:has(.heroHome) .sectionHead h2{color:#174b38!important;font-family:Georgia,serif!important}
+@media(max-width:760px){
+ main:has(.heroHome) .heroHome{padding:8px 13px 24px!important}
+ main:has(.heroHome) .homeHeroPanel{padding:27px 19px 25px!important;border-radius:14px!important}
+ main:has(.heroHome) .homeHeroPanel h1{font-size:clamp(28px,8vw,37px)!important}
+ main:has(.heroHome) .homeHeroLead{font-size:13px!important}
+ main:has(.heroHome) .homeHeroActions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
+ main:has(.heroHome) .homeHeroActions button{padding:10px 8px!important;font-size:11px!important;min-height:46px!important}
+ main:has(.heroHome) .homeHeroActions .homeHeroAdd{grid-column:1/-1!important}
+ main:has(.heroHome) .homeHeroTrust{display:grid!important;gap:7px!important;font-size:10px!important}
+ main:has(.heroHome) .homeQuickLinks{grid-template-columns:1fr!important;gap:9px!important;margin-top:12px!important}
+ main:has(.heroHome) .homeQuickCard{min-height:78px!important;padding:13px!important}
+ main:has(.heroHome) .homePostCard{padding:16px!important}
+ main:has(.heroHome) .homePostCard p{font-size:13px!important}
+}
