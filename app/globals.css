@@ -2177,3 +2177,219 @@ main:has(.heroHome) footer { color: #827579 !important; }
  .homeLogoOnly .logoMark{width:84px!important;height:84px!important;min-width:84px!important;flex-basis:84px!important;border-radius:22px!important}
  .cornerMenuPanel{top:61px!important;left:9px!important;width:min(340px,calc(100vw - 18px))!important}
 }
+
+
+/* Modern Islamic + matrimony homepage refresh; homepage only */
+main:has(.heroHome) {
+  background: #f7f5ee !important;
+  color: #203b31 !important;
+}
+main:has(.heroHome) .heroHome {
+  max-width: 1180px !important;
+  margin: 5px auto 0 !important;
+  padding: 0 22px 28px !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+main:has(.heroHome) .heroContent { display: none !important; }
+main:has(.heroHome) .homeHeroPanel {
+  position: relative;
+  overflow: hidden;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(28px, 5vw, 54px) clamp(18px, 5vw, 58px);
+  border: 1px solid #c7a76a;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(207, 177, 111, .22), transparent 28%),
+    radial-gradient(circle at 8% 100%, rgba(207, 177, 111, .15), transparent 32%),
+    linear-gradient(135deg, #123f32 0%, #0d3329 58%, #174a39 100%);
+  box-shadow: 0 18px 44px rgba(18, 63, 50, .16), inset 0 0 0 5px rgba(255,255,255,.035);
+  text-align: center;
+}
+main:has(.heroHome) .homeHeroPanel:before,
+main:has(.heroHome) .homeHeroPanel:after {
+  content: "✧";
+  position: absolute;
+  color: rgba(224, 194, 132, .38);
+  font-size: 82px;
+  line-height: 1;
+  pointer-events: none;
+}
+main:has(.heroHome) .homeHeroPanel:before { top: 10px; left: 20px; }
+main:has(.heroHome) .homeHeroPanel:after { right: 20px; bottom: 2px; }
+main:has(.heroHome) .homeHeroKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid rgba(224,194,132,.48);
+  border-radius: 999px;
+  color: #f0dba9;
+  background: rgba(255,255,255,.07);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.7px;
+}
+main:has(.heroHome) .homeHeroPanel h1 {
+  max-width: 800px;
+  margin: 20px auto 12px;
+  color: #fffaf0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(30px, 4.8vw, 54px);
+  line-height: 1.12;
+  letter-spacing: -.7px;
+  text-wrap: balance;
+}
+main:has(.heroHome) .homeHeroLead {
+  max-width: 720px;
+  margin: 0 auto;
+  color: #e7e9dc;
+  font-size: clamp(14px, 1.7vw, 17px);
+  font-weight: 500;
+  line-height: 1.75;
+}
+main:has(.heroHome) .homeHeroActions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 11px;
+  margin: 27px auto 18px;
+}
+main:has(.heroHome) .homeHeroActions button {
+  min-height: 49px;
+  padding: 13px 19px;
+  border: 1px solid #d4bb82;
+  border-radius: 13px;
+  color: #183c30;
+  background: linear-gradient(135deg, #f7e8c5, #dfc184);
+  box-shadow: 0 6px 15px rgba(0,0,0,.13);
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+main:has(.heroHome) .homeHeroActions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 20px rgba(0,0,0,.18);
+}
+main:has(.heroHome) .homeHeroActions .homeHeroFemale {
+  color: #fffaf0;
+  border-color: #d4bb82;
+  background: linear-gradient(135deg, #a66a76, #7c394b);
+}
+main:has(.heroHome) .homeHeroActions .homeHeroAdd {
+  color: #f8e8bf;
+  border-color: rgba(224,194,132,.6);
+  background: rgba(255,255,255,.07);
+  box-shadow: none;
+}
+main:has(.heroHome) .homeHeroTrust {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 9px 18px;
+  color: #e7e0cb;
+  font-size: 11px;
+  font-weight: 700;
+}
+main:has(.heroHome) .homeQuickLinks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px;
+  max-width: 1120px;
+  margin: 17px auto 4px;
+}
+main:has(.heroHome) .homeQuickCard {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e4d8bd;
+  border-radius: 17px;
+  background: #fffefa;
+  color: #254537;
+  text-decoration: none;
+  box-shadow: 0 5px 18px rgba(46, 63, 48, .055);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+main:has(.heroHome) .homeQuickCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 22px rgba(46, 63, 48, .1);
+}
+main:has(.heroHome) .homeQuickIcon {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #f2ead8;
+  font-size: 21px;
+}
+main:has(.heroHome) .homeQuickCard strong {
+  display: block;
+  color: #234735;
+  font-size: 13px;
+  line-height: 1.35;
+}
+main:has(.heroHome) .homeQuickCard small {
+  display: block;
+  margin-top: 4px;
+  color: #77766b;
+  font-size: 10px;
+  line-height: 1.45;
+}
+main:has(.heroHome) .homeQuickArrow {
+  margin-left: auto;
+  color: #a8864d;
+  font-size: 25px;
+}
+main:has(.heroHome) .homePosts { margin-top: 20px !important; }
+main:has(.heroHome) .homePostCard {
+  border-color: #e4d8bd !important;
+  border-radius: 15px !important;
+  box-shadow: 0 5px 16px rgba(46,63,48,.07) !important;
+}
+main:has(.heroHome) .sectionHead h2 { color: #234735 !important; }
+main:has(.heroHome) .eyebrow { color: #9a7945 !important; }
+main:has(.heroHome) .count {
+  color: #315a45 !important;
+  background: #edf3e9 !important;
+  border-color: #d4e0cd !important;
+}
+main:has(.heroHome) .profileCard {
+  border-color: #e5dcc9 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 6px 18px rgba(46,63,48,.07) !important;
+}
+main:has(.heroHome) .verified {
+  color: #285a3c !important;
+  background: #edf5e9 !important;
+}
+main:has(.heroHome) .trustStrip > div {
+  border-color: #e4d8bd !important;
+  background: #fffefa !important;
+}
+main:has(.heroHome) .trustStrip b { color: #234735 !important; }
+main:has(.heroHome) .footerNav a { color: #315a45 !important; }
+@media (max-width: 760px) {
+  main:has(.heroHome) .homeQuickLinks { grid-template-columns: 1fr; gap: 9px; }
+  main:has(.heroHome) .homeQuickCard { padding: 13px; }
+}
+@media (max-width: 600px) {
+  main:has(.heroHome) .heroHome { padding: 0 11px 22px !important; margin-top: 3px !important; }
+  main:has(.heroHome) .homeHeroPanel { padding: 27px 15px 25px; border-radius: 21px; }
+  main:has(.heroHome) .homeHeroPanel h1 { margin-top: 17px; font-size: clamp(27px, 8vw, 36px); }
+  main:has(.heroHome) .homeHeroLead { font-size: 13px; line-height: 1.65; }
+  main:has(.heroHome) .homeHeroActions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 21px auto 15px; }
+  main:has(.heroHome) .homeHeroActions button { min-height: 46px; padding: 10px 8px; font-size: 11px; }
+  main:has(.heroHome) .homeHeroActions .homeHeroAdd { grid-column: 1 / -1; }
+  main:has(.heroHome) .homeHeroTrust { display: grid; gap: 7px; text-align: left; width: fit-content; margin: 0 auto; font-size: 10px; }
+  main:has(.heroHome) .homeQuickCard strong { font-size: 12px; }
+  main:has(.heroHome) .homeQuickCard small { font-size: 10px; }
+}

@@ -141,6 +141,38 @@ export default function Home(){
         <section className="heroHome" id="profiles">
           <div className="heroGlow one"></div><div className="heroGlow two"></div>
           <div className="heroContent" aria-hidden="true"></div>
+          <section className="homeHeroPanel" aria-labelledby="home-main-title">
+            <div className="homeHeroKicker"><span>🌙</span> NIKAH • RISHTA • NAYI SHURUAAT</div>
+            <h1 id="home-main-title">Muslim Nikah &amp; Second Marriage Rishta Service</h1>
+            <p className="homeHeroLead">Nikah ke liye munasib rishta dhoondhne ka ek asaan tareeqa. Pehli shaadi ho ya dobara nikah, har shakhs aur family ke faisle ka ehtram.</p>
+            <div className="homeHeroActions">
+              <button type="button" className="homeHeroMale" onClick={()=>{setR("male");scrollToProfiles();}}>👨 Male Rishte Dekhein</button>
+              <button type="button" className="homeHeroFemale" onClick={()=>{setR("female");scrollToProfiles();}}>👩 Female Rishte Dekhein</button>
+              <button type="button" className="homeHeroAdd" onClick={()=>router.push("/add-profile")}>＋ Apna Profile Jodein</button>
+            </div>
+            <div className="homeHeroTrust">
+              <span>🔒 Private details ka ehtiyaat</span>
+              <span>📋 Profile aur access ki saaf maloomat</span>
+              <span>🤝 Faisla aapka, bina dabao</span>
+            </div>
+          </section>
+          <section className="homeQuickLinks" aria-label="Nikah service information">
+            <a href="/widow-widower-nikah-guide" className="homeQuickCard">
+              <span className="homeQuickIcon">💍</span>
+              <span><strong>Second Nikah Guide</strong><small>Divorced, widow aur widower ke liye dobara nikah par rehnumai</small></span>
+              <b className="homeQuickArrow">›</b>
+            </a>
+            <a href="/muslim-nikah-biodata-guide" className="homeQuickCard">
+              <span className="homeQuickIcon">📝</span>
+              <span><strong>Marriage Biodata Guide</strong><small>Profile banane se pehle zaroori maloomat samjhein</small></span>
+              <b className="homeQuickArrow">›</b>
+            </a>
+            <a href="/online-rishta-safety-checklist" className="homeQuickCard">
+              <span className="homeQuickIcon">🛡️</span>
+              <span><strong>Online Rishta Safety</strong><small>Privacy, identity aur payment ke hawale se ehtiyaat</small></span>
+              <b className="homeQuickArrow">›</b>
+            </a>
+          </section>
           {homePosts.length>0&&<section className="homePosts" aria-label="Admin announcements"><div className="homePostsList">{homePosts.map(p=><article className="homePostCard" key={p.id} style={{background:p.backgroundColor||undefined,color:p.textColor||undefined}}><div className="homePostMeta">📌 Zara Nikah Service {p.createdAt?.toDate?.()?.toLocaleDateString?.("en-IN")||""}</div>{p.image&&<img src={p.image} alt="Zara Nikah Service post" loading="lazy" style={{display:"block",width:"auto",maxWidth:"100%",maxHeight:240,objectFit:"contain",borderRadius:14,margin:"10px auto"}}/>}<div style={{whiteSpace:"pre-wrap",color:p.textColor||"inherit"}} dangerouslySetInnerHTML={{__html:sanitizeAdminPostHtml(p.text||"")}}/></article>)}</div></section>}
         </section>
         {r&&<section className="profiles" id="profile-results" style={{scrollMarginTop:12}}><div className="sectionHead"><div><span className="eyebrow">AVAILABLE PROFILES</span><h2>{r==="male"?"Male":"Female"} Rishte</h2></div><span className="count">{loading?"Loading...":shown.length+" Profiles"}</span></div>
