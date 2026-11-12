@@ -15,27 +15,30 @@ function getProfileGender(p){
 }
 
 function decodePostEntities(input){
-  return String(input||"")
-    .replace(/&#(?:x([0-9a-f]{1,6})|([0-9]{1,7}));?/gi,(_,hex,dec)=>{
-      const code=hex?parseInt(hex,16):parseInt(dec,10);
-      return Number.isFinite(code)&&code>0&&code<=0x10ffff?String.fromCodePoint(code):"";
-    })
-    .replace(/&nbsp;/gi," ")
-    .replace(/&amp;/gi,"&")
-    .replace(/&lt;/gi,"<")
-    .replace(/&gt;/gi,">")
-    .replace(/&quot;/gi,'"')
-    .replace(/&#39;|&apos;/gi,"'");
+  let value=String(input||"");
+  for(let i=0;i<5;i++){
+    const decoded=value
+      .replace(/&#(?:x([0-9a-f]{1,6})|([0-9]{1,7}));?/gi,(_,hex,dec)=>{
+        const code=hex?parseInt(hex,16):parseInt(dec,10);
+        return Number.isFinite(code)&&code>0&&code<=0x10ffff?String.fromCodePoint(code):"";
+      })
+      .replace(/&nbsp;/gi," ")
+      .replace(/&amp;/gi,"&")
+      .replace(/&lt;/gi,"<")
+      .replace(/&gt;/gi,">")
+      .replace(/&quot;/gi,'"')
+      .replace(/&#39;|&apos;/gi,"'");
+    if(decoded===value)break;
+    value=decoded;
+  }
+  return value;
 }
 
 function sanitizeAdminPostHtml(input){
-  let value=String(input||"");
-  // Decode entities twice because some older posts were saved double-encoded.
-  value=decodePostEntities(decodePostEntities(value));
-  // Remove Markdown escape slashes and line-continuation slashes from pasted text.
-  value=value.replace(/\\([*_#.])/g,"$1").replace(/\\(?=\s*$)/gm,"");
+  let value=decodePostEntities(input);
+  value=value.replace(/\\{1,2}(?:\r\n|\n|\r)/g,"\n");
+  value=value.replace(/\\([*_#])/g,"$1").replace(/\\[ \t]*(?=\r?$)/gm,"");
   value=value.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"");
-  // Turn common block endings into visible line breaks before sanitising tags.
   value=value.replace(/<\/(?:div|p|li|h[1-6]|section|article)>/gi,"\n")
     .replace(/<(?:div|p|li|h[1-6]|section|article)\b[^>]*>/gi,"")
     .replace(/<br\s*\/?>/gi,"\n");
@@ -43,14 +46,12 @@ function sanitizeAdminPostHtml(input){
   if(!hasHtml){
     value=value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   }
-  // Clean Markdown syntax that was pasted into the old rich-text editor.
-  value=value.replace(/\*\*/g,"")
-    .replace(/(^|[\s(])\*([^*\n]+)\*(?=$|[\s).,!?:;])/gm,"$1$2")
+  value=value.replace(/\*\*([^*\n]+)\*\*/g,"<strong>$1</strong>")
+    .replace(/(^|[\s(])\*([^*\n]+)\*(?=$|[\s).,!?:;])/gm,"$1<em>$2</em>")
     .replace(/^#{1,6}\s*/gm,"")
     .replace(/^[-•]\s+/gm,"• ")
     .replace(/!\[([^\]]*)\]\([^)]+\)/g,"$1")
     .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-  // Keep only the small formatting set used by the admin editor.
   value=value.replace(/<font\b([^>]*)>/gi,function(tag,attrs){
     const color=(attrs.match(/color=["']?(#[0-9a-fA-F]{3,8})["']?/i)||[])[1];
     const size=(attrs.match(/size=["']?([1-7])["']?/i)||[])[1];
@@ -72,7 +73,6 @@ function sanitizeAdminPostHtml(input){
     const safeStyle=(color?"color:"+color+";":"")+(size&&parseInt(size,10)>=8&&parseInt(size,10)<=64?"font-size:"+size+";":"");
     return "<span"+(safeStyle?' style="'+safeStyle+'"':"")+">";
   });
-  // Plain-text newlines and pasted list spacing should remain readable.
   value=value.replace(/\n{3,}/g,"\n\n").replace(/\n/g,"<br>");
   return value;
 }
