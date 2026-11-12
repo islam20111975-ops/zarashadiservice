@@ -29,16 +29,28 @@ function decodePostEntities(input){
 }
 
 function sanitizeAdminPostHtml(input){
-  let value=decodePostEntities(input).replace(/\\([*_#.])/g,"$1");
+  let value=String(input||"");
+  // Decode entities twice because some older posts were saved double-encoded.
+  value=decodePostEntities(decodePostEntities(value));
+  // Remove Markdown escape slashes and line-continuation slashes from pasted text.
+  value=value.replace(/\\([*_#.])/g,"$1").replace(/\\(?=\s*$)/gm,"");
   value=value.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"");
-  // Convert older Markdown/plain-text posts into readable, safe HTML.
-  if(!/<[a-z][^>]*>/i.test(value)){
+  // Turn common block endings into visible line breaks before sanitising tags.
+  value=value.replace(/<\/(?:div|p|li|h[1-6]|section|article)>/gi,"\n")
+    .replace(/<(?:div|p|li|h[1-6]|section|article)\b[^>]*>/gi,"")
+    .replace(/<br\s*\/?>/gi,"\n");
+  const hasHtml=/<[a-z][^>]*>/i.test(value);
+  if(!hasHtml){
     value=value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    value=value.replace(/\*\*([\s\S]+?)\*\*/g,"<strong>$1</strong>");
-    value=value.replace(/\*([^*\n]+?)\*/g,"<em>$1</em>");
-    value=value.replace(/^### (.+)$/gm,"<strong>$1</strong>").replace(/^## (.+)$/gm,"<strong>$1</strong>").replace(/^# (.+)$/gm,"<strong>$1</strong>");
-    value=value.replace(/^[-•] (.+)$/gm,"• $1").replace(/\n/g,"<br>");
   }
+  // Clean Markdown syntax that was pasted into the old rich-text editor.
+  value=value.replace(/\*\*/g,"")
+    .replace(/(^|[\s(])\*([^*\n]+)\*(?=$|[\s).,!?:;])/gm,"$1$2")
+    .replace(/^#{1,6}\s*/gm,"")
+    .replace(/^[-•]\s+/gm,"• ")
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g,"$1")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  // Keep only the small formatting set used by the admin editor.
   value=value.replace(/<font\b([^>]*)>/gi,function(tag,attrs){
     const color=(attrs.match(/color=["']?(#[0-9a-fA-F]{3,8})["']?/i)||[])[1];
     const size=(attrs.match(/size=["']?([1-7])["']?/i)||[])[1];
@@ -46,16 +58,22 @@ function sanitizeAdminPostHtml(input){
     const style=(color?"color:"+color+";":"")+(size?"font-size:"+px[size]+"px;":"");
     return "<span"+(style?' style="'+style+'"':"")+">";
   }).replace(/<\/font>/gi,"</span>");
-  value=value.replace(/<(?!\/?(?:b|strong|i|em|u|br|p|div|span)\b)[^>]*>/gi,"");
-  value=value.replace(/<(b|strong|i|em|u|br|p|div|span)\b([^>]*)>/gi,function(tag,name,attrs){
+  value=value.replace(/<(?!\/?(?:b|strong|i|em|u|br|p|div|span|a)\b)[^>]*>/gi,"");
+  value=value.replace(/<(b|strong|i|em|u|br|p|div|span|a)\b([^>]*)>/gi,function(tag,name,attrs){
     const safeName=name.toLowerCase();
     if(safeName==="br")return "<br>";
+    if(safeName==="a"){
+      const href=(attrs.match(/href=["'](https?:\/\/[^"']+)["']/i)||[])[1];
+      return href?'<a href="'+href.replace(/&/g,"&amp;")+'" target="_blank" rel="noopener noreferrer">':"";
+    }
     if(safeName!=="span")return "<"+safeName+">";
     const color=(attrs.match(/color\s*:\s*(#[0-9a-fA-F]{3,8})/i)||[])[1];
     const size=(attrs.match(/font-size\s*:\s*(\d{1,2}px)/i)||[])[1];
     const safeStyle=(color?"color:"+color+";":"")+(size&&parseInt(size,10)>=8&&parseInt(size,10)<=64?"font-size:"+size+";":"");
     return "<span"+(safeStyle?' style="'+safeStyle+'"':"")+">";
   });
+  // Plain-text newlines and pasted list spacing should remain readable.
+  value=value.replace(/\n{3,}/g,"\n\n").replace(/\n/g,"<br>");
   return value;
 }
 
