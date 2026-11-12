@@ -2157,3 +2157,23 @@ main:has(.heroHome) footer { color: #827579 !important; }
  .siteHeader .headerBrandText small { font-size:8px !important; letter-spacing:2.2px !important; }
  .siteHeader .headerLogin { max-width:94px !important; }
 }
+
+
+/* Minimal home top controls: no full-width header and no brand text */
+.homeTopControls{position:relative;z-index:150;display:flex;justify-content:space-between;align-items:flex-start;padding:12px 14px 0;min-height:54px}
+.cornerIconButton{position:fixed;top:12px;z-index:180;width:48px;height:48px;border:1px solid #d8e6ef;border-radius:15px;background:rgba(255,255,255,.96);color:#214b62;box-shadow:0 5px 18px rgba(24,70,98,.15);font-size:23px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cornerMenuButton{left:12px}.cornerNotificationButton{right:12px}
+.notificationCountBadge{position:absolute;top:-7px;right:-7px;min-width:21px;height:21px;padding:0 5px;border-radius:99px;background:#e11d48;color:#fff;border:2px solid #fff;font-size:11px;line-height:17px;text-align:center;font-weight:900}
+.homeLogoTop{display:flex;justify-content:center;align-items:center;margin:4px auto 12px;padding:0 68px;min-height:112px}
+.homeLogoOnly{border:0;background:transparent;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.homeLogoOnly .logoMark{width:104px!important;height:104px!important;min-width:104px!important;flex:0 0 104px!important;border-radius:26px!important;overflow:hidden;box-shadow:0 10px 28px rgba(65,40,95,.2)!important}
+.homeLogoOnly .logoMark img{width:100%;height:100%;object-fit:contain;display:block}
+.cornerMenuPanel{position:fixed!important;top:68px!important;left:12px!important;right:auto!important;z-index:190!important;width:min(365px,calc(100vw - 24px))!important;max-height:75vh!important;overflow-y:auto!important}
+@media(max-width:700px){
+ .homeTopControls{padding-top:8px;min-height:48px}
+ .cornerIconButton{top:9px;width:44px;height:44px;border-radius:13px;font-size:21px}
+ .cornerMenuButton{left:9px}.cornerNotificationButton{right:9px}
+ .homeLogoTop{min-height:88px;margin:0 auto 8px;padding:0 58px}
+ .homeLogoOnly .logoMark{width:84px!important;height:84px!important;min-width:84px!important;flex-basis:84px!important;border-radius:22px!important}
+ .cornerMenuPanel{top:61px!important;left:9px!important;width:min(340px,calc(100vw - 18px))!important}
+}
