@@ -137,7 +137,7 @@ export default function Home(){
 </div>
 </nav>}
 </div>
-<div className="homeLogoTop"><button className="homeLogoOnly" onClick={()=>router.push("/")} aria-label="Home"><span className="logoMark logoMarkBrand">{branding.logo?<img src={branding.logo} alt="Zara Nikah logo"/>:<><span className="logoZ">Z</span><span className="logoN">N</span></>}</span></button></div>{loginError&&<div className="errorBox homeLoginError">{loginError}</div>}
+{loginError&&<div className="errorBox homeLoginError">{loginError}</div>}
         <section className="heroHome" id="profiles">
           <div className="heroGlow one"></div><div className="heroGlow two"></div>
           <div className="heroContent" aria-hidden="true"></div>
