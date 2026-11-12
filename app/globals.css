@@ -1892,3 +1892,142 @@ main:has(.heroHome) footer { color: #827579 !important; }
   main:has(.heroHome) .gender.genderPremium .premiumCard small { display: none !important; }
   main:has(.heroHome) .gender.genderPremium > .genderCard.premiumCard { min-height: 68px !important; }
 }
+
+
+/* Sky-blue compact header with one expandable actions menu */
+.siteHeader {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  background: linear-gradient(110deg, #e4f5ff 0%, #d8efff 55%, #eaf8ff 100%) !important;
+  border-bottom: 1px solid #b9def3 !important;
+  box-shadow: 0 5px 18px rgba(45, 108, 145, .12) !important;
+  backdrop-filter: blur(14px) !important;
+}
+.siteHeader .headerInner {
+  position: relative !important;
+  min-height: 76px !important;
+  max-width: 1180px !important;
+  padding: 9px 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+}
+.headerWeddingBrand { gap: 10px !important; text-decoration: none !important; }
+.headerWeddingBrand .logoMark {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #1976a8, #48a9d6) !important;
+  box-shadow: 0 5px 13px rgba(28, 105, 145, .2) !important;
+}
+.headerBrandText { display: flex !important; flex-direction: column !important; gap: 2px !important; }
+.headerBrandText strong {
+  color: #174b68 !important;
+  font-size: 18px !important;
+  letter-spacing: 1.1px !important;
+  line-height: 1.1 !important;
+}
+.headerBrandText small {
+  color: #477d99 !important;
+  font-size: 10px !important;
+  letter-spacing: 3px !important;
+  font-weight: 800 !important;
+}
+.siteHeader .headerActions { display: flex !important; align-items: center !important; gap: 9px !important; }
+.headerMenuToggle {
+  min-height: 42px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 9px 15px !important;
+  border: 1px solid #9bcce8 !important;
+  border-radius: 12px !important;
+  background: #f7fcff !important;
+  color: #185778 !important;
+  font-size: 17px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 11px rgba(31, 105, 145, .10) !important;
+}
+.headerMenuToggle span { font-size: 11px !important; letter-spacing: .8px !important; }
+.siteHeader .headerLogin {
+  min-height: 42px !important;
+  padding: 10px 14px !important;
+  border-radius: 12px !important;
+  background: #17658d !important;
+  color: #fff !important;
+  box-shadow: 0 5px 13px rgba(23, 101, 141, .2) !important;
+}
+.headerMenuPanel {
+  position: absolute !important;
+  top: calc(100% - 2px) !important;
+  right: 18px !important;
+  z-index: 120 !important;
+  width: min(365px, calc(100vw - 24px)) !important;
+  max-height: min(75vh, 620px) !important;
+  overflow-y: auto !important;
+  padding: 12px !important;
+  border: 1px solid #b9dcec !important;
+  border-radius: 17px !important;
+  background: #fff !important;
+  box-shadow: 0 16px 42px rgba(24, 78, 107, .2) !important;
+}
+.headerMenuGroup { display: grid !important; gap: 6px !important; }
+.headerMenuGroup + .headerMenuGroup {
+  margin-top: 11px !important;
+  padding-top: 11px !important;
+  border-top: 1px solid #e4eef4 !important;
+}
+.headerMenuLabel {
+  padding: 2px 8px 5px !important;
+  color: #63849a !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  letter-spacing: 1px !important;
+}
+.headerMenuGroup button {
+  width: 100% !important;
+  min-height: 43px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 11px !important;
+  padding: 10px 12px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: #f2f9fd !important;
+  color: #254c61 !important;
+  text-align: left !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+}
+.headerMenuGroup button:hover { background: #e1f2fc !important; }
+.headerMenuGroup button:disabled { opacity: .55 !important; cursor: not-allowed !important; }
+.headerMenuGroup button span { flex: 1 !important; }
+@media (max-width: 700px) {
+  .siteHeader, .siteHeader .headerInner {
+    min-height: 70px !important;
+    height: auto !important;
+  }
+  .siteHeader .headerInner { padding: 8px 10px !important; }
+  .headerWeddingBrand .logoMark {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    border-radius: 12px !important;
+  }
+  .headerBrandText strong { font-size: 14px !important; letter-spacing: .7px !important; }
+  .headerBrandText small { font-size: 8px !important; letter-spacing: 2px !important; }
+  .headerMenuToggle { min-height: 39px !important; padding: 8px 11px !important; }
+  .siteHeader .headerLogin { min-height: 39px !important; padding: 8px 10px !important; font-size: 10px !important; }
+  .headerMenuPanel { right: 8px !important; width: min(340px, calc(100vw - 16px)) !important; }
+}
+@media (max-width: 380px) {
+  .headerBrandText strong { font-size: 12px !important; }
+  .siteHeader .headerActions { gap: 6px !important; }
+  .siteHeader .headerLogin { max-width: 112px !important; white-space: normal !important; line-height: 1.15 !important; }
+}
