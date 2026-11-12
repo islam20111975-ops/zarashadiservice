@@ -2031,3 +2031,100 @@ main:has(.heroHome) footer { color: #827579 !important; }
   .siteHeader .headerActions { gap: 6px !important; }
   .siteHeader .headerLogin { max-width: 112px !important; white-space: normal !important; line-height: 1.15 !important; }
 }
+
+
+/* Refined Zara Nikah header: calm, balanced and mobile-friendly */
+.siteHeader {
+  background: linear-gradient(115deg, #e8f6ff 0%, #dff2fc 52%, #f4fbff 100%) !important;
+  border-bottom: 1px solid #c7e4f3 !important;
+  box-shadow: 0 3px 14px rgba(27, 89, 124, .10) !important;
+}
+.siteHeader .headerInner {
+  min-height: 72px !important;
+  padding: 8px clamp(12px, 3vw, 30px) !important;
+  max-width: 1240px !important;
+}
+.headerWeddingBrand {
+  min-width: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 4px 0 !important;
+}
+.headerWeddingBrand .logoMark {
+  width: 50px !important;
+  height: 50px !important;
+  min-width: 50px !important;
+  border-radius: 15px !important;
+  border: 2px solid rgba(255,255,255,.9) !important;
+  background: linear-gradient(145deg, #1679a9, #4aaed5) !important;
+  box-shadow: 0 5px 14px rgba(24, 103, 145, .20) !important;
+}
+.headerBrandText { gap: 3px !important; }
+.headerBrandText strong {
+  color: #164b68 !important;
+  font-size: clamp(15px, 2vw, 19px) !important;
+  letter-spacing: 1.25px !important;
+  font-weight: 950 !important;
+}
+.headerBrandText small {
+  color: #4e819a !important;
+  font-size: 9px !important;
+  letter-spacing: 3.2px !important;
+}
+.siteHeader .headerActions { gap: 10px !important; }
+.headerMenuToggle {
+  min-height: 43px !important;
+  padding: 9px 16px !important;
+  border: 1px solid #abd5e9 !important;
+  border-radius: 13px !important;
+  background: rgba(255,255,255,.86) !important;
+  color: #155577 !important;
+  box-shadow: 0 3px 9px rgba(29, 99, 135, .08) !important;
+}
+.siteHeader .headerLogin {
+  min-height: 43px !important;
+  padding: 10px 17px !important;
+  border: 1px solid #17658d !important;
+  border-radius: 13px !important;
+  background: linear-gradient(135deg, #17658d, #2187b5) !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  font-weight: 850 !important;
+  box-shadow: 0 4px 11px rgba(23, 101, 141, .16) !important;
+}
+.headerMenuPanel {
+  top: calc(100% + 7px) !important;
+  right: clamp(10px, 2vw, 24px) !important;
+  border: 1px solid #c9e3ef !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 44px rgba(20, 70, 98, .18) !important;
+}
+.headerMenuGroup button {
+  min-height: 46px !important;
+  border: 1px solid #e5f0f6 !important;
+  border-radius: 12px !important;
+  background: #f5fbff !important;
+  color: #214e66 !important;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease !important;
+}
+.headerMenuGroup button:hover {
+  background: #e8f6fd !important;
+  border-color: #c5e3f1 !important;
+  transform: translateX(2px) !important;
+}
+@media (max-width: 700px) {
+  .siteHeader .headerInner { min-height: 66px !important; padding: 7px 11px !important; gap: 7px !important; }
+  .headerWeddingBrand { gap: 8px !important; }
+  .headerWeddingBrand .logoMark { width: 42px !important; height: 42px !important; min-width: 42px !important; border-radius: 12px !important; }
+  .headerBrandText strong { font-size: 14px !important; letter-spacing: .65px !important; }
+  .headerBrandText small { font-size: 8px !important; letter-spacing: 2.4px !important; }
+  .siteHeader .headerActions { gap: 6px !important; }
+  .headerMenuToggle { min-height: 39px !important; padding: 7px 10px !important; border-radius: 11px !important; }
+  .siteHeader .headerLogin { min-height: 39px !important; padding: 8px 10px !important; border-radius: 11px !important; font-size: 10px !important; }
+}
+@media (max-width: 380px) {
+  .headerBrandText strong { font-size: 12px !important; }
+  .headerWeddingBrand .logoMark { width: 38px !important; height: 38px !important; min-width: 38px !important; }
+  .headerMenuToggle span { display: none !important; }
+}
