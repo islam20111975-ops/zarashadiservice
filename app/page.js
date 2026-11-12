@@ -48,8 +48,6 @@ export default function Home(){
   const [r,setR]=useState(null);
   const [headerMenuOpen,setHeaderMenuOpen]=useState(false);
   const [data,setData]=useState([]);
-  const [allProfiles,setAllProfiles]=useState([]),[sliderIds,setSliderIds]=useState([]);
-  const [slideIndex,setSlideIndex]=useState(0);
   const [loading,setLoading]=useState(false);
   const [homePosts,setHomePosts]=useState([]);
   const [tickerText,setTickerText]=useState("");
@@ -84,29 +82,6 @@ export default function Home(){
   useEffect(()=>onSnapshot(collection(db,"homePosts"),snap=>{const rows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted");rows.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));setHomePosts(rows)},()=>setHomePosts([])),[]);
   useEffect(()=>onSnapshot(doc(db,"settings","homeTicker"),snap=>setTickerText(snap.exists()?(snap.data().text||""):""),()=>setTickerText("")),[]);
   useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});(async()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");if(cached?.logo||cached?.appIcon){const b={logo:cached.logo||"",appIcon:cached.appIcon||"/api/pwa-icon?size=512"};setBranding(b);if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}catch(e){} getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){const b={logo:s.data().logo||"",appIcon:s.data().appIcon||"/api/pwa-icon?size=512"};setBranding(b);try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify(b))}catch(e){} if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}).catch(()=>{})})();getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
-  // Public home slider uses only the safe public profile document (ID, gender, photo, status).
-  // Private biodata and contact information live in separate protected collections.
-  useEffect(()=>{
-    let cancelled=false;
-    const loadSlider=async()=>{
-      try{
-        const snap=await getDocs(collection(db,"profiles"));
-        const rows=snap.docs.map(d=>({id:d.id,...d.data()}))
-          .filter(p=>p.status!=="deleted" && getProfileImage(p))
-          .sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
-        if(cancelled)return;
-        setSliderIds(rows.map(p=>p.id));
-        setAllProfiles(rows.map(p=>({id:p.id,image:getProfileImage(p)})));
-      }catch(e){if(!cancelled){setSliderIds([]);setAllProfiles([]);}}
-    };
-    loadSlider();
-    return()=>{cancelled=true};
-  },[]);
-  useEffect(()=>{
-    if(sliderIds.length<2)return;
-    const timer=setInterval(()=>setSlideIndex(i=>(i+1)%sliderIds.length),1000);
-    return()=>clearInterval(timer);
-  },[sliderIds.length]);
   // Gender cards are public; the query returns only documents from the safe /profiles collection.
   // Detailed biodata and mobile numbers remain in separately protected collections.
   useEffect(()=>{
@@ -143,7 +118,6 @@ export default function Home(){
     },300);
     return()=>window.clearTimeout(timer);
   },[r]);
-  const currentProfile=sliderIds.length?allProfiles.find(p=>p.id===sliderIds[slideIndex]):null;
   const openPrivateChat=async()=>{setLoginError("");if(auth.currentUser&&!auth.currentUser.isAnonymous){router.push("/chat");return;}setLoginBusy(true);try{const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});await signInWithPopup(auth,provider);router.push("/chat");}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.");}finally{setLoginBusy(false);}};
   return (
     <>
@@ -166,15 +140,7 @@ export default function Home(){
 </nav>}</div></header>{loginError&&<div className="errorBox homeLoginError">{loginError}</div>}
         <section className="heroHome" id="profiles">
           <div className="heroGlow one"></div><div className="heroGlow two"></div>
-          <div className="heroContent">
-            <div className="homeAutoSlider" aria-label="Nikah profiles automatic slideshow">
-              {sliderIds.length && currentProfile ? <button className="homeSlide" onClick={()=>router.push("/profile/"+currentProfile.id)} aria-label={"Profile "+currentProfile.id+" dekhein"}>
-                <img key={currentProfile.id} src={currentProfile.image||""} alt={"Marriage profile "+currentProfile.id} loading="eager" decoding="async" fetchPriority="high"/>
-                <span className="slideShade"></span><span className="slideId">💍 Profile {currentProfile.id}</span><span className="slideVerified">✓ Verified</span>
-              </button> : <div className="homeSlideEmpty">💍<span>{sliderIds.length?"Image loading...":"Nikah Profiles"}</span></div>}
-              {sliderIds.length>1&&<div className="slideDots">{sliderIds.map((p,i)=><span key={p} className={i===slideIndex?"active":""}></span>)}</div>}
-            </div>
-          </div>
+          <div className="heroContent" aria-hidden="true"></div>
           {tickerText.trim()&&<div aria-label="Zara Nikah Service announcement" role="status" style={{overflow:"hidden",whiteSpace:"nowrap",margin:"12px auto 8px",maxWidth:1180,borderRadius:12,background:"linear-gradient(90deg,#7c1d45,#c02665,#7c1d45)",color:"#fff",padding:"11px 0",boxShadow:"0 6px 18px #7c1d4530"}}><style>{`@keyframes zaraTickerMove{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}`}</style><div style={{display:"inline-block",minWidth:"100%",width:"max-content",fontWeight:900,fontSize:17,letterSpacing:".3px",animation:"zaraTickerMove 45s linear infinite",paddingLeft:12,textShadow:"0 1px 8px #fff8"}}><span style={{background:"linear-gradient(90deg,#fff36b,#ffffff,#7df9ff,#ffb3f2,#fff36b)",backgroundSize:"250% auto",WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",filter:"drop-shadow(0 1px 2px #250018)"}}>{tickerText}</span></div></div>}
           {homePosts.length>0&&<section className="homePosts" aria-label="Admin announcements"><div className="homePostsHeading"><span>📢</span><div><h2>Admin Posts</h2><p>Zara Nikah Service ki latest updates</p></div></div><div className="homePostsList">{homePosts.map(p=><article className="homePostCard" key={p.id} style={{background:p.backgroundColor||undefined,color:p.textColor||undefined}}><div className="homePostMeta">📌 Zara Nikah Service {p.createdAt?.toDate?.()?.toLocaleDateString?.("en-IN")||""}</div>{p.image&&<img src={p.image} alt="Zara Nikah Service post" loading="lazy" style={{display:"block",width:"auto",maxWidth:"100%",maxHeight:240,objectFit:"contain",borderRadius:14,margin:"10px auto"}}/>}<div style={{whiteSpace:"pre-wrap",color:p.textColor||"inherit"}} dangerouslySetInnerHTML={{__html:sanitizeAdminPostHtml(p.text||"")}}/></article>)}</div></section>}
         </section>
