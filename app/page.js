@@ -46,15 +46,10 @@ function sanitizeAdminPostHtml(input){
 
 export default function Home(){
   const [r,setR]=useState(null);
+  const [headerMenuOpen,setHeaderMenuOpen]=useState(false);
   const [data,setData]=useState([]);
   const [allProfiles,setAllProfiles]=useState([]),[sliderIds,setSliderIds]=useState([]);
   const [slideIndex,setSlideIndex]=useState(0);
-  const [headerSlideIndex,setHeaderSlideIndex]=useState(0);
-  const headerWeddingImages=[
-    "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=85",
-    "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1000&q=85",
-    "https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=1000&q=85"
-  ];
   const [loading,setLoading]=useState(false);
   const [homePosts,setHomePosts]=useState([]);
   const [tickerText,setTickerText]=useState("");
@@ -88,7 +83,6 @@ export default function Home(){
   },[user]);
   useEffect(()=>onSnapshot(collection(db,"homePosts"),snap=>{const rows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.status!=="deleted");rows.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));setHomePosts(rows)},()=>setHomePosts([])),[]);
   useEffect(()=>onSnapshot(doc(db,"settings","homeTicker"),snap=>setTickerText(snap.exists()?(snap.data().text||""):""),()=>setTickerText("")),[]);
-  useEffect(()=>{const timer=setInterval(()=>setHeaderSlideIndex(i=>(i+1)%3),3500);return()=>clearInterval(timer)},[]);
   useEffect(()=>{getDoc(doc(db,"settings","appearance")).then(s=>{if(s.exists())setWallpaper(s.data().wallpaper||"")}).catch(()=>{});(async()=>{try{const cached=JSON.parse(window.localStorage.getItem("zaraBrandingCache")||"null");if(cached?.logo||cached?.appIcon){const b={logo:cached.logo||"",appIcon:cached.appIcon||"/api/pwa-icon?size=512"};setBranding(b);if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}catch(e){} getDoc(doc(db,"settings","branding")).then(s=>{if(s.exists()){const b={logo:s.data().logo||"",appIcon:s.data().appIcon||"/api/pwa-icon?size=512"};setBranding(b);try{window.localStorage.setItem("zaraBrandingCache",JSON.stringify(b))}catch(e){} if(b.appIcon||b.logo){let link=document.querySelector("link[rel~=\"icon\"]");if(!link){link=document.createElement("link");link.rel="icon";document.head.appendChild(link)}link.href=b.appIcon||b.logo}}}).catch(()=>{})})();getDoc(doc(db,"settings","social")).then(s=>{if(s.exists())setSocial({whatsapp:s.data().whatsapp||"",facebook:s.data().facebook||"",instagram:s.data().instagram||""})}).catch(()=>{})},[]);
   // Public home slider uses only the safe public profile document (ID, gender, photo, status).
   // Private biodata and contact information live in separate protected collections.
@@ -155,10 +149,21 @@ export default function Home(){
     <>
       <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"url("+wallpaper+")","--site-wallpaper":"url("+wallpaper+")"}:undefined}>
         <header className="siteHeader"><div className="headerInner">
-          <button className="logo headerWeddingBrand" onClick={()=>router.push("/")} aria-label="Zara Nikah Service home"><span className="logoMark logoMarkBrand" aria-hidden="true">{branding.logo?<img src={branding.logo} alt="Zara Nikah logo" />:<><span className="logoZ">Z</span><span className="logoN">N</span></>}</span><span className="headerWeddingSlider" aria-label="Wedding image slider">{headerWeddingImages.map((src,i)=><span key={src} className={i===headerSlideIndex?"headerWeddingFrame isActive":"headerWeddingFrame"}><img src={src} alt="" className="headerWeddingBackdrop" aria-hidden="true" loading={i===0?"eager":"lazy"}/><img src={src} alt="" aria-hidden="true" className="headerWeddingImage" loading={i===0?"eager":"lazy"}/></span>)}<span className="headerWeddingShade"></span><span className="headerWeddingTitle"><strong>ZARA NIKAH</strong><small>SERVICE</small></span><span className="headerWeddingDots">{headerWeddingImages.map((src,i)=><i key={src} className={i===headerSlideIndex?"active":""}/>)}</span></span></button>
-          <nav className="mainNav" aria-label="Main navigation"><a href="/islamic-calendar">🌙 Islamic Calendar</a></nav>
-          <div className="headerActions"><span className="secureChip">✓ Verified Service</span><button className="headerLogin" disabled={loginBusy} onClick={async()=>{setLoginError("");if(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(user?.email?.toLowerCase())){router.push("/admin");return}setLoginBusy(true);try{if(user||auth.currentUser?.isAnonymous)await signOut(auth);const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});const result=await signInWithPopup(auth,p);router.push(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(result.user.email?.toLowerCase())?"/admin":"/")}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}finally{setLoginBusy(false)}}}>{loginBusy?"Login...":user?(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(user.email?.toLowerCase())?"🔐 Admin Dashboard":"👤 My Profile / Switch Account"):"🔐 Login"}</button></div>
-        </div></header>{loginError&&<div className="errorBox homeLoginError">{loginError}</div>}
+<button className="logo headerWeddingBrand" onClick={()=>router.push("/")} aria-label="Zara Nikah Service home"><span className="logoMark logoMarkBrand" aria-hidden="true">{branding.logo?<img src={branding.logo} alt="Zara Nikah logo" />:<><span className="logoZ">Z</span><span className="logoN">N</span></>}</span><span className="headerBrandText"><strong>ZARA NIKAH</strong><small>SERVICE</small></span></button>
+<div className="headerActions"><button className="headerMenuToggle" type="button" aria-label="Open menu" aria-expanded={headerMenuOpen} onClick={()=>setHeaderMenuOpen(v=>!v)}>{headerMenuOpen?"✕":"☰"} <span>MENU</span></button>
+<button className="headerLogin" disabled={loginBusy} onClick={async()=>{setLoginError("");if(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(user?.email?.toLowerCase())){router.push("/admin");return}setLoginBusy(true);try{if(user||auth.currentUser?.isAnonymous)await signOut(auth);const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});const result=await signInWithPopup(auth,p);router.push(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(result.user.email?.toLowerCase())?"/admin":"/")}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}finally{setLoginBusy(false)}}}>{loginBusy?"Login...":user?(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(user.email?.toLowerCase())?"🔐 Admin Dashboard":"👤 My Profile / Switch Account"):"🔐 Login"}</button>
+</div>
+{headerMenuOpen&&<nav className="headerMenuPanel" aria-label="Website menu">
+<div className="headerMenuGroup"><span className="headerMenuLabel">रिश्ते देखें</span>
+<button type="button" onClick={()=>{setR("male");setHeaderMenuOpen(false);scrollToProfiles();}}>👨 <span>Male Rishte</span></button>
+<button type="button" onClick={()=>{setR("female");setHeaderMenuOpen(false);scrollToProfiles();}}>👩 <span>Female Rishte</span></button></div>
+<div className="headerMenuGroup"><span className="headerMenuLabel">सेवाएं</span>
+<button type="button" onClick={()=>{setHeaderMenuOpen(false);router.push("/add-profile");}}>➕ <span>अपना रिश्ता जोड़ें • ₹299 / 3 महीने</span></button>
+<button type="button" onClick={()=>{setHeaderMenuOpen(false);router.push("/instructions");}}>📘 <span>पूरी जानकारी / इस्तेमाल कैसे करें</span></button>
+<button type="button" disabled={loginBusy} onClick={()=>{setHeaderMenuOpen(false);openPrivateChat();}}>💬 <span>Private Chat</span></button>
+{user&&!user.isAnonymous&&<button type="button" onClick={()=>{setHeaderMenuOpen(false);router.push("/notifications");}}>🔔 <span>Notifications{unreadNotifications>0?" ("+(unreadNotifications>99?"99+":unreadNotifications)+" नई)":""}</span></button>}
+<button type="button" onClick={()=>{setHeaderMenuOpen(false);router.push("/islamic-calendar");}}>🌙 <span>Islamic Calendar</span></button></div>
+</nav>}</div></header>{loginError&&<div className="errorBox homeLoginError">{loginError}</div>}
         <section className="heroHome" id="profiles">
           <div className="heroGlow one"></div><div className="heroGlow two"></div>
           <div className="heroContent">
@@ -170,12 +175,6 @@ export default function Home(){
               {sliderIds.length>1&&<div className="slideDots">{sliderIds.map((p,i)=><span key={p} className={i===slideIndex?"active":""}></span>)}</div>}
             </div>
           </div>
-          <div className="gender genderPremium">
-            <button className={r==="male"?"genderCard premiumCard maleCard active":"genderCard premiumCard maleCard"} onClick={()=>{setR("male");scrollToProfiles();}}><div className="cardIcon">👨</div><div><b>Male Rishte</b><small>Rishta dekhne ke liye button par click karein</small></div><span className="arrow">→</span></button>
-            <button className={r==="female"?"genderCard premiumCard femaleCard active":"genderCard premiumCard femaleCard"} onClick={()=>{setR("female");scrollToProfiles();}}><div className="cardIcon">👩</div><div><b>Female Rishte</b><small>Rishta dekhne ke liye button par click karein</small></div><span className="arrow">→</span></button>
-          </div>
-          <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:10,flexWrap:"wrap",margin:"16px auto 4px"}}><button onClick={()=>router.push("/add-profile")} style={{padding:"13px 22px",border:0,borderRadius:14,background:"linear-gradient(135deg,#087443,#10a36b)",color:"#fff",fontWeight:800,fontSize:16,boxShadow:"0 8px 20px #08744333",cursor:"pointer"}}>➕ अपना रिश्ता जोड़ें • ₹299 / 3 महीने</button><button onClick={()=>router.push("/instructions")} style={{padding:"13px 20px",border:"1px solid #7c3aed",borderRadius:14,background:"#fff",color:"#6d28d9",fontWeight:800,fontSize:15,cursor:"pointer"}}>📘 पूरी जानकारी / इस्तेमाल कैसे करें</button></div>
-          <div style={{display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap",margin:"12px auto"}}><button onClick={openPrivateChat} disabled={loginBusy} style={{padding:"11px 18px",border:0,borderRadius:12,background:"#2563eb",color:"#fff",fontWeight:800,cursor:"pointer"}}>{loginBusy?"Google Login...":"💬 Private Chat"}</button>{user&&!user.isAnonymous&&<button onClick={()=>router.push("/notifications")} style={{padding:"11px 18px",border:"1px solid #7c3aed",borderRadius:12,background:"#fff",color:"#6d28d9",fontWeight:800,cursor:"pointer"}}>🔔 Notifications{unreadNotifications>0?` (${unreadNotifications>99?"99+":unreadNotifications} नई)`: ""}</button>}</div>
           {tickerText.trim()&&<div aria-label="Zara Nikah Service announcement" role="status" style={{overflow:"hidden",whiteSpace:"nowrap",margin:"12px auto 8px",maxWidth:1180,borderRadius:12,background:"linear-gradient(90deg,#7c1d45,#c02665,#7c1d45)",color:"#fff",padding:"11px 0",boxShadow:"0 6px 18px #7c1d4530"}}><style>{`@keyframes zaraTickerMove{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}`}</style><div style={{display:"inline-block",minWidth:"100%",width:"max-content",fontWeight:900,fontSize:17,letterSpacing:".3px",animation:"zaraTickerMove 45s linear infinite",paddingLeft:12,textShadow:"0 1px 8px #fff8"}}><span style={{background:"linear-gradient(90deg,#fff36b,#ffffff,#7df9ff,#ffb3f2,#fff36b)",backgroundSize:"250% auto",WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",filter:"drop-shadow(0 1px 2px #250018)"}}>{tickerText}</span></div></div>}
           {homePosts.length>0&&<section className="homePosts" aria-label="Admin announcements"><div className="homePostsHeading"><span>📢</span><div><h2>Admin Posts</h2><p>Zara Nikah Service ki latest updates</p></div></div><div className="homePostsList">{homePosts.map(p=><article className="homePostCard" key={p.id} style={{background:p.backgroundColor||undefined,color:p.textColor||undefined}}><div className="homePostMeta">📌 Zara Nikah Service {p.createdAt?.toDate?.()?.toLocaleDateString?.("en-IN")||""}</div>{p.image&&<img src={p.image} alt="Zara Nikah Service post" loading="lazy" style={{display:"block",width:"auto",maxWidth:"100%",maxHeight:240,objectFit:"contain",borderRadius:14,margin:"10px auto"}}/>}<div style={{whiteSpace:"pre-wrap",color:p.textColor||"inherit"}} dangerouslySetInnerHTML={{__html:sanitizeAdminPostHtml(p.text||"")}}/></article>)}</div></section>}
         </section>
