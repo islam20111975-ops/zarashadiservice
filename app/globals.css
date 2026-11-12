@@ -2626,3 +2626,25 @@ main:not(:has(.homeHeroPanel)) .backAction {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
+
+
+/* Final strict Emerald Green + Royal Gold + Ivory palette override */
+html,body{background:#fffdf6!important;color:#243b30!important}
+body{background:radial-gradient(ellipse at 10% 0%,rgba(20,88,63,.07),transparent 38%),radial-gradient(ellipse at 92% 12%,rgba(181,138,59,.09),transparent 34%),#fffdf6!important;background-attachment:scroll!important}
+body:before{opacity:.16!important;background-image:radial-gradient(circle at 1px 1px,rgba(20,88,63,.10) 1px,transparent 0)!important}
+.siteHeader,header{background:rgba(255,253,246,.97)!important;border-bottom:1px solid #b58a3b!important}
+.siteHeader .headerBrandText strong,.topCenterBrand{background:linear-gradient(100deg,#103e30,#14583f 58%,#b58a3b)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;-webkit-text-fill-color:transparent!important;filter:none!important}
+.topCenterBrand{-webkit-text-stroke:0!important;text-shadow:none!important}
+.cornerIconButton{color:#14583f!important;border-color:#b58a3b!important;background:#fffdf6!important}
+main:has(.heroHome){background:#fffdf6!important;color:#243b30!important}
+main:has(.heroHome) .homeHeroPanel{background:linear-gradient(135deg,#103e30,#14583f 65%,#1c684b)!important;border:2px solid #b58a3b!important}
+main:has(.heroHome) .homeHeroMale{background:linear-gradient(135deg,#14583f,#103e30)!important;color:#fffdf6!important;border:1px solid #d5b66c!important}
+main:has(.heroHome) .homeHeroFemale{background:linear-gradient(135deg,#b58a3b,#8c6829)!important;color:#fffdf6!important;border:1px solid #e2c77f!important}
+main:has(.heroHome) .homeHeroAdd{background:#fffdf6!important;color:#14583f!important;border:1px solid #d5b66c!important}
+main:has(.heroHome) .homeQuickCard,main:has(.heroHome) .trustStrip>div,main:has(.heroHome) .profileCard,main:has(.heroHome) .homePostCard{background:#fffdf6!important;border:1px solid rgba(181,138,59,.55)!important}
+main:has(.heroHome) .homeQuickCard strong,main:has(.heroHome) .sectionHead h2,main:has(.heroHome) .trustStrip b{color:#103e30!important}
+main:not(:has(.heroHome)){background:#fffdf6!important}
+main:not(:has(.heroHome)) :is(.cardPage,.dashboardPage,.admin,.payment,.profileCard,.statCard,.adminBox,.adminUser,.messageBox,.faqItem,.settingsCard,.contentCard,.formCard,.adminList){background:#fffdf6!important;border:1px solid rgba(181,138,59,.55)!important}
+main:not(:has(.heroHome)) :is(button,.primaryAction,.cardInfo button){background:linear-gradient(115deg,#103e30,#14583f 72%,#b58a3b)!important;color:#fffdf6!important;border:1px solid #b58a3b!important}
+main:not(:has(.heroHome)) :is(h1,h2,h3,.sectionHead h2){color:#103e30!important}
+body:after{border-color:rgba(181,138,59,.9)!important;box-shadow:inset 0 0 0 3px rgba(255,253,246,.9),inset 0 0 0 5px rgba(20,88,63,.45)!important}
