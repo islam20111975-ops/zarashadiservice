@@ -162,9 +162,6 @@ export default function Home(){
         <section className="heroHome" id="profiles">
           <div className="heroGlow one"></div><div className="heroGlow two"></div>
           <div className="heroContent">
-            <h1 style={{fontSize:"clamp(24px,4vw,34px)",fontWeight:900,color:"#4c1d95",lineHeight:1.2,margin:"0 auto 18px",maxWidth:900}}>
-              अपनी पसंद का रिश्ता तलाशें
-            </h1>
             <div className="homeAutoSlider" aria-label="Nikah profiles automatic slideshow">
               {sliderIds.length && currentProfile ? <button className="homeSlide" onClick={()=>router.push("/profile/"+currentProfile.id)} aria-label={"Profile "+currentProfile.id+" dekhein"}>
                 <img key={currentProfile.id} src={currentProfile.image||""} alt={"Marriage profile "+currentProfile.id} loading="eager" decoding="async" fetchPriority="high"/>
