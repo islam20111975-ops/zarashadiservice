@@ -35,47 +35,63 @@ function decodePostEntities(input){
 }
 
 function sanitizeAdminPostHtml(input){
-  let value=decodePostEntities(input);
-  value=value.replace(/\\{1,2}[ \t]*(?=<br\s*\/?\s*>)/gi,"");
-  value=value.replace(/\\{1,2}[ \t]*(?=\r?$)/gm,"");
-  value=value.replace(/\\([*_{}\[\]()#+.!|>~-])/g,"$1");
-  value=value.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"");
+  let value=String(input||"")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,"");
+  // Posts copied from chat apps often contain a backslash at every line ending.
+  value=value.replace(/\\+(?:[ \t]*(?=\r?\n)|[ \t]*(?=<br\s*\/?\s*>))/gi,"");
+  value=value.replace(/\\+n/g,"\n").replace(/\\([*_{}\[\]()#+.!|>~-])/g,"$1");
   value=value.replace(/<\/(?:div|p|li|h[1-6]|section|article)>/gi,"\n")
-    .replace(/<(?:div|p|li|h[1-6]|section|article)\b[^>]*>/gi,"")
+    .replace(/<(?:div|p|li|h[1-6]|section|article)\b[^>]*>/gi,"\n")
     .replace(/<br\s*\/?\s*>/gi,"\n");
-  const hasHtml=/<[a-z][^>]*>/i.test(value);
-  if(!hasHtml){
-    value=value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  }
-  value=value.replace(/\*\*([^*\n]+)\*\*/g,"<strong>$1</strong>")
-    .replace(/(^|[\s(])\*([^*\n]+)\*(?=$|[\s).,!?:;])/gm,"$1<em>$2</em>")
-    .replace(/^#{1,6}\s*/gm,"")
-    .replace(/^[-•]\s+/gm,"• ")
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g,"$1")
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-  value=value.replace(/<font\b([^>]*)>/gi,function(tag,attrs){
-    const color=(attrs.match(/color=["']?(#[0-9a-fA-F]{3,8})["']?/i)||[])[1];
-    const size=(attrs.match(/size=["']?([1-7])["']?/i)||[])[1];
-    const px={1:10,2:13,3:16,4:19,5:24,6:32,7:48};
-    const style=(color?"color:"+color+";":"")+(size?"font-size:"+px[size]+"px;":"");
-    return "<span"+(style?' style="'+style+'"':"")+">";
-  }).replace(/<\/font>/gi,"</span>");
-  value=value.replace(/<(?!\/?(?:b|strong|i|em|u|br|p|div|span|a)\b)[^>]*>/gi,"");
-  value=value.replace(/<(b|strong|i|em|u|br|p|div|span|a)\b([^>]*)>/gi,function(tag,name,attrs){
-    const safeName=name.toLowerCase();
-    if(safeName==="br")return "<br>";
-    if(safeName==="a"){
-      const href=(attrs.match(/href=["'](https?:\/\/[^"']+)["']/i)||[])[1];
-      return href?'<a href="'+href.replace(/&/g,"&amp;")+'" target="_blank" rel="noopener noreferrer">':"";
+  const tokens=value.split(/(<[^>]*>)/g);
+  const safe=[];
+  for(const token of tokens){
+    if(!token)continue;
+    if(token[0]==="<"&&token[token.length-1]===">"){
+      const match=token.match(/^<\s*(\/?)\s*([a-z0-9]+)\b([^>]*)>$/i);
+      if(!match)continue;
+      const closing=!!match[1], name=match[2].toLowerCase(), attrs=match[3]||"";
+      if(["b","strong","i","em","u"].includes(name)){safe.push(closing?"</"+name+">":"<"+name+">");continue;}
+      if(name==="br"){safe.push("<br>");continue;}
+      if(["div","p","li","ul","ol"].includes(name)){safe.push("<br>");continue;}
+      if(name==="span"){
+        if(closing){safe.push("</span>");continue;}
+        const color=(attrs.match(/(?:color\s*:\s*|color=["']?)(#[0-9a-f]{3,8})/i)||[])[1];
+        const size=(attrs.match(/font-size\s*:\s*(\d{1,2}px)/i)||[])[1];
+        const px=size&&parseInt(size,10)>=8&&parseInt(size,10)<=64?size:"";
+        const style=(color?"color:"+color+";":"")+(px?"font-size:"+px+";":"");
+        safe.push("<span"+(style?' style="'+style+'"':"")+">");continue;
+      }
+      if(name==="font"){
+        if(closing){safe.push("</span>");continue;}
+        const color=(attrs.match(/color=["']?(#[0-9a-f]{3,8})/i)||[])[1];
+        const size=(attrs.match(/size=["']?([1-7])/i)||[])[1];
+        const px={1:10,2:13,3:16,4:19,5:24,6:32,7:48};
+        const style=(color?"color:"+color+";":"")+(size?"font-size:"+px[size]+"px;":"");
+        safe.push("<span"+(style?' style="'+style+'"':"")+">");continue;
+      }
+      if(name==="a"){
+        if(closing){safe.push("</a>");continue;}
+        const href=(attrs.match(/href\s*=\s*["'](https?:\/\/[^"']+)["']/i)||[])[1];
+        safe.push(href?'<a href="'+href.replace(/&/g,"&amp;")+'" target="_blank" rel="noopener noreferrer">':"");
+        continue;
+      }
+      continue;
     }
-    if(safeName!=="span")return "<"+safeName+">";
-    const color=(attrs.match(/color\s*:\s*(#[0-9a-fA-F]{3,8})/i)||[])[1];
-    const size=(attrs.match(/font-size\s*:\s*(\d{1,2}px)/i)||[])[1];
-    const safeStyle=(color?"color:"+color+";":"")+(size&&parseInt(size,10)>=8&&parseInt(size,10)<=64?"font-size:"+size+";":"");
-    return "<span"+(safeStyle?' style="'+safeStyle+'"':"")+">";
-  });
-  value=value.replace(/\n[ \t]*\n{2,}/g,"\n\n").replace(/\n/g,"<br>");
-  return value;
+    let text=decodePostEntities(token);
+    text=text.replace(/\\+[ \t]*(?=\r?\n)/g,"").replace(/\\+n/g,"\n");
+    text=text.replace(/!\[([^\]]*)\]\([^)]+\)/g,"$1");
+    text=text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    text=text.replace(/\*\*([^*\n]+)\*\*/g,"<strong>$1</strong>")
+      .replace(/(^|[\s(])\*([^*\n]+)\*(?=$|[\s).,!?:;])/gm,"$1<em>$2</em>")
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,(_,label,url)=>'<a href="'+url.replace(/&amp;/g,"&").replace(/&/g,"&amp;")+'" target="_blank" rel="noopener noreferrer">'+label+"</a>")
+      .replace(/^#{1,6}\s*/gm,"")
+      .replace(/^[-•]\s+/gm,"• ")
+      .replace(/^(\d+)\\?\.\s+/gm,"$1. ");
+    safe.push(text.replace(/\r\n|\r|\n/g,"<br>"));
+  }
+  return safe.join("").replace(/(?:<br>){3,}/g,"<br><br>");
 }
 
 export default function Home(){
