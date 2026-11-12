@@ -122,6 +122,7 @@ export default function Home(){
       <main className={wallpaper?"hasWallpaper":""} style={wallpaper?{backgroundImage:"url("+wallpaper+")","--site-wallpaper":"url("+wallpaper+")"}:undefined}>
         <div className="homeTopControls">
 <button className="cornerIconButton cornerMenuButton" type="button" aria-label="Menu" aria-expanded={headerMenuOpen} onClick={()=>setHeaderMenuOpen(v=>!v)}>{headerMenuOpen?"✕":"☰"}</button>
+<div className="topCenterBrand" aria-label="Zara Nikah">Zara Nikah</div>
 <button className="cornerIconButton cornerNotificationButton" type="button" aria-label="Notifications" onClick={()=>router.push("/notifications")}>🔔{unreadNotifications>0&&<span className="notificationCountBadge">{unreadNotifications>99?"99+":unreadNotifications}</span>}</button>
 {headerMenuOpen&&<nav className="headerMenuPanel cornerMenuPanel" aria-label="Website menu">
 <div className="headerMenuGroup"><span className="headerMenuLabel">रिश्ते देखें</span>
