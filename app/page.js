@@ -14,30 +14,45 @@ function getProfileGender(p){
   return String(p?.gender||p?.sex||p?.profileGender||p?.category||p?.type||"").trim().toLowerCase();
 }
 
+function decodePostEntities(input){
+  return String(input||"")
+    .replace(/&#(?:x([0-9a-f]{1,6})|([0-9]{1,7}));?/gi,(_,hex,dec)=>{
+      const code=hex?parseInt(hex,16):parseInt(dec,10);
+      return Number.isFinite(code)&&code>0&&code<=0x10ffff?String.fromCodePoint(code):"";
+    })
+    .replace(/&nbsp;/gi," ")
+    .replace(/&amp;/gi,"&")
+    .replace(/&lt;/gi,"<")
+    .replace(/&gt;/gi,">")
+    .replace(/&quot;/gi,'"')
+    .replace(/&#39;|&apos;/gi,"'");
+}
+
 function sanitizeAdminPostHtml(input){
-  let value=String(input||"").replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"");
-  // Older posts were saved as Markdown/plain text. Convert common formatting safely.
+  let value=decodePostEntities(input).replace(/\\([*_#.`])/g,"$1");
+  value=value.replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi,"");
+  // Convert older Markdown/plain-text posts into readable, safe HTML.
   if(!/<[a-z][^>]*>/i.test(value)){
     value=value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    value=value.replace(/\\?\*\*(.+?)\\?\*\*/g,"<strong>$1</strong>");
-    value=value.replace(/\\?\*(.+?)\\?\*/g,"<em>$1</em>");
+    value=value.replace(/\\*\\*([\\s\\S]+?)\\*\\*/g,"<strong>$1</strong>");
+    value=value.replace(/\\*([^*\\n]+?)\\*/g,"<em>$1</em>");
     value=value.replace(/^### (.+)$/gm,"<strong>$1</strong>").replace(/^## (.+)$/gm,"<strong>$1</strong>").replace(/^# (.+)$/gm,"<strong>$1</strong>");
-    value=value.replace(/^[-•] (.+)$/gm,"• $1").replace(/\n/g,"<br>");
+    value=value.replace(/^[-•] (.+)$/gm,"• $1").replace(/\\n/g,"<br>");
   }
-  value=value.replace(/<font\b([^>]*)>/gi,function(tag,attrs){
+  value=value.replace(/<font\\b([^>]*)>/gi,function(tag,attrs){
     const color=(attrs.match(/color=["']?(#[0-9a-fA-F]{3,8})["']?/i)||[])[1];
     const size=(attrs.match(/size=["']?([1-7])["']?/i)||[])[1];
     const px={1:10,2:13,3:16,4:19,5:24,6:32,7:48};
     const style=(color?"color:"+color+";":"")+(size?"font-size:"+px[size]+"px;":"");
     return "<span"+(style?' style="'+style+'"':"")+">";
-  }).replace(/<\/font>/gi,"</span>");
-  value=value.replace(/<(?!\/?(?:b|strong|i|em|u|br|p|div|span)\b)[^>]*>/gi,"");
-  value=value.replace(/<(b|strong|i|em|u|br|p|div|span)\b([^>]*)>/gi,function(tag,name,attrs){
+  }).replace(/<\\/font>/gi,"</span>");
+  value=value.replace(/<(?!\\/?(?:b|strong|i|em|u|br|p|div|span)\\b)[^>]*>/gi,"");
+  value=value.replace(/<(b|strong|i|em|u|br|p|div|span)\\b([^>]*)>/gi,function(tag,name,attrs){
     const safeName=name.toLowerCase();
     if(safeName==="br")return "<br>";
     if(safeName!=="span")return "<"+safeName+">";
-    const color=(attrs.match(/color\s*:\s*(#[0-9a-fA-F]{3,8})/i)||[])[1];
-    const size=(attrs.match(/font-size\s*:\s*(\d{1,2}px)/i)||[])[1];
+    const color=(attrs.match(/color\\s*:\\s*(#[0-9a-fA-F]{3,8})/i)||[])[1];
+    const size=(attrs.match(/font-size\\s*:\\s*(\\d{1,2}px)/i)||[])[1];
     const safeStyle=(color?"color:"+color+";":"")+(size&&parseInt(size,10)>=8&&parseInt(size,10)<=64?"font-size:"+size+";":"");
     return "<span"+(safeStyle?' style="'+safeStyle+'"':"")+">";
   });
