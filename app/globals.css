@@ -2461,35 +2461,18 @@ main:not(:has(.homeHeroPanel)) :is(.card, .panel, .formCard, .profileCard, .cont
 }
 
 
-/* Center Zara Nikah wordmark between menu and notification buttons */
+/* Bold decorative Zara Nikah wordmark centered between menu and notifications */
 .topCenterBrand {
-  position: fixed;
-  top: 17px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 179;
-  max-width: calc(100vw - 132px);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(17px, 2.8vw, 25px);
-  line-height: 1.25;
-  font-weight: 900;
-  letter-spacing: 1px;
-  background: linear-gradient(100deg, #126b45 0%, #218b72 25%, #bd8b32 50%, #a64c69 75%, #176b8d 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 1px 0 rgba(255,255,255,.8));
+  position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 179;
+  max-width: calc(100vw - 132px); overflow: visible; white-space: nowrap; text-overflow: clip;
+  font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', serif;
+  font-size: clamp(23px, 3.4vw, 31px); line-height: 1.45; font-weight: 1000; letter-spacing: 1.65px;
+  background: linear-gradient(105deg, #075c39 0%, #15966d 24%, #d29b27 48%, #c34d78 72%, #176eaa 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: .35px rgba(255,255,255,.3);
+  filter: drop-shadow(0 2px 1px rgba(20,65,48,.22)) drop-shadow(0 0 7px rgba(255,255,255,.9));
   pointer-events: none;
 }
 @media(max-width:700px) {
-  .topCenterBrand {
-    top: 17px;
-    max-width: calc(100vw - 116px);
-    font-size: clamp(15px, 4.2vw, 20px);
-    letter-spacing: .45px;
-  }
+  .topCenterBrand { top: 12px; max-width: calc(100vw - 112px); font-size: clamp(19px, 5.3vw, 24px); line-height: 1.65; letter-spacing: .8px; }
 }
