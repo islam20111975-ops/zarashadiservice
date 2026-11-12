@@ -2435,3 +2435,27 @@ main:not(:has(.homeHeroPanel)) :is(.card, .panel, .formCard, .profileCard, .cont
 @media (max-width: 700px) {
   body { background-attachment: scroll !important; }
 }
+
+
+/* Colorful Zara Nikah header wordmark */
+.siteHeader .headerBrandText strong {
+  background: linear-gradient(100deg, #126b45 0%, #218b72 28%, #bd8b32 56%, #a64c69 78%, #176b8d 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-weight: 900 !important;
+  text-shadow: none !important;
+  letter-spacing: 1.35px !important;
+}
+.siteHeader .headerBrandText small {
+  color: #9a7130 !important;
+  font-weight: 900 !important;
+  letter-spacing: 3px !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,.8);
+}
+@media(max-width:700px) {
+  .siteHeader .headerBrandText strong { letter-spacing: .55px !important; }
+  .siteHeader .headerBrandText small { letter-spacing: 2px !important; }
+}
