@@ -2476,3 +2476,36 @@ main:not(:has(.homeHeroPanel)) :is(.card, .panel, .formCard, .profileCard, .cont
 @media(max-width:700px) {
   .topCenterBrand { top: 12px; max-width: calc(100vw - 112px); font-size: clamp(19px, 5.3vw, 24px); line-height: 1.65; letter-spacing: .8px; }
 }
+
+
+/* Richer site-wide color and elegant double frame */
+body {
+  background:
+    radial-gradient(ellipse at 5% 4%, rgba(151, 211, 171, .42), transparent 35%),
+    radial-gradient(ellipse at 96% 12%, rgba(245, 211, 137, .38), transparent 34%),
+    radial-gradient(ellipse at 90% 88%, rgba(225, 177, 198, .22), transparent 32%),
+    radial-gradient(ellipse at 8% 88%, rgba(155, 198, 220, .25), transparent 34%),
+    linear-gradient(135deg, #eaf5ed 0%, #f8f2df 48%, #edf4f8 100%) !important;
+  background-attachment: fixed !important;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 7px;
+  z-index: 9998;
+  pointer-events: none;
+  border: 2px solid rgba(173, 133, 55, .82);
+  border-radius: 17px;
+  box-shadow:
+    inset 0 0 0 3px rgba(255,255,255,.72),
+    inset 0 0 0 5px rgba(31, 111, 76, .38),
+    0 0 0 1px rgba(255,255,255,.72);
+}
+@media(max-width:700px) {
+  body::after {
+    inset: 4px;
+    border-width: 1.5px;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.72), inset 0 0 0 3.5px rgba(31,111,76,.35);
+  }
+}
