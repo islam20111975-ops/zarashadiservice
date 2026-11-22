@@ -1,5 +1,5 @@
 {
-  "name": "Zara Nikah Service",
+  "name": "Zara Nikah",
   "short_name": "Zara Nikah",
   "description": "Aapka Rishta, Hamari Zimmedari",
   "id": "/",
@@ -13,21 +13,11 @@
     {
       "src": "/api/pwa-icon?size=192",
       "sizes": "192x192",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/api/pwa-icon?size=512",
-      "sizes": "512x512",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/zara-icon-192.png",
-      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/zara-icon-512.png",
+      "src": "/api/pwa-icon?size=512",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
