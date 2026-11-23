@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
-import {GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "firebase/auth";
+import {onAuthStateChanged} from "firebase/auth";
 import {collection,doc,getDoc,onSnapshot,addDoc,serverTimestamp} from "firebase/firestore";
 import {auth,db} from "../../lib/firebase";
 
