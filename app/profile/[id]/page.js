@@ -104,7 +104,7 @@ export default function Profile(){
   </div></header>
 
   <section className="detail cardPage">
-   <div className="detailTop"><button className="miniBack" onClick={()=>router.push("/")}>← Profiles</button><span className="detailBadge">✓ Verified</span></div>
+   <div className="detailTop"><button className="miniBack" onClick={()=>router.push("/")}>← Profiles</button><span className="detailBadge">Profile Details</span></div>
    <div className="detailPhoto" onClick={()=>setLightbox(true)} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")setLightbox(true)}} aria-label="सभी profile photos और biodata payment देखें">{photos[0]?<><img src={photos[0]} alt="Marriage profile"/>{photos.length>1&&<span className="detailPhotoCount">📷 {photos.length} Photos • सभी देखें</span>}</>:<div className="notFound">Photo not found</div>}</div>
 
    <div className="detailBody">
