@@ -200,6 +200,7 @@ export default function Home(){
               <button type="button" className="homeHeroMale" onClick={()=>{setR("male");scrollToProfiles();}}>👨 Male Rishte Dekhein</button>
               <button type="button" className="homeHeroFemale" onClick={()=>{setR("female");scrollToProfiles();}}>👩 Female Rishte Dekhein</button>
               <button type="button" className="homeHeroAdd" onClick={()=>router.push("/add-profile")}>＋ Apna Profile Jodein</button>
+              <button type="button" className="homeHeroAdd" onClick={()=>router.push(user?"/account":"/login?next=%2Faccount")}>{user?"👤 My Account":"🔐 Login"}</button>
             </div>
             <div className="homeHeroTrust">
               <span>🔒 Private details ka ehtiyaat</span>
