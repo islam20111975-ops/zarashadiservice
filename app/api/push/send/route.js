@@ -30,12 +30,20 @@ async function verifyAdmin(request) {
 export async function GET(request) {
   try {
     const { app } = await verifyAdmin(request);
-    const snapshot = await getFirestore(app).collection("pushSendLogs").orderBy("createdAt", "desc").limit(50).get();
+    const db = getFirestore(app);
+    const [snapshot, userSnapshot] = await Promise.all([
+      db.collection("pushSendLogs").orderBy("createdAt", "desc").limit(50).get(),
+      db.collection("users").get()
+    ]);
     const logs = snapshot.docs.map(doc => {
       const data = doc.data();
       return { id: doc.id, ...data, createdAt: data.createdAt?.toDate?.()?.toISOString?.() || null };
     });
-    return NextResponse.json({ logs });
+    const recipientUids = userSnapshot.docs
+      .map(doc => ({ uid: doc.id, email: String(doc.data().email || "").toLowerCase() }))
+      .filter(item => item.uid && !ADMIN_EMAILS.includes(item.email))
+      .map(item => item.uid);
+    return NextResponse.json({ logs, recipientUids, userCount: recipientUids.length });
   } catch (error) {
     return NextResponse.json({ error: error.message || "Logs load failed" }, { status: 401 });
   }
