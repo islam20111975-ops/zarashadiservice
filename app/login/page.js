@@ -14,14 +14,15 @@ export default function LoginPage(){
   const router=useRouter();
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
-  useEffect(()=>onAuthStateChanged(auth,user=>{if(user)router.replace(returnPath())}),[router]);
+  useEffect(()=>onAuthStateChanged(auth,user=>{if(user){const isAdmin=["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(user.email?.toLowerCase());router.replace(isAdmin?"/admin":returnPath())}}),[router]);
   async function login(){
     setBusy(true);setError("");
     try{
       const provider=new GoogleAuthProvider();
       provider.setCustomParameters({prompt:"select_account"});
-      await signInWithPopup(auth,provider);
-      router.replace(returnPath());
+      const result=await signInWithPopup(auth,provider);
+      const isAdmin=["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(result.user.email?.toLowerCase());
+      router.replace(isAdmin?"/admin":returnPath());
     }catch(e){
       setError(e?.message||"Google Login nahi ho saka. Dobara koshish karein.");
     }finally{setBusy(false)}
