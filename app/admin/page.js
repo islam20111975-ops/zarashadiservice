@@ -45,7 +45,7 @@ export default function Admin(){
   const [chats,setChats]=useState([]),[selectedChatId,setSelectedChatId]=useState(""),[chatMessages,setChatMessages]=useState([]),[chatReply,setChatReply]=useState(""),[chatSending,setChatSending]=useState(false);
   const [posts,setPosts]=useState([]),[postText,setPostText]=useState(""),[editingPostId,setEditingPostId]=useState(""),[postBackgroundColor,setPostBackgroundColor]=useState("#fff7ed"),[postTextColor,setPostTextColor]=useState("#3b1d0b"),[postImageCleared,setPostImageCleared]=useState(false);
   const [tickerText,setTickerText]=useState(""),[tickerSaving,setTickerSaving]=useState(false);
-  const [broadcastText,setBroadcastText]=useState(""),[broadcastSending,setBroadcastSending]=useState(false),[notificationDeleting,setNotificationDeleting]=useState(false),[pushLogs,setPushLogs]=useState([]),[pushLogsLoading,setPushLogsLoading]=useState(false),[pushLogsError,setPushLogsError]=useState(""),[recipientUids,setRecipientUids]=useState([]);
+  const [broadcastText,setBroadcastText]=useState(""),[broadcastSending,setBroadcastSending]=useState(false),[notificationDeleting,setNotificationDeleting]=useState(false),[pushLogs,setPushLogs]=useState([]),[pushLogsLoading,setPushLogsLoading]=useState(false),[pushLogsError,setPushLogsError]=useState(""),[pushLogsDeleting,setPushLogsDeleting]=useState(false),[recipientUids,setRecipientUids]=useState([]);
   const [faqs,setFaqs]=useState([]),[faqQuestion,setFaqQuestion]=useState(""),[faqAnswer,setFaqAnswer]=useState(""),[editingFaqId,setEditingFaqId]=useState("");
   const [postImageFile,setPostImageFile]=useState(null),[postImagePreview,setPostImagePreview]=useState("");
   const postEditorRef=useRef(null),postSelectionRef=useRef(null);
@@ -124,6 +124,20 @@ export default function Admin(){
       setRecipientUids(Array.isArray(data.recipientUids)?data.recipientUids:[]);
     }catch(e){setPushLogsError(e.message||"Push logs load nahi hue.");}
     finally{setPushLogsLoading(false);}
+  }
+
+  async function deletePushLogs(){
+    if(!user||!window.confirm("Kya aap sabhi purane Push Logs delete karna chahte hain? Isse sirf logs delete honge; users, profiles, payments aur notifications safe rahenge."))return;
+    setPushLogsDeleting(true);setPushLogsError("");
+    try{
+      const idToken=await user.getIdToken();
+      const response=await fetch("/api/push/send",{method:"DELETE",cache:"no-store",headers:{Authorization:"Bearer "+idToken}});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||("HTTP "+response.status));
+      setPushLogs([]);
+      setPushLogsError("✅ "+(data.deleted||0)+" purane Push Logs delete ho gaye.");
+    }catch(e){setPushLogsError(e.message||"Push Logs delete nahi hue.");}
+    finally{setPushLogsDeleting(false);}
   }
 
   useEffect(()=>{if(tab==="notifications"&&ADMINS.includes(user?.email?.toLowerCase()))loadPushLogs();},[tab,user]);
@@ -812,7 +826,7 @@ export default function Admin(){
 
 
     {tab==="notifications"&&<div className="adminList"><form className="adminBox" onSubmit={sendBroadcastNotification}><h3>🔔 सभी Users को Notification भेजें</h3><p>यह संदेश सभी registered users को जाएगा। App बंद या मोबाइल लॉक होने पर भी push notification पहुँच सकती है, अगर user ने पहले notification permission दी है।</p><textarea className="adminInput pageEditor" rows="6" maxLength={3000} placeholder="अपना संदेश यहाँ लिखें..." value={broadcastText} onChange={e=>setBroadcastText(e.target.value)} required/><small>{broadcastText.length}/3000 characters • {recipientUids.length} recipients</small><button className="primaryAction" disabled={broadcastSending||!broadcastText.trim()}>{broadcastSending?"भेज रहे हैं...":"📨 सभी को Notification भेजें"}</button></form><div className="adminBox" style={{marginTop:14}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}}><h3>🛠️ Push Notification Error Logs</h3><button type="button" className="backAction" onClick={loadPushLogs} disabled={pushLogsLoading}>{pushLogsLoading?"Loading...":"↻ Logs Refresh karein"}</button></div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}}><h3>🛠️ Push Notification Error Logs</h3><button type="button" className="backAction" onClick={loadPushLogs} disabled={pushLogsLoading}>{pushLogsLoading?"Loading...":"↻ Logs Refresh karein"}</button><button type="button" className="backAction" style={{color:"#b42318"}} onClick={deletePushLogs} disabled={pushLogsDeleting||pushLogsLoading}>{pushLogsDeleting?"Deleting...":"🗑️ Purane Logs Delete karein"}</button></div>
       <p>Yahan recent 50 push attempts ka result aur Firebase error code dikhega. Device token ya private mobile number yahan nahi dikhaya jayega.</p>
       {pushLogsError&&<div className="errorBox">{pushLogsError}</div>}
       {!pushLogsLoading&&!pushLogsError&&!pushLogs.length&&<p>Abhi koi push log save nahi hua. Naya notification bhejne ke baad yahan result dikhega.</p>}
