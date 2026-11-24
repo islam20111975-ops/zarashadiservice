@@ -31,7 +31,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(["uid","isOnline","lastSeen"])
         && request.resource.data.uid == userId
         && request.resource.data.isOnline is bool;
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
     match /users/{userId} {
