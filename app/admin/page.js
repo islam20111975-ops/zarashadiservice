@@ -117,7 +117,7 @@ export default function Admin(){
     setPushLogsLoading(true);setPushLogsError("");
     try{
       const idToken=await user.getIdToken();
-      const response=await fetch("/api/push/send",{headers:{Authorization:"Bearer "+idToken}});
+      const response=await fetch("/api/push/send",{cache:"no-store",headers:{Authorization:"Bearer "+idToken}});
       const data=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(data.error||("HTTP "+response.status));
       setPushLogs(Array.isArray(data.logs)?data.logs:[]);
@@ -816,7 +816,7 @@ export default function Admin(){
       {!pushLogsLoading&&!pushLogsError&&!pushLogs.length&&<p>Abhi koi push log save nahi hua. Naya notification bhejne ke baad yahan result dikhega.</p>}
       {pushLogs.map(log=><article className="userAdminCard" key={log.id}>
         <b>{log.failureCount>0?"❌ Push failed":"✅ Push result"}</b>
-        <p style={{margin:"6px 0"}}>Date: {log.createdAt?new Date(log.createdAt).toLocaleString("en-IN"):"—"} · Sent: {log.sent||0} · Failed: {log.failureCount||0} · Devices: {log.registeredDevices||0} · Users: {log.recipients||0}</p>
+        <p style={{margin:"6px 0"}}>Date: {log.createdAt?new Date(log.createdAt).toLocaleString("en-IN"):"—"} · Sent: {log.sent||0} · Failed: {log.failureCount||0} · Devices: {log.registeredDevices||0} · Users: {log.recipients||0} · Invalid tokens removed: {log.invalidTokensRemoved||0}</p>
         {Array.isArray(log.errors)&&log.errors.map((item,i)=><p key={i} style={{overflowWrap:"anywhere",margin:"4px 0"}}><b>{item.code||"unknown"}</b>: {item.message||"No error message"}</p>)}
       </article>)}
     </div>
