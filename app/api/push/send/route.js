@@ -60,23 +60,25 @@ export async function POST(request) {
     if (!uids.length) return NextResponse.json({ sent: 0, failureCount: 0, recipients: 0, registeredDevices: 0, message: "No recipients" });
 
     const db = getFirestore(app);
-    const tokens = [];
+    const tokenRecords = [];
     for (let i = 0; i < uids.length; i += 10) {
       const snapshot = await db.collection("pushTokens").where("uid", "in", uids.slice(i, i + 10)).get();
       snapshot.forEach(doc => {
         const token = doc.data().token;
-        if (typeof token === "string" && token.length > 20) tokens.push(token);
+        if (typeof token === "string" && token.length > 20) tokenRecords.push({ token, ref: doc.ref });
       });
     }
+    const uniqueTokenRecords = [...new Map(tokenRecords.map(item => [item.token, item])).values()];
 
     let sent = 0;
     let failureCount = 0;
+    let invalidTokensRemoved = 0;
     const errors = [];
     const notificationTag = `zara-nikah-${Date.now()}`;
-    for (let i = 0; i < tokens.length; i += 500) {
-      const batch = tokens.slice(i, i + 500);
+    for (let i = 0; i < uniqueTokenRecords.length; i += 500) {
+      const batch = uniqueTokenRecords.slice(i, i + 500);
       const response = await getMessaging(app).sendEachForMulticast({
-        tokens: batch,
+        tokens: batch.map(item => item.token),
         data: { title, body: message, url: "/notifications" },
         webpush: {
           headers: { TTL: "86400", Urgency: "high" },
@@ -96,16 +98,25 @@ export async function POST(request) {
       });
       sent += response.successCount;
       failureCount += response.failureCount;
+      const staleTokenRefs = [];
       response.responses.forEach((item, index) => {
-        if (!item.success && errors.length < 5) {
-          errors.push({ code: item.error?.code || "unknown", message: item.error?.message || "Push failed" });
+        if (!item.success) {
+          const code = item.error?.code || "unknown";
+          if (code === "messaging/registration-token-not-registered" || code === "messaging/invalid-registration-token") staleTokenRefs.push(batch[index].ref);
+          if (errors.length < 5) errors.push({ code, message: item.error?.message || "Push failed" });
         }
       });
+      for (let j = 0; j < staleTokenRefs.length; j += 400) {
+        const cleanup = db.batch();
+        staleTokenRefs.slice(j, j + 400).forEach(ref => cleanup.delete(ref));
+        await cleanup.commit();
+        invalidTokensRemoved += Math.min(400, staleTokenRefs.length - j);
+      }
     }
-    const result = { sent, failureCount, recipients: uids.length, registeredDevices: tokens.length, errors };
+    const result = { sent, failureCount, recipients: uids.length, registeredDevices: uniqueTokenRecords.length, invalidTokensRemoved, errors };
     await db.collection("pushSendLogs").add({
       adminEmail: decoded.email, title, sent, failureCount,
-      recipients: uids.length, registeredDevices: tokens.length, errors,
+      recipients: uids.length, registeredDevices: uniqueTokenRecords.length, invalidTokensRemoved, errors,
       createdAt: FieldValue.serverTimestamp()
     });
     return NextResponse.json(result);
