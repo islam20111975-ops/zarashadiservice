@@ -361,7 +361,7 @@ service cloud.firestore {
       allow update: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read","readAt"])
         && request.resource.data.read == true);
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
     match /{document=**} { allow read, write: if false; }
