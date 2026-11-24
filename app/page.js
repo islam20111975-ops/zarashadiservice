@@ -184,7 +184,7 @@ export default function Home(){
 <button type="button" disabled={loginBusy} onClick={()=>{setHeaderMenuOpen(false);openPrivateChat();}}>💬 <span>Private Chat</span></button>
 <button type="button" onClick={()=>{setHeaderMenuOpen(false);router.push("/notifications");}}>🔔 <span>मेरी सूचनाएँ ({unreadNotifications})</span></button>
 <button type="button" onClick={()=>{setHeaderMenuOpen(false);router.push("/islamic-calendar");}}>🌙 <span>Islamic Calendar</span></button>
-<button type="button" disabled={loginBusy} onClick={async()=>{setLoginError("");if(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(user?.email?.toLowerCase())){router.push("/admin");return}setLoginBusy(true);try{if(user||auth.currentUser?.isAnonymous)await signOut(auth);const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});const result=await signInWithPopup(auth,p);router.push(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(result.user.email?.toLowerCase())?"/admin":"/")}catch(e){setLoginError(e?.message||"Google Login nahi ho saka.")}finally{setLoginBusy(false)}}}>🔐 <span>{loginBusy?"Login...":user?"Profile / Account":"Login"}</span></button>
+<button type="button" disabled={loginBusy} onClick={()=>{setLoginError("");setHeaderMenuOpen(false);router.push(user?(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(user.email?.toLowerCase())?"/admin":"/account"):"/login?next=%2Faccount")}}>🔐 <span>{loginBusy?"Login...":user?"Profile / Account":"Login"}</span></button>
 </div>
 </nav>}
 </div>
@@ -200,7 +200,7 @@ export default function Home(){
               <button type="button" className="homeHeroMale" onClick={()=>{setR("male");scrollToProfiles();}}>👨 Male Rishte Dekhein</button>
               <button type="button" className="homeHeroFemale" onClick={()=>{setR("female");scrollToProfiles();}}>👩 Female Rishte Dekhein</button>
               <button type="button" className="homeHeroAdd" onClick={()=>router.push("/add-profile")}>＋ Apna Profile Jodein</button>
-              <button type="button" className="homeHeroAdd" onClick={()=>router.push(user?"/account":"/login?next=%2Faccount")}>{user?"👤 My Account":"🔐 Login"}</button>
+              <button type="button" className="homeHeroAdd" onClick={()=>router.push(user?(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(user.email?.toLowerCase())?"/admin":"/account"):"/login?next=%2Faccount")}>{user?(["ngogrant454@gmail.com","islam20111975@gmail.com"].includes(user.email?.toLowerCase())?"🛡️ Admin Dashboard":"👤 My Account"):"🔐 Login"}</button>
             </div>
             <div className="homeHeroTrust">
               <span>🔒 Private details ka ehtiyaat</span>
