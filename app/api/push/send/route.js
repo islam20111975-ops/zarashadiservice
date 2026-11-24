@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getApps, initializeApp, cert } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 
 export const runtime = "nodejs";
@@ -17,17 +17,33 @@ function getAdminApp() {
   return initializeApp({ credential: cert(serviceAccount) });
 }
 
+async function verifyAdmin(request) {
+  const authorization = request.headers.get("authorization") || "";
+  const idToken = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+  if (!idToken) throw new Error("Login token missing");
+  const app = getAdminApp();
+  const decoded = await getAuth(app).verifyIdToken(idToken);
+  if (!decoded.email || !ADMIN_EMAILS.includes(decoded.email.toLowerCase())) throw new Error("Admin permission required");
+  return { app, decoded };
+}
+
+export async function GET(request) {
+  try {
+    const { app } = await verifyAdmin(request);
+    const snapshot = await getFirestore(app).collection("pushSendLogs").orderBy("createdAt", "desc").limit(50).get();
+    const logs = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return { id: doc.id, ...data, createdAt: data.createdAt?.toDate?.()?.toISOString?.() || null };
+    });
+    return NextResponse.json({ logs });
+  } catch (error) {
+    return NextResponse.json({ error: error.message || "Logs load failed" }, { status: 401 });
+  }
+}
+
 export async function POST(request) {
   try {
-    const authorization = request.headers.get("authorization") || "";
-    const idToken = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
-    if (!idToken) return NextResponse.json({ error: "Login token missing" }, { status: 401 });
-
-    const app = getAdminApp();
-    const decoded = await getAuth(app).verifyIdToken(idToken);
-    if (!decoded.email || !ADMIN_EMAILS.includes(decoded.email.toLowerCase())) {
-      return NextResponse.json({ error: "Admin permission required" }, { status: 403 });
-    }
+    const { app, decoded } = await verifyAdmin(request);
 
     const body = await request.json();
     const uids = [...new Set((Array.isArray(body.uids) ? body.uids : []).filter(x => typeof x === "string" && x.length > 0))].slice(0, 500);
@@ -78,13 +94,13 @@ export async function POST(request) {
         }
       });
     }
-    return NextResponse.json({
-      sent,
-      failureCount,
-      recipients: uids.length,
-      registeredDevices: tokens.length,
-      errors
+    const result = { sent, failureCount, recipients: uids.length, registeredDevices: tokens.length, errors };
+    await db.collection("pushSendLogs").add({
+      adminEmail: decoded.email, title, sent, failureCount,
+      recipients: uids.length, registeredDevices: tokens.length, errors,
+      createdAt: FieldValue.serverTimestamp()
     });
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Push send failed:", error);
     return NextResponse.json({ error: error.message || "Push send failed" }, { status: 500 });
