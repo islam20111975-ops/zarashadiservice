@@ -167,7 +167,9 @@ export default function Admin(){
       }
       const push=saved?await sendPushToUsers(targetUids,"📢 Zara Nikah Service",message):{ok:false,sent:0,failureCount:targetUids.length,error:"Notification save nahi hui."};
       setBroadcastText("");
-      setError("Message bhej diya. In-app: "+saved+" users; mobile push: "+push.sent+" devices; failed: "+(push.failureCount||0)+(saveFailures?", save failed: "+saveFailures:"")+(push.error?" • "+push.error:""));
+      const sendSuccessful=saved===targetUids.length&&saveFailures===0&&push.ok;
+      const statusText=(sendSuccessful?"✅ SEND SUCCESSFUL":"❌ SEND FAILED")+" — In-app: "+saved+"/"+targetUids.length+" users; mobile push accepted: "+push.sent+" devices; push failed: "+(push.failureCount||0)+(saveFailures?", in-app save failed: "+saveFailures:"")+(push.error?" • "+push.error:"");
+      setError(statusText);
     }catch(err){setError("Notification nahi bheji ja saki: "+err.message)}
     finally{setBroadcastSending(false)}
   }
