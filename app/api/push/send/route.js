@@ -125,3 +125,23 @@ export async function POST(request) {
     return NextResponse.json({ error: error.message || "Push send failed" }, { status: 500 });
   }
 }
+
+
+export async function DELETE(request) {
+  try {
+    const { app } = await verifyAdmin(request);
+    const db = getFirestore(app);
+    let deleted = 0;
+    while (true) {
+      const snapshot = await db.collection("pushSendLogs").limit(400).get();
+      if (snapshot.empty) break;
+      const batch = db.batch();
+      snapshot.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      deleted += snapshot.size;
+    }
+    return NextResponse.json({ ok: true, deleted });
+  } catch (error) {
+    return NextResponse.json({ error: error.message || "Push logs delete failed" }, { status: 401 });
+  }
+}
